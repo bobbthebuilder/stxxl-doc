@@ -1,22 +1,26 @@
 /***************************************************************************
- *            test_btree.cpp
- *  A very basic test
- *  Tue Feb 14 20:39:53 2006
- *  Copyright  2006  Roman Dementiev
- *  Email
- ****************************************************************************/
+ *  containers/btree/test_const_scan.cpp
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
 #include <iostream>
 
-#include "stxxl/bits/containers/btree/btree.h"
-#include "stxxl/timer"
+#include <stxxl/bits/containers/btree/btree.h>
+#include <stxxl/timer>
 
 
 struct comp_type : public std::less<int>
 {
     static int max_value()
     {
-        return (std::numeric_limits < int > ::max)();
+        return (std::numeric_limits<int>::max)();
     }
 };
 
@@ -75,17 +79,17 @@ void C(btree_type & BTree)
     STXXL_MSG("Scanning with const iterator: " << Timer1.mseconds() << " msec");
 }
 
-int main(int argc, char * argv [])
+int main(int argc, char * argv[])
 {
     if (argc < 2)
     {
         STXXL_MSG("Usage: " << argv[0] << " #ins");
-        return 1;
+        return -1;
     }
 
     const unsigned nins = atoi(argv[1]);
 
-    STXXL_MSG("Data set size  : " << nins * sizeof(std::pair < int, my_type >) << " bytes");
+    STXXL_MSG("Data set size  : " << nins * sizeof(std::pair<int, my_type>) << " bytes");
     STXXL_MSG("Node cache size: " << node_cache_size << " bytes");
     STXXL_MSG("Leaf cache size: " << leaf_cache_size << " bytes");
 

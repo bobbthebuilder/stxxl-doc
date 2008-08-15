@@ -1,15 +1,17 @@
-#ifndef WRITE_POOL_HEADER
-#define WRITE_POOL_HEADER
-
 /***************************************************************************
- *            write_pool.h
+ *  include/stxxl/bits/mng/write_pool.h
  *
- *  Wed Jul  2 11:55:44 2003
- *  Copyright  2003  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2003-2004 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl/bits/mng/mng.h"
+#ifndef STXXL_WRITE_POOL_HEADER
+#define STXXL_WRITE_POOL_HEADER
 
 #include <list>
 
@@ -17,11 +19,8 @@
  #include <boost/config.hpp>
 #endif
 
-#ifdef BOOST_MSVC
- #include <hash_map>
-#else
- #include <ext/hash_map>
-#endif
+#include <stxxl/bits/mng/mng.h>
+//#include <stxxl/bits/compat_hash_map.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -46,18 +45,18 @@ public:
         bid_type bid;
 
         busy_entry() : block(NULL) { }
-        busy_entry(const busy_entry &a) : block(a.block), req(a.req), bid(a.bid) { }
-        busy_entry(block_type * &bl, request_ptr & r, bid_type & bi) :
+        busy_entry(const busy_entry & a) : block(a.block), req(a.req), bid(a.bid) { }
+        busy_entry(block_type * & bl, request_ptr & r, bid_type & bi) :
             block(bl), req(r), bid(bi) { }
 
         operator request_ptr () { return req; }
     };
-    //typedef __gnu_cxx::hash_map < bid_type, request_ptr , bid_hash > hash_map_type;
+    //typedef typename compat_hash_map < bid_type, request_ptr , bid_hash >::result hash_map_type;
     //typedef typename hash_map_type::iterator block_track_iterator;
     typedef typename std::list<block_type *>::iterator free_blocks_iterator;
     typedef typename std::list<busy_entry>::iterator busy_blocks_iterator;
-protected:
 
+protected:
     // contains free write blocks
     std::list<block_type *> free_blocks;
     // blocks that are in writing
@@ -98,8 +97,7 @@ public:
 
         try
         {
-            busy_blocks_iterator i2 = busy_blocks.begin();
-            for ( ; i2 != busy_blocks.end(); ++i2)
+            for (busy_blocks_iterator i2 = busy_blocks.begin(); i2 != busy_blocks.end(); ++i2)
             {
                 i2->req->wait();
                 delete i2->block;
@@ -120,6 +118,12 @@ public:
     //! \return request object of the write operation
     request_ptr write(block_type * block, bid_type bid)
     {
+        for (busy_blocks_iterator i2 = busy_blocks.begin(); i2 != busy_blocks.end(); ++i2)
+        {
+            if (i2->bid == bid && i2->block != block) {
+                STXXL_VERBOSE1("WAW dependency");
+            }
+        }
         request_ptr result = block->write(bid);
         ++busy_blocks_size;
         busy_blocks.push_back(busy_entry(block, result, bid));
@@ -142,16 +146,16 @@ public:
         STXXL_VERBOSE1("write_pool::steal : all " << busy_blocks_size << " are busy");
         busy_blocks_iterator completed = wait_any(busy_blocks.begin(), busy_blocks.end());
         assert(completed != busy_blocks.end()); // we got something reasonable from wait_any
-        assert(completed->req->poll()); // and it is *really* completed
+        assert(completed->req->poll());         // and it is *really* completed
         block_type * p = completed->block;
         busy_blocks.erase(completed);
         --busy_blocks_size;
-        check_all_busy(); // for debug
+        check_all_busy();                       // for debug
         return p;
     }
 
     // deprecated name for the steal()
-    block_type * get()
+    __STXXL_DEPRECATED(block_type * get())
     {
         return steal();
     }
@@ -161,7 +165,7 @@ public:
     void resize(unsigned_type new_size)
     {
         int_type diff = int_type(new_size) - int_type(size());
-        if (diff > 0 )
+        if (diff > 0)
         {
             free_blocks_size += diff;
             while (--diff >= 0)
@@ -172,7 +176,7 @@ public:
         }
 
         while (++diff <= 0)
-            delete get();
+            delete steal();
     }
 
     request_ptr get_request(bid_type bid)
@@ -209,6 +213,7 @@ public:
         free_blocks.push_back(block);
         ++free_blocks_size;
     }
+
 protected:
     void check_all_busy()
     {
@@ -244,11 +249,11 @@ __STXXL_END_NAMESPACE
 namespace std
 {
     template <class BlockType>
-    void swap(stxxl::write_pool < BlockType > & a,
+    void swap(stxxl::write_pool<BlockType> & a,
               stxxl::write_pool<BlockType> & b)
     {
         a.swap(b);
     }
 }
 
-#endif
+#endif // !STXXL_WRITE_POOL_HEADER

@@ -1,10 +1,22 @@
+/***************************************************************************
+ *  common/version.cpp
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2007 Andreas Beckmann <beckmann@mpi-inf.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
 #include <stxxl/bits/version.h>
 
 #ifdef STXXL_BOOST_CONFIG
-#include<boost/version.hpp>
+#include <boost/version.hpp>
 #endif
 
-#define STXXL_VERSION_STRING_MA_MI_PL "1.1.1"
+#define STXXL_VERSION_STRING_MA_MI_PL "1.2.1"
 
 // version.defs gets created if a snapshot/beta/rc/release is done
 #ifdef HAVE_VERSION_DEFS
@@ -16,13 +28,19 @@
 #include "version_svn.defs"
 #endif
 
+
+__STXXL_BEGIN_NAMESPACE
+
 // FIXME: this currently only works for GNU-like systems,
 //        there are no details available on windows platform
 
-
-const char * stxxl::get_version_string()
+const char * get_version_string()
 {
-    return "STXXL v"
+    return "STXXL"
+#ifdef STXXL_VERSION_STRING_SVN_BRANCH
+           " (branch: " STXXL_VERSION_STRING_SVN_BRANCH ")"
+#endif
+           " v"
            STXXL_VERSION_STRING_MA_MI_PL
 #ifdef STXXL_VERSION_STRING_DATE
            "-" STXXL_VERSION_STRING_DATE
@@ -55,5 +73,7 @@ const char * stxxl::get_version_string()
 #endif
     ;
 }
+
+__STXXL_END_NAMESPACE
 
 // vim: et:ts=4:sw=4

@@ -1,16 +1,23 @@
+/***************************************************************************
+ *  include/stxxl/bits/common/tmeta.h
+ *
+ *  Template Metaprogramming Tools
+ *  (from the Generative Programming book Krysztof Czarnecki, Ulrich Eisenecker)
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2003 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
 #ifndef STXXL_META_TEMPLATE_PROGRAMMING
 #define STXXL_META_TEMPLATE_PROGRAMMING
 
-/***************************************************************************
- *            tmeta.h
- *  Template Metaprogramming Tools
- *  (from the Generative Programming book Krysztof Czarnecki, Ulrich Eisenecker)
- *  Thu May 29 11:43:44 2003
- *  Copyright  2003  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
-
-#include "stxxl/bits/namespace.h"
+#include <stxxl/bits/namespace.h>
+#include <stxxl/bits/common/types.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -54,7 +61,7 @@ struct IF_N<false, Num1, Num2>
 
 const int DEFAULT = ~(~0u >> 1); // initialize with the smallest int
 
-struct NilCase {};
+struct NilCase { };
 
 template <int tag_, class Type_, class Next_ = NilCase>
 struct CASE
@@ -73,11 +80,12 @@ class SWITCH
         caseTag = Case::tag,
         found = (caseTag == tag || caseTag == DEFAULT)
     };
+
 public:
-    typedef typename IF < found,
-    typename Case::Type,
-    typename SWITCH<tag, NextCase>::result
-    > ::result result;
+    typedef typename IF<found,
+                        typename Case::Type,
+                        typename SWITCH<tag, NextCase>::result
+                        >::result result;
 };
 
 template <int tag>
@@ -87,18 +95,19 @@ public:
     typedef NilCase result;
 };
 
-template <unsigned Input>
-class LOG
+//! \internal, use LOG2 instead
+template <unsigned_type Input>
+class LOG2_floor
 {
 public:
     enum
     {
-        value = LOG < Input / 2 > ::value + 1
+        value = LOG2_floor<Input / 2>::value + 1
     };
 };
 
 template <>
-class LOG < 1 >
+class LOG2_floor<1>
 {
 public:
     enum
@@ -108,7 +117,7 @@ public:
 };
 
 template <>
-class LOG < 0 >
+class LOG2_floor<0>
 {
 public:
     enum
@@ -117,7 +126,39 @@ public:
     };
 };
 
+template <unsigned_type Input>
+class LOG2
+{
+public:
+    enum
+    {
+        floor = LOG2_floor<Input>::value,
+        ceil = LOG2_floor<Input - 1>::value + 1
+    };
+};
+
+template <>
+class LOG2<1>
+{
+public:
+    enum
+    {
+        floor = 0,
+        ceil = 0
+    };
+};
+
+template <>
+class LOG2<0>
+{
+public:
+    enum
+    {
+        floor = 0,
+        ceil = 0
+    };
+};
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_META_TEMPLATE_PROGRAMMING

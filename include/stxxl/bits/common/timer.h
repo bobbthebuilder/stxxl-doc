@@ -1,18 +1,19 @@
-#ifndef TIMER_HEADER
-#define TIMER_HEADER
+/***************************************************************************
+ *  include/stxxl/bits/common/timer.h
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002, 2005 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-/* Simple timer class by Roman Dementiev
- */
+#ifndef STXXL_TIMER_HEADER
+#define STXXL_TIMER_HEADER
 
-#include "stxxl/bits/namespace.h"
-
-#ifdef BOOST_MSVC
- // no alternative to boost :-(
- #define STXXL_NONMONOTONIC_BOOST_TIMESTAMP
-#endif
-
-#if defined(STXXL_BOOST_TIMESTAMP) && \
-    defined(STXXL_NONMONOTONIC_BOOST_TIMESTAMP)
+#ifdef STXXL_BOOST_TIMESTAMP
  #include <boost/date_time/posix_time/posix_time.hpp>
  #include <cmath>
 #else
@@ -20,30 +21,28 @@
  #include <sys/time.h>
 #endif
 
+#include <stxxl/bits/namespace.h>
+
 
 __STXXL_BEGIN_NAMESPACE
 
-//! \brief Returns number of seconds since the epoch (or midnight, if boost timer is used), high resolution.
+//! \brief Returns number of seconds since the epoch, high resolution.
 inline double
-timestamp ()
+timestamp()
 {
-#ifdef STXXL_NONMONOTONIC_BOOST_TIMESTAMP
+#ifdef STXXL_BOOST_TIMESTAMP
     boost::posix_time::ptime MyTime = boost::posix_time::microsec_clock::local_time();
-    boost::posix_time::time_duration Duration = MyTime.time_of_day();
-#ifdef BOOST_MSVC
-#pragma message("FIXME: stxxl_timestamp() is non-monotonic, boost::posix_time::microsec_clock::local_time().time_of_day() resets on midnight")
-#else
-#warning FIXME: stxxl_timestamp() is non-monotonic, boost::posix_time::microsec_clock::local_time().time_of_day() resets on midnight
-#endif
-    double sec = double (Duration.hours()) * 3600. +
-                 double (Duration.minutes()) * 60. +
-                 double (Duration.seconds()) +
-                 double (Duration.fractional_seconds()) / (pow(10., Duration.num_fractional_digits()));
+    boost::posix_time::time_duration Duration =
+        MyTime - boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
+    double sec = double(Duration.hours()) * 3600. +
+                 double(Duration.minutes()) * 60. +
+                 double(Duration.seconds()) +
+                 double(Duration.fractional_seconds()) / (pow(10., Duration.num_fractional_digits()));
     return sec;
 #else
     struct timeval tp;
     gettimeofday(&tp, NULL);
-    return double (tp.tv_sec) + tp.tv_usec / 1000000.;
+    return double(tp.tv_sec) + tp.tv_usec / 1000000.;
 #endif
 }
 
@@ -53,6 +52,7 @@ class timer
     double accumulated;
     double last_clock;
     inline double timestamp();
+
 public:
     inline timer();
     inline void start();
@@ -68,7 +68,7 @@ timer::timer() : running(false), accumulated(0.)
 
 double timer::timestamp()
 {
-   return stxxl::timestamp();
+    return stxxl::timestamp();
 }
 
 void timer::start()
@@ -115,4 +115,4 @@ double timer::seconds()
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_TIMER_HEADER

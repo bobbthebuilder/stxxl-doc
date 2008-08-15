@@ -1,16 +1,20 @@
 /***************************************************************************
- *            test_prefetch_pool.cpp
+ *  mng/test_prefetch_pool.cpp
  *
- *  Wed Jul  2 15:32:34 2003
- *  Copyright  2003  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
-
-#include <iostream>
-#include "stxxl/bits/mng/mng.h"
-#include "stxxl/bits/mng/prefetch_pool.h"
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2003 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
 //! \example mng/test_prefetch_pool.cpp
+
+#include <iostream>
+#include <stxxl/mng>
+#include <stxxl/bits/mng/prefetch_pool.h>
 
 #define BLOCK_SIZE (1024 * 512)
 
@@ -20,19 +24,16 @@ struct MyType
     char chars[5];
 };
 
-using namespace stxxl;
+typedef stxxl::typed_block<BLOCK_SIZE, MyType> block_type;
 
-
-typedef typed_block<BLOCK_SIZE, MyType> block_type;
-
-int main ()
+int main()
 {
-    prefetch_pool<block_type> pool(2);
+    stxxl::prefetch_pool<block_type> pool(2);
     pool.resize(10);
     pool.resize(5);
     block_type * blk = new block_type;
     block_type::bid_type bid;
-    block_manager::get_instance()->new_blocks(single_disk(), &bid, (&bid) + 1);
+    stxxl::block_manager::get_instance()->new_blocks(stxxl::single_disk(), &bid, (&bid) + 1);
     pool.hint(bid);
     pool.read(blk, bid)->wait();
     delete blk;

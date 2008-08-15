@@ -1,10 +1,22 @@
 /***************************************************************************
- *            tpie_stack_benchmark.cpp
+ *  containers/tpie_stack_benchmark.cpp
  *
- *  Wed Jul 12 18:28:43 2006
- *  Copyright  2006  User Roman Dementiev
- *  Email
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
+//! \example containers/tpie_stack_benchmark.cpp
+//! This is a benchmark mentioned in the paper
+//! R. Dementiev, L. Kettner, P. Sanders "STXXL: standard template library for XXL data sets"
+//! Software: Practice and Experience
+//! Volume 38, Issue 6, Pages 589-637, May 2008
+//! DOI: 10.1002/spe.844
+
 
 #include "app_config.h"
 
@@ -17,15 +29,13 @@
 // Utilities for ASCII output.
 #include <ami_scan_utils.h>
 
-#include "stxxl/bits/common/utils_ledasm.h"
-#include "stxxl/timer"
+#include <stxxl/bits/common/utils.h>
+#include <stxxl/timer>
 
 
 #define MEM_2_RESERVE    (768 * 1024 * 1024)
 
-
-#define    BLOCK_SIZE (2 * 1024 * 1024)
-
+#define BLOCK_SIZE       (2 * 1024 * 1024)
 
 
 #ifndef DISKS
@@ -75,7 +85,7 @@ void run_stack(stxxl::int64 volume)
     }
 
     STXXL_MSG("Insertions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
+              " seconds : " << (double(volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
               " MB/s");
 
 
@@ -100,15 +110,15 @@ void run_stack(stxxl::int64 volume)
     }
 
     STXXL_MSG("Deletions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
+              " seconds : " << (double(volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
               " MB/s");
 }
 
 
-
 int main(int argc, char * argv[])
 {
-    using namespace std;
+    using std::cout;
+    using std::endl;
 #ifdef BTE_COLLECTION_IMP_MMAP
     cout << "BTE_COLLECTION_IMP_MMAP is defined" << endl;
 #endif
@@ -135,16 +145,16 @@ int main(int argc, char * argv[])
         STXXL_MSG("Usage: " << argv[0] << " version #volume");
         STXXL_MSG("\t version = 1: TPIE stack with 4 byte records");
         STXXL_MSG("\t version = 2: TPIE stack with 32 byte records");
-        return 0;
+        return -1;
     }
 
     int version = atoi(argv[1]);
-    stxxl::int64 volume = atoll(argv[2]);
+    stxxl::int64 volume = stxxl::atoint64(argv[2]);
 
     STXXL_MSG("Allocating array with size " << MEM_2_RESERVE
                                             << " bytes to prevent file buffering.");
     //int * array = new int[MEM_2_RESERVE/sizeof(int)];
-    int * array = (int *) malloc(MEM_2_RESERVE);
+    int * array = (int *)malloc(MEM_2_RESERVE);
     std::fill(array, array + (MEM_2_RESERVE / sizeof(int)), 0);
 
     STXXL_MSG("Running version: " << version);
@@ -153,10 +163,10 @@ int main(int argc, char * argv[])
     switch (version)
     {
     case 1:
-        run_stack < my_record_ < 4 > > (volume);
+        run_stack<my_record_<4> >(volume);
         break;
     case 2:
-        run_stack < my_record_ < 32 > > (volume);
+        run_stack<my_record_<32> >(volume);
         break;
     default:
         STXXL_MSG("Unsupported version " << version);

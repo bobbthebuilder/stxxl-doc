@@ -1,112 +1,48 @@
-#include "stxxl/bits/io/wfs_file.h"
+/***************************************************************************
+ *  io/wfs_file.cpp
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2005 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
+#include <stxxl/bits/io/wfs_file.h>
 
 #ifdef BOOST_MSVC
 
 __STXXL_BEGIN_NAMESPACE
 
 
-HANDLE wfs_file_base::get_file_des() const
-{
-    return file_des;
-}
-
-void wfs_file_base::lock()
-{
-    if (LockFile(file_des, 0, 0, 0xffffffff, 0xffffffff) == 0)
-        stxxl_win_lasterror_exit("LockFile ", io_error);
-}
-
-wfs_request_base::wfs_request_base (
+wfs_request_base::wfs_request_base(
     wfs_file_base * f,
     void * buf,
     stxxl::int64 off,
     size_t b,
     request_type t,
     completion_handler on_cmpl) :
-    request (on_cmpl, f, buf, off, b, t),
+    request(on_cmpl, f, buf, off, b, t),
     /*		file (f),
                     buffer (buf),
                     offset (off),
                     bytes (b),
                     type(t), */
-    _state (OP)
+    _state(OP)
 {
  #ifdef STXXL_CHECK_BLOCK_ALIGNING
     // Direct I/O requires file system block size alignment for file offsets,
     // memory buffer addresses, and transfer(buffer) size must be multiple
     // of the file system block size
-    check_aligning ();
+    check_aligning();
  #endif
 }
 
-bool wfs_request_base::add_waiter (onoff_switch * sw)
+wfs_request_base::~wfs_request_base()
 {
- #ifdef STXXL_BOOST_THREADS
-    boost::mutex::scoped_lock Lock(waiters_mutex);
- #else
-    waiters_mutex.lock ();
- #endif
-
-    if (poll ())                     // request already finished
-    {
- #ifndef STXXL_BOOST_THREADS
-        waiters_mutex.unlock ();
- #endif
-        return true;
-    }
-
-    waiters.insert (sw);
- #ifndef STXXL_BOOST_THREADS
-    waiters_mutex.unlock ();
- #endif
-
-    return false;
-}
-
-void wfs_request_base::delete_waiter (onoff_switch * sw)
-{
- #ifdef STXXL_BOOST_THREADS
-    boost::mutex::scoped_lock Lock(waiters_mutex);
-    waiters.erase (sw);
- #else
-    waiters_mutex.lock ();
-    waiters.erase (sw);
-    waiters_mutex.unlock ();
- #endif
-}
-int wfs_request_base::nwaiters ()                 // returns number of waiters
-{
- #ifdef STXXL_BOOST_THREADS
-    boost::mutex::scoped_lock Lock(waiters_mutex);
-    return waiters.size();
- #else
-    waiters_mutex.lock ();
-    int size = waiters.size ();
-    waiters_mutex.unlock ();
-    return size;
- #endif
-}
-void wfs_request_base::check_aligning ()
-{
-    if (offset % BLOCK_ALIGN)
-        STXXL_ERRMSG ("Offset is not aligned: modulo "
-                                              << BLOCK_ALIGN << " = " <<
-                      offset % BLOCK_ALIGN);
-
-    if (bytes % BLOCK_ALIGN)
-        STXXL_ERRMSG ("Size is multiple of " <<
-                      BLOCK_ALIGN << ", = " << bytes % BLOCK_ALIGN);
-
-    if (long (buffer) % BLOCK_ALIGN)
-        STXXL_ERRMSG ("Buffer is not aligned: modulo "
-                                              << BLOCK_ALIGN << " = " <<
-                      long (buffer) % BLOCK_ALIGN << " (" <<
-                      std::hex << buffer << std::dec << ")");
-}
-
-wfs_request_base::~wfs_request_base ()
-{
-    STXXL_VERBOSE3("wfs_request_base " << unsigned (this) << ": deletion, cnt: " << ref_cnt);
+    STXXL_VERBOSE3("wfs_request_base " << unsigned(this) << ": deletion, cnt: " << ref_cnt);
 
     assert(_state() == DONE || _state() == READY2DIE);
 
@@ -117,22 +53,65 @@ wfs_request_base::~wfs_request_base ()
     // _state.wait_for (READY2DIE); // does not make sense ?
 }
 
-void wfs_request_base::wait ()
+bool wfs_request_base::add_waiter(onoff_switch * sw)
 {
-    STXXL_VERBOSE3("wfs_request_base : " << unsigned (this) << " wait ");
+    scoped_mutex_lock Lock(waiters_mutex);
 
-    START_COUNT_WAIT_TIME
+    if (poll())                     // request already finished
+    {
+        return true;
+    }
+
+    waiters.insert(sw);
+
+    return false;
+}
+
+void wfs_request_base::delete_waiter(onoff_switch * sw)
+{
+    scoped_mutex_lock Lock(waiters_mutex);
+    waiters.erase(sw);
+}
+
+int wfs_request_base::nwaiters()                 // returns number of waiters
+{
+    scoped_mutex_lock Lock(waiters_mutex);
+    return waiters.size();
+}
+
+void wfs_request_base::check_aligning()
+{
+    if (offset % BLOCK_ALIGN != 0)
+        STXXL_ERRMSG("Offset is not aligned: modulo "
+                                              << BLOCK_ALIGN << " = " <<
+                     offset % BLOCK_ALIGN);
+
+    if (bytes % BLOCK_ALIGN != 0)
+        STXXL_ERRMSG("Size is not a multiple of " <<
+                     BLOCK_ALIGN << ", = " << bytes % BLOCK_ALIGN);
+
+    if (long(buffer) % BLOCK_ALIGN != 0)
+        STXXL_ERRMSG("Buffer is not aligned: modulo "
+                                              << BLOCK_ALIGN << " = " <<
+                     long(buffer) % BLOCK_ALIGN << " (" <<
+                     std::hex << buffer << std::dec << ")");
+}
+
+void wfs_request_base::wait()
+{
+    STXXL_VERBOSE3("wfs_request_base : " << unsigned(this) << " wait ");
+
+    stats::scoped_wait_timer wait_timer;
 
  #ifdef NO_OVERLAPPING
     enqueue();
  #endif
 
-    _state.wait_for (READY2DIE);
-
-    END_COUNT_WAIT_TIME
+    _state.wait_for(READY2DIE);
 
     check_errors();
 }
+
 bool wfs_request_base::poll()
 {
  #ifdef NO_OVERLAPPING
@@ -145,15 +124,18 @@ bool wfs_request_base::poll()
 
     return s;
 }
-const char * wfs_request_base::io_type ()
+
+const char * wfs_request_base::io_type()
 {
     return "wfs_base";
 }
 
-wfs_file_base::wfs_file_base (
+////////////////////////////////////////////////////////////////////////////
+
+wfs_file_base::wfs_file_base(
     const std::string & filename,
     int mode,
-    int disk) : file (disk), file_des (INVALID_HANDLE_VALUE), mode_(mode)
+    int disk) : file(disk), file_des(INVALID_HANDLE_VALUE), mode_(mode)
 {
     DWORD dwDesiredAccess = 0;
     DWORD dwShareMode = 0;
@@ -204,16 +186,28 @@ wfs_file_base::wfs_file_base (
 
     if (file_des == INVALID_HANDLE_VALUE)
         stxxl_win_lasterror_exit("CreateFile  filename=" << filename, io_error);
-};
+}
 
-wfs_file_base::~wfs_file_base ()
+wfs_file_base::~wfs_file_base()
 {
     if (!CloseHandle(file_des))
         stxxl_win_lasterror_exit("closing file (call of ::CloseHandle) ", io_error)
 
         file_des = INVALID_HANDLE_VALUE;
-};
-stxxl::int64 wfs_file_base::size ()
+}
+
+HANDLE wfs_file_base::get_file_des() const
+{
+    return file_des;
+}
+
+void wfs_file_base::lock()
+{
+    if (LockFile(file_des, 0, 0, 0xffffffff, 0xffffffff) == 0)
+        stxxl_win_lasterror_exit("LockFile ", io_error);
+}
+
+stxxl::int64 wfs_file_base::size()
 {
     LARGE_INTEGER result;
     if (!GetFileSizeEx(file_des, &result))
@@ -221,7 +215,8 @@ stxxl::int64 wfs_file_base::size ()
 
         return result.QuadPart;
 }
-void wfs_file_base::set_size (stxxl::int64 newsize)
+
+void wfs_file_base::set_size(stxxl::int64 newsize)
 {
     stxxl::int64 cur_size = size();
 
@@ -237,9 +232,6 @@ void wfs_file_base::set_size (stxxl::int64 newsize)
                                      " newsize=" << newsize << " ", io_error);
 }
 
-
-
 __STXXL_END_NAMESPACE
 
-#endif // BOOST_MSVC
-
+#endif // #ifdef BOOST_MSVC

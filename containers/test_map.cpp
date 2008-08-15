@@ -1,14 +1,18 @@
 /***************************************************************************
- *            test_map.cpp
+ *  containers/test_map.cpp
  *
- *  Tue Mar 22 10:41:38 2005
- *  Copyright  2005  Roman Dementiev
- *  Email dementiev@ira.uka.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2005, 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl/map"
 #include <algorithm>
 #include <cmath>
+#include <stxxl/map>
 
 typedef unsigned int key_type;
 typedef unsigned int data_type;
@@ -17,11 +21,11 @@ struct cmp : public std::less<key_type>
 {
     static key_type min_value()
     {
-        return (std::numeric_limits < key_type > ::min)();
+        return (std::numeric_limits<key_type>::min)();
     }
     static key_type max_value()
     {
-        return (std::numeric_limits < key_type > ::max)();
+        return (std::numeric_limits<key_type>::max)();
     }
 };
 
@@ -30,16 +34,19 @@ struct cmp : public std::less<key_type>
 
 #define CACHE_ELEMENTS (BLOCK_SIZE * CACHE_SIZE / (sizeof(key_type) + sizeof(data_type)))
 
-typedef stxxl::map<key_type, data_type, cmp, BLOCK_SIZE, BLOCK_SIZE > map_type;
+typedef stxxl::map<key_type, data_type, cmp, BLOCK_SIZE, BLOCK_SIZE> map_type;
 
-int main()
+int main(int argc, char ** argv)
 {
     stxxl::stats * bm = stxxl::stats::get_instance();
     STXXL_MSG(*bm);
 
     STXXL_MSG("Block size " << BLOCK_SIZE / 1024 << " kb");
     STXXL_MSG("Cache size " << (CACHE_SIZE * BLOCK_SIZE) / 1024 << " kb");
-    for (int mult = 1; mult < 256; mult *= 2 )
+    int max_mult = 256;
+    if (argc > 1)
+        max_mult = atoi(argv[1]);
+    for (int mult = 1; mult < max_mult; mult *= 2)
     {
         const unsigned el = mult * (CACHE_ELEMENTS / 8);
         STXXL_MSG("Elements to insert " << el << " volume =" <<
@@ -52,9 +59,9 @@ int main()
             Map[i] = i + 1;
         }
 
-        double writes = double (bm->get_writes()) / double (el);
-        double logel = log(double (el)) / log(double (BLOCK_SIZE));
-        STXXL_MSG("Logs: writes " << writes << " logel " << logel << " writes/logel " << (writes / logel) );
+        double writes = double(bm->get_writes()) / double(el);
+        double logel = log(double(el)) / log(double(BLOCK_SIZE));
+        STXXL_MSG("Logs: writes " << writes << " logel " << logel << " writes/logel " << (writes / logel));
         STXXL_MSG(*bm);
         bm->reset();
         STXXL_MSG("Doing search");
@@ -67,14 +74,12 @@ int main()
             map_type::const_iterator result = ConstMap.find(key);
             assert((*result).second == key + 1);
         }
-        double reads = double (bm->get_reads()) / logel;
-        double readsperq = double (bm->get_reads()) / queries;
+        double reads = double(bm->get_reads()) / logel;
+        double readsperq = double(bm->get_reads()) / queries;
         STXXL_MSG("reads/logel " << reads << " readsperq " << readsperq);
         STXXL_MSG(*bm);
         bm->reset();
     }
-
-
 
     return 0;
 }

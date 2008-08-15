@@ -1,26 +1,32 @@
 /***************************************************************************
- *            test_btree.cpp
+ *  containers/btree/test_btree.cpp
+ *
  *  A very basic test
- *  Tue Feb 14 20:39:53 2006
- *  Copyright  2006  Roman Dementiev
- *  Email
- ****************************************************************************/
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
 #include <iostream>
 
-#include "stxxl/bits/containers/btree/btree.h"
-#include "stxxl/timer"
+#include <stxxl/bits/containers/btree/btree.h>
+#include <stxxl/timer>
 
 
 struct comp_type : public std::less<int>
 {
     static int max_value()
     {
-        return (std::numeric_limits < int > ::max)();
+        return (std::numeric_limits<int>::max)();
     }
 };
 
-typedef stxxl::btree::btree < int, double, comp_type, 4096, 4096, stxxl::SR > btree_type;
+typedef stxxl::btree::btree<int, double, comp_type, 4096, 4096, stxxl::SR> btree_type;
 
 std::ostream & operator << (std::ostream & o, const std::pair<int, double> & obj)
 {
@@ -31,12 +37,12 @@ std::ostream & operator << (std::ostream & o, const std::pair<int, double> & obj
 #define node_cache_size (25 * 1024 * 1024)
 #define leaf_cache_size (25 * 1024 * 1024)
 
-int main(int argc, char * argv [])
+int main(int argc, char * argv[])
 {
     if (argc < 2)
     {
         STXXL_MSG("Usage: " << argv[0] << " #ins");
-        return 1;
+        return -1;
     }
 
     btree_type BTree1(node_cache_size, leaf_cache_size);
@@ -258,7 +264,7 @@ int main(int argc, char * argv [])
     CBTree3.key_comp();
     CBTree3.value_comp();
 
-    double sum;
+    double sum = 0.0;
 
     STXXL_MSG(*stxxl::stats::get_instance());
 

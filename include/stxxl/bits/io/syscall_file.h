@@ -1,16 +1,20 @@
-#ifndef SYSCALL_HEADER
-#define SYSCALL_HEADER
-
 /***************************************************************************
- *            syscall_file.h
+ *  include/stxxl/bits/io/syscall_file.h
  *
- *  Sat Aug 24 23:55:08 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl/bits/io/ufs_file.h"
-#include "stxxl/bits/common/debug.h"
+#ifndef STXXL_SYSCALL_FILE_HEADER
+#define STXXL_SYSCALL_FILE_HEADER
+
+#include <stxxl/bits/io/ufs_file.h>
+#include <stxxl/bits/common/debug.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -21,7 +25,6 @@ __STXXL_BEGIN_NAMESPACE
 //! \brief Implementation of file based on UNIX syscalls
 class syscall_file : public ufs_file_base
 {
-protected:
 public:
     //! \brief constructs file object
     //! \param filename path of file
@@ -48,6 +51,7 @@ public:
 class syscall_request : public ufs_request_base
 {
     friend class syscall_file;
+
 protected:
     syscall_request(
         syscall_file * f,
@@ -56,21 +60,14 @@ protected:
         size_t b,
         request_type t,
         completion_handler on_cmpl);
-    void serve ();
-public:
-    const char * io_type ();
-private:
-    // Following methods are declared but not implemented
-    // intentionally to forbid their usage
-    syscall_request(const syscall_request &);
-    syscall_request & operator=(const syscall_request &);
-    syscall_request();
-};
+    void serve();
 
+public:
+    const char * io_type();
+};
 
 //! \}
 
 __STXXL_END_NAMESPACE
 
-
-#endif
+#endif // !STXXL_SYSCALL_FILE_HEADER

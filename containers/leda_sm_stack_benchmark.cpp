@@ -1,15 +1,29 @@
 /***************************************************************************
- *            leda_sm_stack_benchmark.cpp
+ *  containers/leda_sm_stack_benchmark.cpp
  *
- *  Wed Jul 12 18:28:43 2006
- *  Copyright  2006  User Roman Dementiev
- *  Email
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
+//! \example containers/leda_sm_stack_benchmark.cpp
+//! This is a benchmark mentioned in the paper
+//! R. Dementiev, L. Kettner, P. Sanders "STXXL: standard template library for XXL data sets"
+//! Software: Practice and Experience
+//! Volume 38, Issue 6, Pages 589-637, May 2008
+//! DOI: 10.1002/spe.844
+
+
+#include <iostream>
+#include <algorithm>
 
 #include <LEDA-SM/ext_stack.h>
 #include <LEDA-SM/ext_memory_manager.h>
 #include <LEDA-SM/debug.h>
-#include <cassert>
 #include <LEDA/random_source.h>
 #include <LEDA/stack.h>
 #include <LEDA-SM/block.h>
@@ -17,16 +31,18 @@
 #define DEBUG 0
 #define DD 500
 
-#include "stxxl/bits/common/utils_ledasm.h"
-#include "stxxl/timer"
+#include <stxxl/types>
+#include <stxxl/timer>
 
+#define STXXL_MSG(x) \
+    { std::cout << "[STXXL-MSG] " << x << std::endl << std::flush; \
+    }
 
 
 #define MEM_2_RESERVE    (768 * 1024 * 1024)
 
-
-#define    BLOCK_SIZE1 (EXT_BLK_SZ * 4)
-#define    BLOCK_SIZE2 (DISK_BLOCK_SIZE * 4)
+#define BLOCK_SIZE1 (EXT_BLK_SZ * 4)
+#define BLOCK_SIZE2 (DISK_BLOCK_SIZE * 4)
 
 
 #ifndef DISKS
@@ -74,7 +90,7 @@ void run_stack(stxxl::int64 volume)
     }
 
     STXXL_MSG("Insertions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
+              " seconds : " << (double(volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
               " MB/s");
 
     ext_mem_mgr.print_statistics();
@@ -100,12 +116,11 @@ void run_stack(stxxl::int64 volume)
     }
 
     STXXL_MSG("Deletions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
+              " seconds : " << (double(volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
               " MB/s");
 
     ext_mem_mgr.print_statistics();
 }
-
 
 
 int main(int argc, char * argv[])
@@ -119,7 +134,7 @@ int main(int argc, char * argv[])
         STXXL_MSG("Usage: " << argv[0] << " version #volume");
         STXXL_MSG("\t version = 1: LEDA-SM stack with 4 byte records");
         STXXL_MSG("\t version = 2: LEDA-SM stack with 32 byte records");
-        return 0;
+        return -1;
     }
 
     int version = atoi(argv[1]);
@@ -136,14 +151,14 @@ int main(int argc, char * argv[])
     switch (version)
     {
     case 1:
-        run_stack < my_record_ < 4 > > (volume);
+        run_stack<my_record_<4> >(volume);
         break;
     case 2:
-        run_stack < my_record_ < 32 > > (volume);
+        run_stack<my_record_<32> >(volume);
         break;
     default:
         STXXL_MSG("Unsupported version " << version);
     }
 
-    delete [] array;
+    delete[] array;
 }

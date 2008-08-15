@@ -1,16 +1,20 @@
 /***************************************************************************
- *            test_corr_insert_scan.cpp
+ *  containers/btree/test_corr_insert_scan.cpp
  *
- *  Tue Feb 21 11:52:14 2006
- *  Copyright  2006  Roman Dementiev
- *  Email
- ****************************************************************************/
-
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
 #include <iostream>
 
-#include "stxxl/bits/containers/btree/btree.h"
-#include "stxxl/algorithm"
+#include <stxxl/bits/containers/btree/btree.h>
+#include <stxxl/scan>
+#include <stxxl/sort>
 
 
 struct comp_type : public std::less<int>
@@ -25,7 +29,7 @@ struct comp_type : public std::less<int>
     }
 };
 
-typedef stxxl::btree::btree < int, double, comp_type, 4096, 4096, stxxl::SR > btree_type;
+typedef stxxl::btree::btree<int, double, comp_type, 4096, 4096, stxxl::SR> btree_type;
 //typedef stxxl::btree::btree<int,double,comp_type,10,11,stxxl::SR> btree_type;
 
 std::ostream & operator << (std::ostream & o, const std::pair<int, double> & obj)
@@ -38,7 +42,7 @@ std::ostream & operator << (std::ostream & o, const std::pair<int, double> & obj
 struct rnd_gen
 {
     stxxl::random_number32 rnd;
-    int operator ()  ()
+    int operator () ()
     {
         return (rnd() >> 2);
     }
@@ -49,12 +53,12 @@ bool operator == (const std::pair<int, double> & a, const std::pair<int, double>
     return a.first == b.first;
 }
 
-int main(int argc, char * argv [])
+int main(int argc, char * argv[])
 {
     if (argc < 2)
     {
         STXXL_MSG("Usage: " << argv[0] << " #log_ins");
-        return 1;
+        return -1;
     }
 
     btree_type BTree(1024 * 128, 1024 * 128);
@@ -70,7 +74,7 @@ int main(int argc, char * argv [])
     stxxl::vector<int>::const_iterator it = Values.begin();
     STXXL_MSG("Inserting " << nins << " random values into btree");
     for ( ; it != Values.end(); ++it)
-        BTree.insert(std::pair < int, double > (*it, double (*it) + 1.0));
+        BTree.insert(std::pair<int, double>(*it, double(*it) + 1.0));
 
 
     STXXL_MSG("Sorting the random values");
@@ -91,7 +95,7 @@ int main(int argc, char * argv [])
     for ( ; vIt != Values.end(); ++vIt, ++bIt)
     {
         assert(*vIt == bIt->first);
-        assert(double (bIt->first) + 1.0 == bIt->second);
+        assert(double(bIt->first) + 1.0 == bIt->second);
         assert(bIt != BTree.end());
     }
 

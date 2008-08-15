@@ -7,10 +7,10 @@ LIB_OBJECTS = \
 	../io/mmap_file.$(OBJEXT) \
 	../io/wincall_file.$(OBJEXT) \
 	../io/boostfd_file.$(OBJEXT) \
+	../io/mem_file.$(OBJEXT) \
 	../io/iostats.$(OBJEXT) \
 	../mng/mng.$(OBJEXT) \
 	../algo/async_schedule.$(OBJEXT) \
-	../common/log.$(OBJEXT) \
 	../common/debug.$(OBJEXT) \
 	../common/rand.$(OBJEXT) \
 	../common/seed.$(OBJEXT) \

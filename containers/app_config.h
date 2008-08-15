@@ -21,7 +21,7 @@
 
 #include <portability.h>
 #include <sys/types.h> // for size_t
-#include <stdlib.h> // for random()
+#include <stdlib.h>    // for random()
 
 #define DEFAULT_TEST_SIZE (20000000)
 #define DEFAULT_RANDOM_SEED 17
@@ -71,7 +71,6 @@ extern int random_seed;
 // <><><><><><><><><><><><><><><><><><><><><><><><> //
 // <> BTE_COLLECTION_UFS configuration options   <> //
 // <><><><><><><><><><><><><><><><><><><><><><><><> //
-
 
 
 // <><><><><><><><><><><><><><><><><><><><><><><><> //

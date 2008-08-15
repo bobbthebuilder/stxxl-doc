@@ -1,10 +1,14 @@
 /***************************************************************************
- *            btree_pager.h
+ *  include/stxxl/bits/containers/btree/btree_pager.h
  *
- *  Wed Feb 15 11:55:33 2006
- *  Copyright  2006  Roman Dementiev
- *  Email
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
 #ifndef STXXL_CONTAINERS_BTREE__BTREE_PAGER_H
 #define STXXL_CONTAINERS_BTREE__BTREE_PAGER_H
@@ -12,27 +16,25 @@
 #include <memory>
 #include <list>
 
-#include "stxxl/bits/common/utils.h"
+#include <stxxl/bits/noncopyable.h>
+#include <stxxl/bits/common/utils.h>
+#include <stxxl/bits/compat_auto_ptr.h>
 
 
 __STXXL_BEGIN_NAMESPACE
 
 namespace btree
 {
-    class lru_pager
+    class lru_pager : private noncopyable
     {
         unsigned_type npages_;
         typedef std::list<int_type> list_type;
 
-        std::auto_ptr<list_type> history;
+        compat_auto_ptr<list_type>::result history;
         std::vector<list_type::iterator> history_entry;
 
-
-        lru_pager(const lru_pager & obj);
-        lru_pager & operator = (const lru_pager & obj);
     public:
-
-        lru_pager() : npages_(0), history(NULL)
+        lru_pager() : npages_(0)
         { }
 
         lru_pager(unsigned_type npages) :
@@ -61,7 +63,7 @@ namespace btree
             std::swap(npages_, obj.npages_);
             // workaround for buggy GCC 3.4 STL
             //std::swap(history,obj.history);
-            std::auto_ptr<list_type> tmp = obj.history;
+            compat_auto_ptr<list_type>::result tmp = obj.history;
             obj.history = history;
             history = tmp;
             std::swap(history_entry, obj.history_entry);
@@ -74,12 +76,11 @@ __STXXL_END_NAMESPACE
 
 namespace std
 {
-    inline void swap(      stxxl::btree::lru_pager & a,
-                           stxxl::btree::lru_pager & b)
+    inline void swap(stxxl::btree::lru_pager & a,
+                     stxxl::btree::lru_pager & b)
     {
         a.swap(b);
     }
 }
-
 
 #endif /* STXXL_CONTAINERS_BTREE__BTREE_PAGER_H */

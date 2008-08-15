@@ -1,10 +1,25 @@
 /***************************************************************************
+ *  containers/leda_sm_pq_benchmark.cpp
  *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
  *
- *  Mon Jul 10 16:01:47 2006
- *  Copyright  2006  User Roman Dementiev
- *  Email
- ****************************************************************************/
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
+//! \example containers/leda_sm_pq_benchmark.cpp
+//! This is a benchmark mentioned in the paper
+//! R. Dementiev, L. Kettner, P. Sanders "STXXL: standard template library for XXL data sets"
+//! Software: Practice and Experience
+//! Volume 38, Issue 6, Pages 589-637, May 2008
+//! DOI: 10.1002/spe.844
+
+
+#include <iostream>
+#include <algorithm>
 
 #include <LEDA-SM/ext_memory_manager.h>
 #include <LEDA-SM/ext_memory_manager.h>
@@ -15,16 +30,17 @@
 #include <LEDA-SM/ext_r_heap.h>
 #include <LEDA-SM/buffer_tree.h>
 #include <LEDA/random.h>
-#include <algorithm>
 
-#include "stxxl/bits/common/utils_ledasm.h"
-#include "stxxl/timer"
+#include <stxxl/types>
+#include <stxxl/timer>
+
+#define STXXL_MSG(x) \
+    { std::cout << "[STXXL-MSG] " << x << std::endl << std::flush; \
+    }
 
 
 #define PQ_MEM_SIZE     (512 * 1024 * 1024)
-
-
-#define MAX_ELEMENTS (2000 * 1024 * 1024)
+#define MAX_ELEMENTS    (2000 * 1024 * 1024)
 
 
 struct my_record
@@ -84,7 +100,7 @@ inline int myrand()
 long long unsigned ran32State = 0xdeadbeef;
 inline long long unsigned myrand()
 {
-    return (ran32State = (ran32State * 0x5DEECE66DULL + 0xBULL) & 0xFFFFFFFFFFFFULL );
+    return (ran32State = (ran32State * 0x5DEECE66DULL + 0xBULL) & 0xFFFFFFFFFFFFULL);
 }
 #endif
 
@@ -96,7 +112,7 @@ void run_ledasm_insert_all_delete_all(stxxl::int64 ops)
 
     stxxl::int64 i;
 
-    my_record cur;
+    //my_record cur;
 
 
     stxxl::timer Timer;
@@ -117,7 +133,7 @@ void run_ledasm_insert_all_delete_all(stxxl::int64 ops)
     }
 
     STXXL_MSG("Insertions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
+              " seconds : " << (double(ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
 
     ext_mem_mgr.print_statistics();
     ext_mem_mgr.reset_statistics();
@@ -139,7 +155,7 @@ void run_ledasm_insert_all_delete_all(stxxl::int64 ops)
     }
 
     STXXL_MSG("Deletions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
+              " seconds : " << (double(ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
 
 
     ext_mem_mgr.print_statistics();
@@ -152,8 +168,7 @@ void run_ledasm_intermixed(stxxl::int64 ops)
 
     stxxl::int64 i;
 
-    my_record cur;
-
+    //my_record cur;
 
 
     stxxl::timer Timer;
@@ -174,7 +189,7 @@ void run_ledasm_intermixed(stxxl::int64 ops)
     }
 
     STXXL_MSG("Insertions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
+              " seconds : " << (double(ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
 
     ext_mem_mgr.print_statistics();
     ext_mem_mgr.reset_statistics();
@@ -200,7 +215,7 @@ void run_ledasm_intermixed(stxxl::int64 ops)
     STXXL_MSG("Records in PQ: " << PQ.size());
 
     STXXL_MSG("Deletions/Insertion elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
+              " seconds : " << (double(ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
 
 
     ext_mem_mgr.print_statistics();
@@ -217,7 +232,7 @@ int main(int argc, char * argv[])
         STXXL_MSG("Usage: " << argv[0] << " version #ops");
         STXXL_MSG("\t version = 1: insert-all-delete-all leda-sm pqueue");
         STXXL_MSG("\t version = 2: insert-all-delete-all leda-sm pqueue");
-        return 0;
+        return -1;
     }
 
     int version = atoi(argv[1]);

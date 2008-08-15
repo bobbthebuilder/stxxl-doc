@@ -1,15 +1,19 @@
-#ifndef RUN_CURSOR_HEADER
-#define RUN_CURSOR_HEADER
-
 /***************************************************************************
- *            run_cursor.h
+ *  include/stxxl/bits/algo/run_cursor.h
  *
- *  Mon Jan 20 10:38:01 2003
- *  Copyright  2003  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2003 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl/bits/common/utils.h"
+#ifndef STXXL_RUN_CURSOR_HEADER
+#define STXXL_RUN_CURSOR_HEADER
+
+#include <stxxl/bits/common/utils.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -22,7 +26,7 @@ struct run_cursor
 
     run_cursor() : pos(0), buffer(NULL) { }
 
-    inline const typename block_type::type & current () const
+    inline const typename block_type::type & current() const
     {
         return (*buffer)[pos];
     }
@@ -34,6 +38,7 @@ struct run_cursor
 
 #ifdef STXXL_SORT_SINGLE_PREFETCHER
 
+template <typename must_be_void = void>
 struct have_prefetcher
 {
     static void * untyped_prefetcher;
@@ -45,7 +50,7 @@ template <typename block_type,
           typename prefetcher_type_>
 struct run_cursor2 : public run_cursor<block_type>
 #ifdef STXXL_SORT_SINGLE_PREFETCHER
-, public have_prefetcher
+                     , public have_prefetcher<>
 #endif
 {
     typedef prefetcher_type_ prefetcher_type;
@@ -57,35 +62,40 @@ struct run_cursor2 : public run_cursor<block_type>
     using run_cursor<block_type>::buffer;
 
 #ifdef STXXL_SORT_SINGLE_PREFETCHER
-    static prefetcher_type * & prefetcher()    // sorry, a hack
+    static prefetcher_type * const prefetcher()    // sorry, a hack
     {
-        return (prefetcher_type * &)untyped_prefetcher;
+        return reinterpret_cast<prefetcher_type *>(untyped_prefetcher);
     }
-    run_cursor2 () { }
+    static void set_prefetcher(prefetcher_type * pfptr)
+    {
+        untyped_prefetcher = pfptr;
+    }
+    run_cursor2() { }
 #else
     prefetcher_type * prefetcher_;
     prefetcher_type * & prefetcher() // sorry, a hack
     {
         return prefetcher_;
     }
-public:
+
     run_cursor2() { }
     run_cursor2(prefetcher_type * p) : prefetcher_(p) { }
 #endif
 
-    inline bool empty () const
+    inline bool empty() const
     {
         return (pos >= block_type::size);
     }
     inline void operator ++ (int);
-    inline void make_inf ()
+    inline void make_inf()
     {
         pos = block_type::size;
     }
 };
 
 #ifdef STXXL_SORT_SINGLE_PREFETCHER
-void * have_prefetcher::untyped_prefetcher = NULL;
+template <typename must_be_void>
+void * have_prefetcher<must_be_void>::untyped_prefetcher = NULL;
 #endif
 
 template <typename block_type,
@@ -96,7 +106,7 @@ void run_cursor2<block_type, prefetcher_type>::operator ++ (int)
     pos++;
     if (UNLIKELY(pos >= block_type::size))
     {
-        if ( prefetcher()->block_consumed(buffer) )
+        if (prefetcher()->block_consumed(buffer))
             pos = 0;
     }
 }
@@ -116,4 +126,4 @@ struct run_cursor_cmp
 __STXXL_END_NAMESPACE
 
 
-#endif
+#endif // !STXXL_RUN_CURSOR_HEADER

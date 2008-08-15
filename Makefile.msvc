@@ -1,10 +1,26 @@
 # This -*- Makefile -*- is intended for processing with nmake.
 
+############################################################################
+#  Makefile.msvc
+#
+#  Part of the STXXL. See http://stxxl.sourceforge.net
+#
+#  Copyright (C) 2005-2007 Roman Dementiev <dementiev@ira.uka.de>
+#
+#  Distributed under the Boost Software License, Version 1.0.
+#  (See accompanying file LICENSE_1_0.txt or copy at
+#  http://www.boost.org/LICENSE_1_0.txt)
+############################################################################
+
+
 main: library
 
 include make.settings
 
 library:
+	cd common
+	$(MAKE) lib
+	cd ..
 	cd io
 	$(MAKE) lib
 	cd ..
@@ -14,14 +30,14 @@ library:
 	cd algo
 	$(MAKE) lib
 	cd ..
-	cd common
-	$(MAKE) lib
-	cd ..
 	cd lib
 	$(MAKE)
 	cd ..
+	cd common
+	$(MAKE) tools
+	cd ..
 	cd utils
-	$(MAKE) create
+	$(MAKE) tools
 	cd ..
 	@echo "Building library is completed."
 	@echo "Use the following compiler options with programs using Stxxl: $(STXXL_COMPILER_OPTIONS)"
@@ -31,20 +47,26 @@ library:
 
 
 tests: library
+	cd common
+	$(MAKE) tests
+	cd ..
 	cd io
-	$(MAKE)
+	$(MAKE) tests
 	cd ..
 	cd mng
-	$(MAKE)
+	$(MAKE) tests
 	cd ..
 	cd containers
-	$(MAKE)
+	$(MAKE) tests
 	cd ..
 	cd algo
-	$(MAKE)
+	$(MAKE) tests
 	cd ..
 	cd stream
-	$(MAKE)
+	$(MAKE) tests
+	cd ..
+	cd utils
+	$(MAKE) tests
 	cd ..
 	@echo "Building tests is completed."
 	@echo "Use the following compiler options with programs using Stxxl: $(STXXL_COMPILER_OPTIONS)"
@@ -52,6 +74,9 @@ tests: library
 
 clean:
 	cd lib
+	$(MAKE) clean
+	cd ..
+	cd common
 	$(MAKE) clean
 	cd ..
 	cd io
@@ -70,9 +95,6 @@ clean:
 	$(MAKE) clean
 	cd ..
 	cd utils
-	$(MAKE) clean
-	cd ..
-	cd common
 	$(MAKE) clean
 	cd ..
 	@echo "Cleaning completed"

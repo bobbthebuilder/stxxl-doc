@@ -1,22 +1,27 @@
+/***************************************************************************
+ *  include/stxxl/bits/common/rand.h
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002, 2003, 2005 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *  Copyright (C) 2007 Andreas Beckmann <beckmann@mpi-inf.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
 #ifndef STXXL_RAND_HEADER
 #define STXXL_RAND_HEADER
 
-/***************************************************************************
- *            rand.h
- *
- *  Sat Aug 24 23:53:36 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
-
 #include <cstdlib>
-
-#include "stxxl/bits/common/types.h"
-#include "stxxl/bits/common/seed.h"
 
 #ifdef STXXL_BOOST_RANDOM
  #include <boost/random.hpp>
 #endif
+
+#include <stxxl/bits/common/types.h>
+#include <stxxl/bits/common/seed.h>
 
 // Recommended seeding procedure:
 // by default, the global seed is initialized from a high resolution timer and the process id
@@ -24,6 +29,7 @@
 // 2. seed = stxxl::get_next_seed(); // store/print/... this value can be used for step 1 to replay the program with a specific seed
 // 3. stxxl::srandom_number32(); // seed the global state of stxxl::random_number32
 // 4. create all the other prngs used.
+
 
 __STXXL_BEGIN_NAMESPACE
 
@@ -101,7 +107,7 @@ struct random_uniform_slow
     typedef boost::minstd_rand base_generator_type;
     base_generator_type generator;
     boost::uniform_real<> uni_dist;
-    mutable boost::variate_generator < base_generator_type &, boost::uniform_real<> > uni;
+    mutable boost::variate_generator<base_generator_type &, boost::uniform_real<> > uni;
 
     random_uniform_slow(unsigned seed = 0) : uni(generator, uni_dist)
     {
@@ -169,4 +175,4 @@ struct random_number64
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_RAND_HEADER

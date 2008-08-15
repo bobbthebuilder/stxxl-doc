@@ -1,12 +1,24 @@
 /***************************************************************************
- *            stack_benchmark.cpp
+ *  containers/stack_benchmark.cpp
  *
- *  Wed Jul 12 18:28:43 2006
- *  Copyright  2006  User Roman Dementiev
- *  Email
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl.h"
+//! \example containers/stack_benchmark.cpp
+//! This is a benchmark mentioned in the paper
+//! R. Dementiev, L. Kettner, P. Sanders "STXXL: standard template library for XXL data sets"
+//! Software: Practice and Experience
+//! Volume 38, Issue 6, Pages 589-637, May 2008
+//! DOI: 10.1002/spe.844
+
+
+#include <stxxl/stack>
 
 #define MEM_2_RESERVE    (768 * 1024 * 1024)
 
@@ -22,7 +34,10 @@ template <unsigned RECORD_SIZE>
 struct my_record_
 {
     char data[RECORD_SIZE];
-    my_record_() { }
+    my_record_()
+    {
+        memset(data, 0, sizeof(data));
+    }
 };
 
 template <unsigned RECORD_SIZE>
@@ -42,7 +57,7 @@ void run_stxxl_growshrink2_stack(stxxl::int64 volume)
     STXXL_MSG("Record size: " << sizeof(my_record) << " bytes");
 
     stxxl::prefetch_pool<block_type> p_pool(DISKS * 4);
-    stxxl::write_pool<block_type>    w_pool(DISKS * 4);
+    stxxl::write_pool<block_type> w_pool(DISKS * 4);
 
     stack_type Stack(p_pool, w_pool);
 
@@ -73,7 +88,7 @@ void run_stxxl_growshrink2_stack(stxxl::int64 volume)
     }
 
     STXXL_MSG("Insertions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
+              " seconds : " << (double(volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
               " MB/s");
 
     std::cout << *Stats;
@@ -100,7 +115,7 @@ void run_stxxl_growshrink2_stack(stxxl::int64 volume)
     }
 
     STXXL_MSG("Deletions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
+              " seconds : " << (double(volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
               " MB/s");
 
     std::cout << *Stats;
@@ -145,7 +160,7 @@ void run_stxxl_normal_stack(stxxl::int64 volume)
     }
 
     STXXL_MSG("Insertions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
+              " seconds : " << (double(volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
               " MB/s");
 
     std::cout << *Stats;
@@ -171,12 +186,11 @@ void run_stxxl_normal_stack(stxxl::int64 volume)
     }
 
     STXXL_MSG("Deletions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
+              " seconds : " << (double(volume) / (1024. * 1024. * Timer.mseconds() / 1000.)) <<
               " MB/s");
 
     std::cout << *Stats;
 }
-
 
 
 int main(int argc, char * argv[])
@@ -196,11 +210,11 @@ int main(int argc, char * argv[])
         STXXL_MSG("\t version = 2: grow-shrink-stack2 with 32 byte records");
         STXXL_MSG("\t version = 3: normal-stack with 4 byte records");
         STXXL_MSG("\t version = 4: normal-stack with 32 byte records");
-        return 0;
+        return -1;
     }
 
     int version = atoi(argv[1]);
-    stxxl::int64 volume = atoll(argv[2]);
+    stxxl::int64 volume = stxxl::atoint64(argv[2]);
 
     STXXL_MSG("Allocating array with size " << MEM_2_RESERVE
                                             << " bytes to prevent file buffering.");
@@ -213,20 +227,20 @@ int main(int argc, char * argv[])
     switch (version)
     {
     case 1:
-        run_stxxl_growshrink2_stack < my_record_ < 4 > > (volume);
+        run_stxxl_growshrink2_stack<my_record_<4> >(volume);
         break;
     case 2:
-        run_stxxl_growshrink2_stack < my_record_ < 32 > > (volume);
+        run_stxxl_growshrink2_stack<my_record_<32> >(volume);
         break;
     case 3:
-        run_stxxl_normal_stack < my_record_ < 4 > > (volume);
+        run_stxxl_normal_stack<my_record_<4> >(volume);
         break;
     case 4:
-        run_stxxl_normal_stack < my_record_ < 32 > > (volume);
+        run_stxxl_normal_stack<my_record_<32> >(volume);
         break;
     default:
         STXXL_MSG("Unsupported version " << version);
     }
 
-    delete [] array;
+    delete[] array;
 }

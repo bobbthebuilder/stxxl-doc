@@ -1,17 +1,22 @@
 /***************************************************************************
- *            iterator_map.h
+ *  include/stxxl/bits/containers/btree/iterator_map.h
  *
- *  Tue Feb 14 20:35:33 2006
- *  Copyright  2006  Roman Dementiev
- *  Email
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
 #ifndef STXXL_CONTAINERS_BTREE__ITERATOR_MAP_H
 #define STXXL_CONTAINERS_BTREE__ITERATOR_MAP_H
 
-#include "stxxl/bits/containers/btree/iterator.h"
-
 #include <map>
+
+#include <stxxl/bits/noncopyable.h>
+#include <stxxl/bits/containers/btree/iterator.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -19,7 +24,7 @@ __STXXL_BEGIN_NAMESPACE
 namespace btree
 {
     template <class BTreeType>
-    class iterator_map
+    class iterator_map : private noncopyable
     {
     public:
         typedef BTreeType btree_type;
@@ -32,20 +37,20 @@ namespace btree
             bid_type bid;
             unsigned pos;
             Key() { }
-            Key(const bid_type &b, unsigned p) : bid(b), pos(p) { }
+            Key(const bid_type & b, unsigned p) : bid(b), pos(p) { }
         };
 
         struct bid_comp
         {
-            bool operator ()  (const bid_type & a, const bid_type & b) const
+            bool operator () (const bid_type & a, const bid_type & b) const
             {
-                return (a.storage < b.storage) || ( a.storage == b.storage && a.offset < b.offset);
+                return (a.storage < b.storage) || (a.storage == b.storage && a.offset < b.offset);
             }
         };
         struct KeyCmp
         {
             bid_comp BIDComp;
-            bool operator() (const Key & a, const Key & b) const
+            bool operator () (const Key & a, const Key & b) const
             {
                 return BIDComp(a.bid, b.bid) || (a.bid == b.bid && a.pos < b.pos);
             }
@@ -60,10 +65,6 @@ namespace btree
         typedef typename multimap_type::iterator mmiterator_type;
         typedef typename multimap_type::const_iterator mmconst_iterator_type;
 
-        iterator_map();         // forbidden
-        iterator_map(const iterator_map &);         // forbidden
-        iterator_map & operator = (const iterator_map &);         // forbidden
-
 
         // changes btree pointer in all contained iterators
         void change_btree_pointers(btree_type * b)
@@ -76,7 +77,6 @@ namespace btree
         }
 
     public:
-
         iterator_map(btree_type * b) : btree_(b)
         { }
 
@@ -100,8 +100,8 @@ namespace btree
             mmiterator_type i = range.first;
             for ( ; i != range.second; ++i)
             {
-                assert(it.bid == (*i).first.bid );
-                assert(it.pos == (*i).first.pos );
+                assert(it.bid == (*i).first.bid);
+                assert(it.pos == (*i).first.pos);
 
                 if ((*i).second == &it)
                 {
@@ -111,15 +111,14 @@ namespace btree
                 }
             }
 
-            STXXL_FORMAT_ERROR_MSG(msg, "unregister_iterator Panic in btree::iterator_map, can not find and unregister iterator")
-            throw std::runtime_error(msg.str());
+            STXXL_THROW(std::runtime_error, "unregister_iterator", "Panic in btree::iterator_map, can not find and unregister iterator");
         }
         template <class OutputContainer>
-        void find(      const bid_type & bid,
-                        unsigned first_pos,
-                        unsigned last_pos,
-                        OutputContainer & out
-        )
+        void find(const bid_type & bid,
+                  unsigned first_pos,
+                  unsigned last_pos,
+                  OutputContainer & out
+                  )
         {
             Key firstkey(bid, first_pos);
             Key lastkey(bid, last_pos);
@@ -156,8 +155,8 @@ __STXXL_END_NAMESPACE
 namespace std
 {
     template <class BTreeType>
-    void swap( stxxl::btree::iterator_map < BTreeType > & a,
-               stxxl::btree::iterator_map<BTreeType> & b)
+    void swap(stxxl::btree::iterator_map<BTreeType> & a,
+              stxxl::btree::iterator_map<BTreeType> & b)
     {
         a.swap(b);
     }

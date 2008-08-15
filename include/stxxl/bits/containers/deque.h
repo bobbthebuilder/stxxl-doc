@@ -1,15 +1,19 @@
+/***************************************************************************
+ *  include/stxxl/bits/containers/deque.h
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
 #ifndef _STXXL_DEQUE_H
 #define _STXXL_DEQUE_H
 
-/***************************************************************************
- *            deque.h
- *
- *  Mon Sep 18 16:18:16 2006
- *  Copyright  2006  Roman Dementiev
- *  Email
- ****************************************************************************/
-
-#include "stxxl/vector"
+#include <stxxl/vector>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -25,7 +29,7 @@ class deque_iterator
 {
     typedef typename DequeType::size_type size_type;
     typedef typename DequeType::vector_type vector_type;
-    typedef deque_iterator<DequeType>       _Self;
+    typedef deque_iterator<DequeType> _Self;
     DequeType * Deque;
     size_type Offset;
 
@@ -91,22 +95,22 @@ public:
         return *this;
     }
 
-    reference operator *()
+    reference operator * ()
     {
         return Deque->Vector[Offset];
     }
 
-    pointer operator ->()
+    pointer operator -> ()
     {
         return &(Deque->Vector[Offset]);
     }
 
-    const_reference operator *() const
+    const_reference operator * () const
     {
         return Deque->Vector[Offset];
     }
 
-    const_pointer operator ->() const
+    const_pointer operator -> () const
     {
         return &(Deque->Vector[Offset]);
     }
@@ -121,57 +125,57 @@ public:
         return Deque->Vector[(Offset + op) % Deque->Vector.size()];
     }
 
-    _Self & operator ++()
+    _Self & operator ++ ()
     {
         Offset = (Offset + 1) % Deque->Vector.size();
         return *this;
     }
-    _Self operator ++(int)
+    _Self operator ++ (int)
     {
         _Self __tmp = *this;
         Offset = (Offset + 1) % Deque->Vector.size();
         return __tmp;
     }
-    _Self & operator --()
+    _Self & operator -- ()
     {
         Offset = (Offset + Deque->Vector.size() - 1) % Deque->Vector.size();
         return *this;
     }
-    _Self operator --(int)
+    _Self operator -- (int)
     {
         _Self __tmp = *this;
         Offset = (Offset + Deque->Vector.size() - 1) % Deque->Vector.size();
         return __tmp;
     }
-    bool operator == (const _Self &a) const
+    bool operator == (const _Self & a) const
     {
         assert(Deque == a.Deque);
         return Offset == a.Offset;
     }
-    bool operator != (const _Self &a) const
+    bool operator != (const _Self & a) const
     {
         assert(Deque == a.Deque);
         return Offset != a.Offset;
     }
 
-    bool operator < (const _Self &a) const
+    bool operator < (const _Self & a) const
     {
         assert(Deque == a.Deque);
         return (a - (*this)) > 0;
     }
 
-    bool operator == (const const_iterator &a) const
+    bool operator == (const const_iterator & a) const
     {
         assert(Deque == a.Deque);
         return Offset == a.Offset;
     }
-    bool operator != (const const_iterator &a) const
+    bool operator != (const const_iterator & a) const
     {
         assert(Deque == a.Deque);
         return Offset != a.Offset;
     }
 
-    bool operator < (const const_iterator &a) const
+    bool operator < (const const_iterator & a) const
     {
         assert(Deque == a.Deque);
         return (a - (*this)) > 0;
@@ -206,7 +210,7 @@ public:
     typedef typename DequeType::difference_type difference_type;
 
     const_deque_iterator() : Deque(NULL), Offset(0) { }
-    const_deque_iterator(const deque_iterator<DequeType> & it ) :
+    const_deque_iterator(const deque_iterator<DequeType> & it) :
         Deque(it.Deque), Offset(it.Offset)
     { }
 
@@ -252,12 +256,12 @@ public:
         return *this;
     }
 
-    const_reference operator *() const
+    const_reference operator * () const
     {
         return Deque->Vector[Offset];
     }
 
-    const_pointer operator ->() const
+    const_pointer operator -> () const
     {
         return &(Deque->Vector[Offset]);
     }
@@ -267,57 +271,57 @@ public:
         return Deque->Vector[(Offset + op) % Deque->Vector.size()];
     }
 
-    _Self & operator ++()
+    _Self & operator ++ ()
     {
         Offset = (Offset + 1) % Deque->Vector.size();
         return *this;
     }
-    _Self operator ++(int)
+    _Self operator ++ (int)
     {
         _Self __tmp = *this;
         Offset = (Offset + 1) % Deque->Vector.size();
         return __tmp;
     }
-    _Self & operator --()
+    _Self & operator -- ()
     {
         Offset = (Offset + Deque->Vector.size() - 1) % Deque->Vector.size();
         return *this;
     }
-    _Self operator --(int)
+    _Self operator -- (int)
     {
         _Self __tmp = *this;
         Offset = (Offset + Deque->Vector.size() - 1) % Deque->Vector.size();
         return __tmp;
     }
-    bool operator == (const _Self &a) const
+    bool operator == (const _Self & a) const
     {
         assert(Deque == a.Deque);
         return Offset == a.Offset;
     }
-    bool operator != (const _Self &a) const
+    bool operator != (const _Self & a) const
     {
         assert(Deque == a.Deque);
         return Offset != a.Offset;
     }
 
-    bool operator < (const _Self &a) const
+    bool operator < (const _Self & a) const
     {
         assert(Deque == a.Deque);
         return (a - (*this)) > 0;
     }
 
-    bool operator == (const iterator &a) const
+    bool operator == (const iterator & a) const
     {
         assert(Deque == a.Deque);
         return Offset == a.Offset;
     }
-    bool operator != (const iterator &a) const
+    bool operator != (const iterator & a) const
     {
         assert(Deque == a.Deque);
         return Offset != a.Offset;
     }
 
-    bool operator < (const iterator &a) const
+    bool operator < (const iterator & a) const
     {
         assert(Deque == a.Deque);
         return (a - (*this)) > 0;
@@ -339,7 +343,8 @@ public:
 template <class T, class VectorType = stxxl::vector<T> >
 class deque : private noncopyable
 {
-    typedef deque<T, VectorType>     Self_;
+    typedef deque<T, VectorType> Self_;
+
 public:
     typedef typename VectorType::size_type size_type;
     typedef typename VectorType::difference_type difference_type;
@@ -354,6 +359,7 @@ public:
 
     friend class deque_iterator<Self_>;
     friend class const_deque_iterator<Self_>;
+
 private:
     VectorType Vector;
     size_type begin_o, end_o, size_;
@@ -365,14 +371,14 @@ private:
         if (begin_o > end_o)
         {                         // copy data to the new end of the vector
             const size_type new_begin_o = old_size + begin_o;
-            std::copy(      Vector.begin() + begin_o,
-                            Vector.begin() + old_size,
-                            Vector.begin() + new_begin_o);
+            std::copy(Vector.begin() + begin_o,
+                      Vector.begin() + old_size,
+                      Vector.begin() + new_begin_o);
             begin_o = new_begin_o;
         }
     }
-public:
 
+public:
     deque() : Vector((STXXL_DEFAULT_BLOCK_SIZE(T)) / sizeof(T)), begin_o(0), end_o(0), size_(0)
     { }
 
@@ -397,9 +403,17 @@ public:
     {
         return const_iterator(this, begin_o);
     }
+    const_iterator cbegin() const
+    {
+        return begin();
+    }
     const_iterator end() const
     {
         return const_iterator(this, end_o);
+    }
+    const_iterator cend() const
+    {
+        return end();
     }
 
     size_type size() const
@@ -409,7 +423,7 @@ public:
 
     size_type max_size() const
     {
-        return (std::numeric_limits < size_type > ::max)() / 2 - 1;
+        return (std::numeric_limits<size_type>::max)() / 2 - 1;
     }
 
     bool empty() const
@@ -423,7 +437,7 @@ public:
         return Vector[(begin_o + n) % Vector.size()];
     }
 
-    const_reference operator[](size_type n) const
+    const_reference operator [] (size_type n) const
     {
         assert(n < size());
         return Vector[(begin_o + n) % Vector.size()];
@@ -521,15 +535,15 @@ public:
         else
         {
             if (n + 1 > Vector.size())
-            {                     // need to resize
+            {                             // need to resize
                 const size_type old_size = Vector.size();
                 Vector.resize(2 * n);
                 if (begin_o > end_o)
                 {                         // copy data to the new end of the vector
                     const size_type new_begin_o = Vector.size() - old_size + begin_o;
-                    std::copy(      Vector.begin() + begin_o,
-                                    Vector.begin() + old_size,
-                                    Vector.begin() + new_begin_o);
+                    std::copy(Vector.begin() + begin_o,
+                              Vector.begin() + old_size,
+                              Vector.begin() + new_begin_o);
                     begin_o = new_begin_o;
                 }
             }
@@ -557,16 +571,12 @@ __STXXL_END_NAMESPACE
 
 namespace std
 {
-    template <
-              typename T,
-              typename VT >
-    void swap(      stxxl::deque < T, VT > & a,
-                    stxxl::deque<T, VT> & b )
+    template <typename T, typename VT>
+    void swap(stxxl::deque<T, VT> & a,
+              stxxl::deque<T, VT> & b)
     {
         a.swap(b);
     }
 }
-
-
 
 #endif /* _STXXL_DEQUE_H */

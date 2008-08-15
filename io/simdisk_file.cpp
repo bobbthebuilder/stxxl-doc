@@ -1,14 +1,26 @@
-#include "stxxl/bits/io/simdisk_file.h"
+/***************************************************************************
+ *  io/simdisk_file.cpp
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002-2003 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#ifdef BOOST_MSVC
+#include <stxxl/bits/io/simdisk_file.h>
+
+#ifndef BOOST_MSVC
 // mmap call does not exist in Windows
-#else
+
 
 __STXXL_BEGIN_NAMESPACE
 
 
-void DiskGeometry::add_zone (int &first_cyl, int last_cyl,
-                             int sec_per_track, int &first_sect)
+void DiskGeometry::add_zone(int & first_cyl, int last_cyl,
+                            int sec_per_track, int & first_sect)
 {
     double rate =
         nsurfaces * sec_per_track * bytes_per_sector /
@@ -18,12 +30,12 @@ void DiskGeometry::add_zone (int &first_cyl, int last_cyl,
     int sectors =
         (last_cyl - first_cyl +
          1) * nsurfaces * sec_per_track;
-    zones.insert (Zone (first_sect, sectors, rate));
+    zones.insert(Zone(first_sect, sectors, rate));
     first_sect += sectors;
     first_cyl = last_cyl + 1;
 }
 
-double DiskGeometry::get_delay (stxxl::int64 /*offset*/, size_t size)                   // returns delay in s
+double DiskGeometry::get_delay(stxxl::int64 /*offset*/, size_t size)                   // returns delay in s
 {
     /*
 
@@ -63,12 +75,11 @@ double DiskGeometry::get_delay (stxxl::int64 /*offset*/, size_t size)           
        return delay;
 
      */
-    return double (size) / double (AVERAGE_SPEED);
+    return double(size) / double(AVERAGE_SPEED);
 }
 
 
-
-IC35L080AVVA07::IC35L080AVVA07 ()
+IC35L080AVVA07::IC35L080AVVA07()
 {
     std::cout << "Creating IBM 120GXP IC35L080AVVA07" <<
     std::endl;
@@ -78,44 +89,44 @@ IC35L080AVVA07::IC35L080AVVA07 ()
     cmd_ovh = 0.0002;                           // in s
     seek_time = 0.0082;                         // in s
     rot_latency = 0.00417;                      // in s
-    head_switch_time = 0.0015;                          // in s
-    cyl_switch_time = 0.002;                            // in s
-    revolution_time = 0.0083;                           // in s
-    interface_speed = 100000000;                        // in byte/s
+    head_switch_time = 0.0015;                  // in s
+    cyl_switch_time = 0.002;                    // in s
+    revolution_time = 0.0083;                   // in s
+    interface_speed = 100000000;                // in byte/s
 
     int first_sect = 0;
     int last_cyl = 0;
-    add_zone (last_cyl, 1938, 928, first_sect);
-    add_zone (last_cyl, 3756, 921, first_sect);
-    add_zone (last_cyl, 5564, 896, first_sect);
-    add_zone (last_cyl, 7687, 896, first_sect);
-    add_zone (last_cyl, 9526, 888, first_sect);
-    add_zone (last_cyl, 11334, 883, first_sect);
-    add_zone (last_cyl, 13331, 864, first_sect);
-    add_zone (last_cyl, 15128, 850, first_sect);
-    add_zone (last_cyl, 16925, 840, first_sect);
-    add_zone (last_cyl, 18922, 822, first_sect);
-    add_zone (last_cyl, 20709, 806, first_sect);
-    add_zone (last_cyl, 22601, 792, first_sect);
-    add_zone (last_cyl, 24138, 787, first_sect);
-    add_zone (last_cyl, 26024, 768, first_sect);
-    add_zone (last_cyl, 27652, 752, first_sect);
-    add_zone (last_cyl, 29501, 740, first_sect);
-    add_zone (last_cyl, 31234, 725, first_sect);
-    add_zone (last_cyl, 33009, 698, first_sect);
-    add_zone (last_cyl, 34784, 691, first_sect);
-    add_zone (last_cyl, 36609, 672, first_sect);
-    add_zone (last_cyl, 38374, 648, first_sect);
-    add_zone (last_cyl, 40139, 630, first_sect);
-    add_zone (last_cyl, 41904, 614, first_sect);
-    add_zone (last_cyl, 43519, 595, first_sect);
-    add_zone (last_cyl, 45250, 576, first_sect);
-    add_zone (last_cyl, 47004, 552, first_sect);
-    add_zone (last_cyl, 48758, 533, first_sect);
-    add_zone (last_cyl, 50491, 512, first_sect);
-    add_zone (last_cyl, 52256, 493, first_sect);
-    add_zone (last_cyl, 54010, 471, first_sect);
-    add_zone (last_cyl, 55571, 448, first_sect);
+    add_zone(last_cyl, 1938, 928, first_sect);
+    add_zone(last_cyl, 3756, 921, first_sect);
+    add_zone(last_cyl, 5564, 896, first_sect);
+    add_zone(last_cyl, 7687, 896, first_sect);
+    add_zone(last_cyl, 9526, 888, first_sect);
+    add_zone(last_cyl, 11334, 883, first_sect);
+    add_zone(last_cyl, 13331, 864, first_sect);
+    add_zone(last_cyl, 15128, 850, first_sect);
+    add_zone(last_cyl, 16925, 840, first_sect);
+    add_zone(last_cyl, 18922, 822, first_sect);
+    add_zone(last_cyl, 20709, 806, first_sect);
+    add_zone(last_cyl, 22601, 792, first_sect);
+    add_zone(last_cyl, 24138, 787, first_sect);
+    add_zone(last_cyl, 26024, 768, first_sect);
+    add_zone(last_cyl, 27652, 752, first_sect);
+    add_zone(last_cyl, 29501, 740, first_sect);
+    add_zone(last_cyl, 31234, 725, first_sect);
+    add_zone(last_cyl, 33009, 698, first_sect);
+    add_zone(last_cyl, 34784, 691, first_sect);
+    add_zone(last_cyl, 36609, 672, first_sect);
+    add_zone(last_cyl, 38374, 648, first_sect);
+    add_zone(last_cyl, 40139, 630, first_sect);
+    add_zone(last_cyl, 41904, 614, first_sect);
+    add_zone(last_cyl, 43519, 595, first_sect);
+    add_zone(last_cyl, 45250, 576, first_sect);
+    add_zone(last_cyl, 47004, 552, first_sect);
+    add_zone(last_cyl, 48758, 533, first_sect);
+    add_zone(last_cyl, 50491, 512, first_sect);
+    add_zone(last_cyl, 52256, 493, first_sect);
+    add_zone(last_cyl, 54010, 471, first_sect);
+    add_zone(last_cyl, 55571, 448, first_sect);
 
     /*
      * set<Zone,ZoneCmp>::iterator it=zones.begin();
@@ -136,53 +147,40 @@ IC35L080AVVA07::IC35L080AVVA07 ()
      */
 
     std::cout << "Transfer 16 Mb from zone 0 : " <<
-    get_delay (0,
-               16 * 1024 *
-               1024) << " s" << std::endl;
+    get_delay(0,
+              16 * 1024 *
+              1024) << " s" << std::endl;
     std::cout << "Transfer 16 Mb from zone 30: " <<
-    get_delay (stxxl::int64 (158204036) *
-               stxxl::int64 (bytes_per_sector),
-               16 * 1024 *
-               1024) << " s" << std::endl;
+    get_delay(stxxl::int64(158204036) *
+              stxxl::int64(bytes_per_sector),
+              16 * 1024 *
+              1024) << " s" << std::endl;
 }
 
+////////////////////////////////////////////////////////////////////////////
 
-
-void sim_disk_file::set_size (stxxl::int64 newsize)
-{
-    if (newsize > size ())
-    {
-        stxxl_check_ge_0(::lseek(file_des, newsize - 1, SEEK_SET), io_error);
-        stxxl_check_ge_0(::write(file_des, "", 1), io_error);
-    }
-}
-
-void sim_disk_request::serve ()
+void sim_disk_request::serve()
 {
     //      static_cast<syscall_file*>(file_)->set_size(offset+bytes);
-    double op_start = stxxl_timestamp();
+    double op_start = timestamp();
     stats * iostats = stats::get_instance();
     if (type == READ)
     {
- #ifdef STXXL_IO_STATS
-        iostats->read_started (size());
- #endif
+        iostats->read_started(size());
     }
     else
     {
- #ifdef STXXL_IO_STATS
-        iostats->write_started (size());
- #endif
+        iostats->write_started(size());
     }
 
     try {
         void * mem =
-            mmap (NULL, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, static_cast<sim_disk_file *>(file_)->get_file_des (), offset);
+            mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, static_cast<sim_disk_file *>(file_)->get_file_des(), offset);
         if (mem == MAP_FAILED)
         {
             STXXL_FORMAT_ERROR_MSG(msg, "Mapping failed. " <<
-                                   "Page size: " << sysconf (_SC_PAGESIZE) << " offset modulo page size " <<
-                                   (offset % sysconf(_SC_PAGESIZE)))
+                                   "Page size: " << sysconf(_SC_PAGESIZE) << " offset modulo page size " <<
+                                   (offset % sysconf(_SC_PAGESIZE)));
 
             error_occured(msg.str());
         }
@@ -195,27 +193,27 @@ void sim_disk_request::serve ()
             if (type == READ)
             {
                 memcpy(buffer, mem, bytes);
-                stxxl_check_ge_0(munmap((char *) mem, bytes), io_error);
+                stxxl_check_ge_0(munmap((char *)mem, bytes), io_error);
             } else {
                 memcpy(mem, buffer, bytes);
-                stxxl_check_ge_0(munmap((char *) mem, bytes), io_error);
+                stxxl_check_ge_0(munmap((char *)mem, bytes), io_error);
             }
         }
 
         double delay =
-            (static_cast <sim_disk_file * >(file_))->get_delay (offset, bytes);
+            (static_cast<sim_disk_file *>(file_))->get_delay(offset, bytes);
 
 
-        delay = delay - stxxl_timestamp() + op_start;
+        delay = delay - timestamp() + op_start;
 
-        assert( delay > 0.0 );
+        assert(delay > 0.0);
 
-        int seconds_to_wait = static_cast < int >(floor (delay));
+        int seconds_to_wait = static_cast<int>(floor(delay));
         if (seconds_to_wait)
-            sleep (seconds_to_wait);
+            sleep(seconds_to_wait);
 
 
-        usleep ((unsigned long) ((delay - seconds_to_wait) * 1000000.));
+        usleep((unsigned long)((delay - seconds_to_wait) * 1000000.));
     }
     catch (const io_error & ex)
     {
@@ -224,76 +222,72 @@ void sim_disk_request::serve ()
 
     if (type == READ)
     {
- #ifdef STXXL_IO_STATS
-        iostats->read_finished ();
- #endif
+        iostats->read_finished();
     }
     else
     {
- #ifdef STXXL_IO_STATS
-        iostats->write_finished ();
- #endif
+        iostats->write_finished();
     }
 
+    _state.set_to(DONE);
 
-    _state.set_to (DONE);
+    {
+        scoped_mutex_lock Lock(waiters_mutex);
 
- #ifdef STXXL_BOOST_THREADS
-    boost::mutex::scoped_lock Lock(waiters_mutex);
- #else
-    waiters_mutex.lock ();
- #endif
+        // << notification >>
+        for (std::set<onoff_switch *>::iterator i =
+                 waiters.begin(); i != waiters.end(); i++)
+            (*i)->on();
+    }
 
-    // << notification >>
-    for (std::set < onoff_switch * > ::iterator i =
-             waiters.begin (); i != waiters.end (); i++)
-        (*i)->on ();
-
-
- #ifdef STXXL_BOOST_THREADS
-    Lock.unlock();
- #else
-    waiters_mutex.unlock ();
- #endif
-
-    completed ();
-    _state.set_to (READY2DIE);
+    completed();
+    _state.set_to(READY2DIE);
 }
 
-request_ptr sim_disk_file::aread (void * buffer, stxxl::int64 pos, size_t bytes,
-                                  completion_handler on_cmpl)
+////////////////////////////////////////////////////////////////////////////
+
+void sim_disk_file::set_size(stxxl::int64 newsize)
 {
-    request_ptr req = new sim_disk_request (this, buffer, pos, bytes,
-                                            request::READ, on_cmpl);
+    if (newsize > size())
+    {
+        stxxl_check_ge_0(::lseek(file_des, newsize - 1, SEEK_SET), io_error);
+        stxxl_check_ge_0(::write(file_des, "", 1), io_error);
+    }
+}
+
+request_ptr sim_disk_file::aread(void * buffer, stxxl::int64 pos, size_t bytes,
+                                 completion_handler on_cmpl)
+{
+    request_ptr req = new sim_disk_request(this, buffer, pos, bytes,
+                                           request::READ, on_cmpl);
     if (!req.get())
         stxxl_function_error(io_error);
 
 
  #ifndef NO_OVERLAPPING
-    disk_queues::get_instance ()->add_readreq(req, get_id());
+    disk_queues::get_instance()->add_readreq(req, get_id());
  #endif
 
     return req;
 }
-request_ptr sim_disk_file::awrite (
+
+request_ptr sim_disk_file::awrite(
     void * buffer, stxxl::int64 pos, size_t bytes,
     completion_handler on_cmpl)
 {
-    request_ptr req = new sim_disk_request (this, buffer, pos, bytes,
-                                            request::WRITE, on_cmpl);
+    request_ptr req = new sim_disk_request(this, buffer, pos, bytes,
+                                           request::WRITE, on_cmpl);
 
     if (!req.get())
         stxxl_function_error(io_error);
 
 
  #ifndef NO_OVERLAPPING
-    disk_queues::get_instance ()->add_writereq(req, get_id());
+    disk_queues::get_instance()->add_writereq(req, get_id());
  #endif
     return req;
 }
 
 __STXXL_END_NAMESPACE
 
-#endif
-
-
+#endif // #ifndef BOOST_MSVC

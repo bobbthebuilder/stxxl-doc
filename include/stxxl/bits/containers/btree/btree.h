@@ -1,36 +1,40 @@
 /***************************************************************************
- *            btree.h
+ *  include/stxxl/bits/containers/btree/btree.h
  *
- *  Tue Feb 14 19:02:35 2006
- *  Copyright  2006  Roman Dementiev
- *  Email
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
 #ifndef STXXL_CONTAINERS_BTREE__BTREE_H
 #define STXXL_CONTAINERS_BTREE__BTREE_H
 
-#include "stxxl/bits/namespace.h"
-#include "stxxl/bits/containers/btree/iterator.h"
-#include "stxxl/bits/containers/btree/iterator_map.h"
-#include "stxxl/bits/containers/btree/leaf.h"
-#include "stxxl/bits/containers/btree/node_cache.h"
-#include "stxxl/bits/containers/btree/root_node.h"
-#include "stxxl/bits/containers/btree/node.h"
-#include "stxxl/vector"
+#include <stxxl/bits/namespace.h>
+#include <stxxl/bits/containers/btree/iterator.h>
+#include <stxxl/bits/containers/btree/iterator_map.h>
+#include <stxxl/bits/containers/btree/leaf.h>
+#include <stxxl/bits/containers/btree/node_cache.h>
+#include <stxxl/bits/containers/btree/root_node.h>
+#include <stxxl/bits/containers/btree/node.h>
+#include <stxxl/vector>
 
 
 __STXXL_BEGIN_NAMESPACE
 
 namespace btree
 {
-    template <      class KeyType,
+    template <class KeyType,
               class DataType,
               class CompareType,
               unsigned RawNodeSize,
               unsigned RawLeafSize,
               class PDAllocStrategy
-    >
-    class btree
+              >
+    class btree : private noncopyable
     {
     public:
         typedef KeyType key_type;
@@ -43,7 +47,7 @@ namespace btree
 
         typedef stxxl::uint64 size_type;
         typedef stxxl::int64 difference_type;
-        typedef std::pair < const key_type, data_type > value_type;
+        typedef std::pair<const key_type, data_type> value_type;
         typedef value_type & reference;
         typedef const value_type & const_reference;
         typedef value_type * pointer;
@@ -81,7 +85,6 @@ namespace btree
         };
 
     private:
-
         key_compare key_compare_;
         mutable node_cache_type node_cache_;
         mutable leaf_cache_type leaf_cache_;
@@ -102,17 +105,13 @@ namespace btree
         iterator end_iterator;
 
 
-        btree();         // forbidden
-        btree(const btree &);         // forbidden
-        btree & operator = (const btree &);         // forbidden
-
         template <class BIDType>
         void insert_into_root(const std::pair<key_type, BIDType> & splitter)
         {
             std::pair<root_node_iterator_type, bool> result =
                 root_node_.insert(splitter);
             assert(result.second == true);
-            if (root_node_.size() > max_node_size)            // root overflow
+            if (root_node_.size() > max_node_size)      // root overflow
             {
                 STXXL_VERBOSE1("btree::insert_into_root, overflow happened, splitting");
 
@@ -128,7 +127,7 @@ namespace btree
                 unsigned_type i = 0;
                 root_node_iterator_type it = root_node_.begin();
                 typename node_block_type::iterator block_it = LeftNode->block().begin();
-                while (i < half)              // copy smaller part
+                while (i < half)                // copy smaller part
                 {
                     *block_it = *it;
                     ++i;
@@ -139,7 +138,7 @@ namespace btree
                 key_type LeftKey = (LeftNode->block()[half - 1]).first;
 
                 block_it = RightNode->block().begin();
-                while (i < old_size)              // copy larger part
+                while (i < old_size)            // copy larger part
                 {
                     *block_it = *it;
                     ++i;
@@ -161,10 +160,9 @@ namespace btree
                 STXXL_VERBOSE1("btree Increasing height to " << height_);
                 if (node_cache_.size() < (height_ - 1))
                 {
-                    STXXL_FORMAT_ERROR_MSG(msg, "btree::bulk_construction The height of the tree (" << height_ << ") has exceeded the required capacity ("
-                                                                                                    << (node_cache_.size() + 1) << ") of the node cache. " <<
-                                           "Increase the node cache size.")
-                    throw std::runtime_error(msg.str());
+                    STXXL_THROW(std::runtime_error, "btree::bulk_construction", "The height of the tree (" << height_ << ") has exceeded the required capacity ("
+                                                                                                           << (node_cache_.size() + 1) << ") of the node cache. " <<
+                                "Increase the node cache size.");
                 }
             }
         }
@@ -176,7 +174,7 @@ namespace btree
             typedef typename local_node_type::bid_type local_bid_type;
 
             root_node_iterator_type leftIt, rightIt;
-            if (UIt->first == key_compare::max_value())            // UIt is the last entry in the root
+            if (UIt->first == key_compare::max_value())         // UIt is the last entry in the root
             {
                 assert(UIt != root_node_.begin());
                 rightIt = UIt;
@@ -190,8 +188,8 @@ namespace btree
             }
 
             // now fuse or balance nodes pointed by leftIt and rightIt
-            local_bid_type LeftBid = (local_bid_type) leftIt->second;
-            local_bid_type RightBid = (local_bid_type) rightIt->second;
+            local_bid_type LeftBid = (local_bid_type)leftIt->second;
+            local_bid_type RightBid = (local_bid_type)rightIt->second;
             local_node_type * LeftNode = cache_.get_node(LeftBid, true);
             local_node_type * RightNode = cache_.get_node(RightBid, true);
 
@@ -199,12 +197,12 @@ namespace btree
             if (TotalSize <= RightNode->max_nelements())
             {
                 // fuse
-                RightNode->fuse(*LeftNode);                 // add the content of LeftNode to RightNode
+                RightNode->fuse(*LeftNode);             // add the content of LeftNode to RightNode
 
                 cache_.unfix_node(RightBid);
-                cache_.delete_node(LeftBid);                 // 'delete_node' unfixes LeftBid also
+                cache_.delete_node(LeftBid);            // 'delete_node' unfixes LeftBid also
 
-                root_node_.erase(leftIt);                 // delete left BID from the root
+                root_node_.erase(leftIt);               // delete left BID from the root
             }
             else
             {
@@ -212,7 +210,7 @@ namespace btree
 
                 key_type NewSplitter = RightNode->balance(*LeftNode);
 
-                root_node_.erase(leftIt);                 // delete left BID from the root
+                root_node_.erase(leftIt);               // delete left BID from the root
                 // reinsert with the new key
                 root_node_.insert(root_node_pair_type(NewSplitter, (node_bid_type)LeftBid));
 
@@ -226,7 +224,7 @@ namespace btree
             leaf_bid_type NewBid;
             leaf_type * NewLeaf = leaf_cache_.get_new_node(NewBid);
             assert(NewLeaf);
-            end_iterator = NewLeaf->end();             // initialize end() iterator
+            end_iterator = NewLeaf->end();              // initialize end() iterator
             root_node_.insert(root_node_pair_type(key_compare::max_value(), (node_bid_type)NewBid));
         }
 
@@ -264,14 +262,14 @@ namespace btree
             key_type lastKey = key_compare::max_value();
 
             typedef std::pair<key_type, node_bid_type> key_bid_pair;
-            typedef typename stxxl::VECTOR_GENERATOR < key_bid_pair, 1, 1,
-            node_block_type::raw_size > ::result key_bid_vector_type;
+            typedef typename stxxl::VECTOR_GENERATOR<key_bid_pair, 1, 1,
+                                                     node_block_type::raw_size>::result key_bid_vector_type;
 
             key_bid_vector_type Bids;
 
             leaf_bid_type NewBid;
             leaf_type * Leaf = leaf_cache_.get_new_node(NewBid);
-            const unsigned_type max_leaf_elements = unsigned_type(double (Leaf->max_nelements()) * leaf_fill_factor);
+            const unsigned_type max_leaf_elements = unsigned_type(double(Leaf->max_nelements()) * leaf_fill_factor);
 
             while (b != e)
             {
@@ -300,14 +298,25 @@ namespace btree
                 ++b;
             }
 
-            // balance the last leaf
+            // rebalance the last leaf
             if (Leaf->underflows() && !Bids.empty())
             {
                 leaf_type * LeftLeaf = leaf_cache_.get_node((leaf_bid_type)(Bids.back().second));
                 assert(LeftLeaf);
-                const key_type NewSplitter = Leaf->balance(*LeftLeaf);
-                Bids.back().first = NewSplitter;
-                assert(!LeftLeaf->overflows() && !LeftLeaf->underflows());
+                if (LeftLeaf->size() + Leaf->size() <= Leaf->max_nelements()) // can fuse
+                {
+                    Leaf->fuse(*LeftLeaf);
+                    leaf_cache_.delete_node((leaf_bid_type)(Bids.back().second));
+                    Bids.pop_back();
+                    assert(!Leaf->overflows() && !Leaf->underflows());
+                }
+                else
+                {
+                    // need to rebalance
+                    const key_type NewSplitter = Leaf->balance(*LeftLeaf);
+                    Bids.back().first = NewSplitter;
+                    assert(!LeftLeaf->overflows() && !LeftLeaf->underflows());
+                }
             }
 
             assert(!Leaf->overflows() && (!Leaf->underflows() || size_ <= max_leaf_size));
@@ -316,13 +325,13 @@ namespace btree
 
             Bids.push_back(key_bid_pair(key_compare::max_value(), (node_bid_type)NewBid));
 
-            const unsigned_type max_node_elements = unsigned_type(double (max_node_size) * node_fill_factor);
+            const unsigned_type max_node_elements = unsigned_type(double(max_node_size) * node_fill_factor);
 
             while (Bids.size() > max_node_elements)
             {
                 key_bid_vector_type ParentBids;
 
-                stxxl::uint64 nparents = div_and_round_up( Bids.size(), stxxl::uint64(max_node_elements));
+                stxxl::uint64 nparents = div_and_round_up(Bids.size(), stxxl::uint64(max_node_elements));
                 assert(nparents >= 2);
                 STXXL_VERBOSE1("btree bulk constructBids.size() " << Bids.size() << " nparents: " << nparents << " max_ns: "
                                                                   << max_node_elements);
@@ -345,12 +354,21 @@ namespace btree
                     {
                         assert(it == Bids.end());                       // this can happen only at the end
                         assert(!ParentBids.empty());
-                        // TODO
+
                         node_type * LeftNode = node_cache_.get_node(ParentBids.back().second);
                         assert(LeftNode);
-                        const key_type NewSplitter = Node->balance(*LeftNode);
-                        ParentBids.back().first = NewSplitter;
-                        assert(!LeftNode->overflows() && !LeftNode->underflows());
+                        if (LeftNode->size() + Node->size() <= Node->max_nelements()) // can fuse
+                        {
+                            Node->fuse(*LeftNode);
+                            node_cache_.delete_node(ParentBids.back().second);
+                            ParentBids.pop_back();
+                        }
+                        else
+                        {   // need to rebalance
+                            const key_type NewSplitter = Node->balance(*LeftNode);
+                            ParentBids.back().first = NewSplitter;
+                            assert(!LeftNode->overflows() && !LeftNode->underflows());
+                        }
                     }
                     assert(!Node->overflows() && !Node->underflows());
 
@@ -359,17 +377,15 @@ namespace btree
 
                 std::swap(ParentBids, Bids);
 
-                assert(nparents == Bids.size());
+                assert(nparents == Bids.size() || (nparents - 1) == Bids.size());
 
                 ++height_;
                 STXXL_VERBOSE1("Increasing height to " << height_);
                 if (node_cache_.size() < (height_ - 1))
                 {
-                    STXXL_FORMAT_ERROR_MSG(msg, "btree::bulk_construction The height of the tree (" << height_ << ") has exceeded the required capacity ("
-                                                                                                    << (node_cache_.size() + 1) << ") of the node cache. " <<
-                                           "Increase the node cache size.")
-
-                    throw std::runtime_error(msg.str());
+                    STXXL_THROW(std::runtime_error, "btree::bulk_construction", "The height of the tree (" << height_ << ") has exceeded the required capacity ("
+                                                                                                           << (node_cache_.size() + 1) << ") of the node cache. " <<
+                                "Increase the node cache size.");
                 }
             }
 
@@ -377,9 +393,9 @@ namespace btree
         }
 
     public:
-        btree(  unsigned_type node_cache_size_in_bytes,
-                unsigned_type leaf_cache_size_in_bytes
-        ) :
+        btree(unsigned_type node_cache_size_in_bytes,
+              unsigned_type leaf_cache_size_in_bytes
+              ) :
             node_cache_(node_cache_size_in_bytes, this, key_compare_),
             leaf_cache_(leaf_cache_size_in_bytes, this, key_compare_),
             iterator_map_(this),
@@ -400,10 +416,10 @@ namespace btree
             create_empty_leaf();
         }
 
-        btree(  const key_compare & c_,
-                unsigned_type node_cache_size_in_bytes,
-                unsigned_type leaf_cache_size_in_bytes
-        ) :
+        btree(const key_compare & c_,
+              unsigned_type node_cache_size_in_bytes,
+              unsigned_type leaf_cache_size_in_bytes
+              ) :
             key_compare_(c_),
             node_cache_(node_cache_size_in_bytes, this, key_compare_),
             leaf_cache_(leaf_cache_size_in_bytes, this, key_compare_),
@@ -438,7 +454,7 @@ namespace btree
 
         size_type max_size() const
         {
-            return (std::numeric_limits < size_type > ::max)();
+            return (std::numeric_limits<size_type>::max)();
         }
 
         bool empty() const
@@ -446,7 +462,7 @@ namespace btree
             return !size_;
         }
 
-        std::pair<iterator, bool> insert(const value_type &x)
+        std::pair<iterator, bool> insert(const value_type & x)
         {
             root_node_iterator_type it = root_node_.lower_bound(x.first);
             assert(!root_node_.empty());
@@ -464,7 +480,7 @@ namespace btree
                 leaf_cache_.unfix_node((leaf_bid_type)it->second);
                 //if(key_compare::max_value() == Splitter.first)
                 if (!(key_compare_(key_compare::max_value(), Splitter.first) ||
-                      key_compare_(Splitter.first, key_compare::max_value()) ))
+                      key_compare_(Splitter.first, key_compare::max_value())))
                     return result;
                 // no overflow/splitting happened
 
@@ -489,7 +505,7 @@ namespace btree
             node_cache_.unfix_node((node_bid_type)it->second);
             //if(key_compare::max_value() == Splitter.first)
             if (!(key_compare_(key_compare::max_value(), Splitter.first) ||
-                  key_compare_(Splitter.first, key_compare::max_value()) ))
+                  key_compare_(Splitter.first, key_compare::max_value())))
                 return result;
             // no overflow/splitting happened
 
@@ -506,7 +522,7 @@ namespace btree
         iterator begin()
         {
             root_node_iterator_type it = root_node_.begin();
-            assert(it != root_node_.end() );
+            assert(it != root_node_.end());
 
             if (height_ == 2)            // 'it' points to a leaf
             {
@@ -535,7 +551,7 @@ namespace btree
         const_iterator begin() const
         {
             root_node_const_iterator_type it = root_node_.begin();
-            assert(it != root_node_.end() );
+            assert(it != root_node_.end());
 
             if (height_ == 2)            // 'it' points to a leaf
             {
@@ -568,7 +584,7 @@ namespace btree
             return end_iterator;
         }
 
-        data_type & operator []  (const key_type & k)
+        data_type & operator [] (const key_type & k)
         {
             return (*((insert(value_type(k, data_type()))).first)).second;
         }
@@ -754,37 +770,37 @@ namespace btree
             return result;
         }
 
-        std::pair<iterator, iterator> equal_range(const key_type &k)
+        std::pair<iterator, iterator> equal_range(const key_type & k)
         {
-            iterator l = lower_bound(k);             // l->first >= k
+            iterator l = lower_bound(k);                                // l->first >= k
 
-            if (l == end() || key_compare_(k, l->first))  // if (k < l->first)
+            if (l == end() || key_compare_(k, l->first))                // if (k < l->first)
                 return std::pair<iterator, iterator>(l, l);
             // then upper_bound == lower_bound
 
             iterator u = l;
-            ++u;             // only one element ==k can exist
+            ++u;                                                        // only one element ==k can exist
 
             assert(leaf_cache_.nfixed() == 0);
             assert(node_cache_.nfixed() == 0);
 
-            return std::pair<iterator, iterator>(l, u);           // then upper_bound == (lower_bound+1)
+            return std::pair<iterator, iterator>(l, u);                 // then upper_bound == (lower_bound+1)
         }
 
-        std::pair<const_iterator, const_iterator> equal_range(const key_type &k) const
+        std::pair<const_iterator, const_iterator> equal_range(const key_type & k) const
         {
-            const_iterator l = lower_bound(k);             // l->first >= k
+            const_iterator l = lower_bound(k);                          // l->first >= k
 
-            if (l == end() || key_compare_(k, l->first))  // if (k < l->first)
+            if (l == end() || key_compare_(k, l->first))                // if (k < l->first)
                 return std::pair<const_iterator, const_iterator>(l, l);
             // then upper_bound == lower_bound
 
             const_iterator u = l;
-            ++u;             // only one element ==k can exist
+            ++u;                                                        // only one element ==k can exist
 
             assert(leaf_cache_.nfixed() == 0);
             assert(node_cache_.nfixed() == 0);
-            return std::pair<const_iterator, const_iterator>(l, u);           // then upper_bound == (lower_bound+1)
+            return std::pair<const_iterator, const_iterator>(l, u);     // then upper_bound == (lower_bound+1)
         }
 
         size_type erase(const key_type & k)
@@ -843,8 +859,8 @@ namespace btree
                 assert(RootNode);
                 assert(RootNode->back().first == key_compare::max_value());
                 root_node_.clear();
-                root_node_.insert(      RootNode->block().begin(),
-                                        RootNode->block().begin() + RootNode->size());
+                root_node_.insert(RootNode->block().begin(),
+                                  RootNode->block().begin() + RootNode->size());
 
                 node_cache_.delete_node(RootBid);
                 --height_;
@@ -906,15 +922,15 @@ namespace btree
         }
 
         template <class InputIterator>
-        btree(  InputIterator b,
-                InputIterator e,
-                const key_compare & c_,
-                unsigned_type node_cache_size_in_bytes,
-                unsigned_type leaf_cache_size_in_bytes,
-                bool range_sorted = false,
-                double node_fill_factor = 0.75,
-                double leaf_fill_factor = 0.6
-        ) :
+        btree(InputIterator b,
+              InputIterator e,
+              const key_compare & c_,
+              unsigned_type node_cache_size_in_bytes,
+              unsigned_type leaf_cache_size_in_bytes,
+              bool range_sorted = false,
+              double node_fill_factor = 0.75,
+              double leaf_fill_factor = 0.6
+              ) :
             key_compare_(c_),
             node_cache_(node_cache_size_in_bytes, this, key_compare_),
             leaf_cache_(leaf_cache_size_in_bytes, this, key_compare_),
@@ -944,14 +960,14 @@ namespace btree
 
 
         template <class InputIterator>
-        btree(  InputIterator b,
-                InputIterator e,
-                unsigned_type node_cache_size_in_bytes,
-                unsigned_type leaf_cache_size_in_bytes,
-                bool range_sorted = false,
-                double node_fill_factor = 0.75,
-                double leaf_fill_factor = 0.6
-        ) :
+        btree(InputIterator b,
+              InputIterator e,
+              unsigned_type node_cache_size_in_bytes,
+              unsigned_type leaf_cache_size_in_bytes,
+              bool range_sorted = false,
+              double node_fill_factor = 0.75,
+              double leaf_fill_factor = 0.6
+              ) :
             node_cache_(node_cache_size_in_bytes, this, key_compare_),
             leaf_cache_(leaf_cache_size_in_bytes, this, key_compare_),
             iterator_map_(this),
@@ -999,13 +1015,13 @@ namespace btree
 
         void swap(btree & obj)
         {
-            std::swap(key_compare_, obj.key_compare_);            // OK
+            std::swap(key_compare_, obj.key_compare_);          // OK
 
-            std::swap(node_cache_, obj.node_cache_);             // OK
-            std::swap(leaf_cache_, obj.leaf_cache_);             // OK
+            std::swap(node_cache_, obj.node_cache_);            // OK
+            std::swap(leaf_cache_, obj.leaf_cache_);            // OK
 
 
-            std::swap(iterator_map_, obj.iterator_map_);            // must update all iterators
+            std::swap(iterator_map_, obj.iterator_map_);        // must update all iterators
 
             std::swap(end_iterator, obj.end_iterator);
             std::swap(size_, obj.size_);
@@ -1041,26 +1057,26 @@ namespace btree
         }
     };
 
-    template <      class KeyType,
+    template <class KeyType,
               class DataType,
               class CompareType,
               unsigned LogNodeSize,
               unsigned LogLeafSize,
               class PDAllocStrategy
-    >
+              >
     inline bool operator == (const btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & a,
                              const btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & b)
     {
         return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin());
     }
 
-    template <      class KeyType,
+    template <class KeyType,
               class DataType,
               class CompareType,
               unsigned LogNodeSize,
               unsigned LogLeafSize,
               class PDAllocStrategy
-    >
+              >
     inline bool operator != (const btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & a,
                              const btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & b)
     {
@@ -1068,13 +1084,13 @@ namespace btree
     }
 
 
-    template <      class KeyType,
+    template <class KeyType,
               class DataType,
               class CompareType,
               unsigned LogNodeSize,
               unsigned LogLeafSize,
               class PDAllocStrategy
-    >
+              >
     inline bool operator < (const btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & a,
                             const btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & b)
     {
@@ -1082,13 +1098,13 @@ namespace btree
     }
 
 
-    template <      class KeyType,
+    template <class KeyType,
               class DataType,
               class CompareType,
               unsigned LogNodeSize,
               unsigned LogLeafSize,
               class PDAllocStrategy
-    >
+              >
     inline bool operator > (const btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & a,
                             const btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & b)
     {
@@ -1096,26 +1112,26 @@ namespace btree
     }
 
 
-    template <      class KeyType,
+    template <class KeyType,
               class DataType,
               class CompareType,
               unsigned LogNodeSize,
               unsigned LogLeafSize,
               class PDAllocStrategy
-    >
+              >
     inline bool operator <= (const btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & a,
                              const btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & b)
     {
         return !(b < a);
     }
 
-    template <      class KeyType,
+    template <class KeyType,
               class DataType,
               class CompareType,
               unsigned LogNodeSize,
               unsigned LogLeafSize,
               class PDAllocStrategy
-    >
+              >
     inline bool operator >= (const btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & a,
                              const btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & b)
     {
@@ -1128,14 +1144,14 @@ __STXXL_END_NAMESPACE
 
 namespace std
 {
-    template <      class KeyType,
+    template <class KeyType,
               class DataType,
               class CompareType,
               unsigned LogNodeSize,
               unsigned LogLeafSize,
               class PDAllocStrategy
-    >
-    void swap(stxxl::btree::btree < KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy > & a,
+              >
+    void swap(stxxl::btree::btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & a,
               stxxl::btree::btree<KeyType, DataType, CompareType, LogNodeSize, LogLeafSize, PDAllocStrategy> & b)
     {
         if (&a != &b)

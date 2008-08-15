@@ -1,16 +1,26 @@
 /***************************************************************************
- *            test_deque.cpp
+ *  containers/test_deque.cpp
  *
- *  Mon Sep 18 18:29:33 2006
- *  Copyright  2006  Roman Dementiev
- *  Email
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl.h"
+#include <iterator>
+#include <stxxl/deque>
 
 
-int main()
+int main(int argc, char * argv[])
 {
+    if (argc != 2) {
+        STXXL_MSG("Usage: " << argv[0] << " #ops");
+        return -1;
+    }
+
     stxxl::deque<int> Deque;
 
     stxxl::deque<int>::const_iterator b = Deque.begin();
@@ -28,8 +38,8 @@ int main()
     stxxl::deque<int> XXLDeque;
     std::deque<int> STDDeque;
 
-    stxxl::int64 ops = 0;
-    while (1)
+    stxxl::int64 ops = stxxl::atoint64(argv[1]);
+    for (stxxl::int64 i = 0; i < ops; ++i)
     {
         unsigned curOP = rand() % 6;
         unsigned value = rand();
@@ -87,12 +97,11 @@ int main()
             assert(XXLDeque.front() == STDDeque.front());
         }
 
-        if (!(ops % 100000))
+        if (!(i % 100000))
         {
             assert(std::equal(XXLDeque.begin(), XXLDeque.end(), STDDeque.begin()));
-            STXXL_MSG("Operations done: " << ops << " size: " << STDDeque.size());
+            STXXL_MSG("Operations done: " << i << " size: " << STDDeque.size());
         }
-        ++ops;
     }
 
     return 0;

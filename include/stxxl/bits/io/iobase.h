@@ -1,16 +1,18 @@
-#ifndef IOBASE_HEADER
-#define IOBASE_HEADER
-
 /***************************************************************************
- *            iobase.h
+ *  include/stxxl/bits/io/iobase.h
  *
- *  Sat Aug 24 23:54:44 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *  Copyright (C) 2008 Andreas Beckmann <beckmann@cs.uni-frankfurt.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#define STXXL_IO_STATS
-
+#ifndef STXXL_IOBASE_HEADER
+#define STXXL_IOBASE_HEADER
 
 #ifdef STXXL_BOOST_CONFIG
  #include <boost/config.hpp>
@@ -42,6 +44,7 @@
 #include <set>
 
 #ifdef BOOST_MSVC
+// this is not stxxl/bits/io/io.h !
  #include <io.h>
 #else
  #include <unistd.h>
@@ -83,15 +86,14 @@
 #endif
 
 
-#include "stxxl/bits/namespace.h"
-#include "stxxl/bits/io/iostats.h"
-#include "stxxl/bits/common/semaphore.h"
-#include "stxxl/bits/common/mutex.h"
-//#include "stxxl/bits/common/rwlock.h"
-#include "stxxl/bits/common/switch.h"
-#include "stxxl/bits/common/state.h"
-#include "stxxl/bits/common/exceptions.h"
-#include "stxxl/bits/io/completion_handler.h"
+#include <stxxl/bits/namespace.h>
+#include <stxxl/bits/io/iostats.h>
+#include <stxxl/bits/common/semaphore.h>
+#include <stxxl/bits/common/mutex.h>
+#include <stxxl/bits/common/switch.h>
+#include <stxxl/bits/common/state.h>
+#include <stxxl/bits/common/exceptions.h>
+#include <stxxl/bits/io/completion_handler.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -114,27 +116,22 @@ class request_ptr;
 struct default_completion_handler
 {
     //! \brief An operator that does nothing
-    void operator()  (request *) { }
+    void operator () (request *) { }
 };
 
 //! \brief Defines interface of file
 
 //! It is a base class for different implementations that might
 //! base on various file systems or even remote storage interfaces
-class file
+class file : private noncopyable
 {
-    //! \brief private constructor
-    //! \remark instantiation of file without id is forbidden
-    file ()
-    { };
-
 protected:
     int id;
 
     //! \brief Initializes file object
     //! \param _id file identifier
     //! \remark Called in implementations of file
-    file (int _id) : id (_id) { };
+    file(int _id) : id(_id) { }
 
 public:
     //! \brief Definition of acceptable file open modes
@@ -157,25 +154,25 @@ public:
     //! \param bytes number of bytes to transfer
     //! \param on_cmpl I/O completion handler
     //! \return \c request_ptr object, that can be used to track the status of the operation
-    virtual request_ptr aread (void * buffer, stxxl::int64 pos, size_t bytes,
-                               completion_handler on_cmpl ) = 0;
+    virtual request_ptr aread(void * buffer, stxxl::int64 pos, size_t bytes,
+                              completion_handler on_cmpl) = 0;
     //! \brief Schedules asynchronous write request to the file
     //! \param buffer pointer to memory buffer to write from
     //! \param pos starting file position to write
     //! \param bytes number of bytes to transfer
     //! \param on_cmpl I/O completion handler
     //! \return \c request_ptr object, that can be used to track the status of the operation
-    virtual request_ptr awrite (void * buffer, stxxl::int64 pos, size_t bytes,
-                                completion_handler on_cmpl ) = 0;
+    virtual request_ptr awrite(void * buffer, stxxl::int64 pos, size_t bytes,
+                               completion_handler on_cmpl) = 0;
 
     //! \brief Changes the size of the file
     //! \param newsize value of the new file size
-    virtual void set_size (stxxl::int64 newsize) = 0;
+    virtual void set_size(stxxl::int64 newsize) = 0;
     //! \brief Returns size of the file
     //! \return file size in bytes
-    virtual stxxl::int64 size () = 0;
+    virtual stxxl::int64 size() = 0;
     //! \brief deprecated, use \c stxxl::file::get_id() instead
-    int get_disk_number ()
+    __STXXL_DEPRECATED(int get_disk_number())
     {
         return id;
     }
@@ -190,7 +187,14 @@ public:
     //! \brief Locks file for reading and writing
     virtual void lock() { }
 
-    virtual ~file () { }
+    //! \brief Some specialized file types may need to know freed regions
+    virtual void delete_region(int64 offset, unsigned_type size)
+    {
+        UNUSED(offset);
+        UNUSED(size);
+    }
+
+    virtual ~file() { }
 };
 
 class mc;
@@ -202,10 +206,11 @@ class disk_queues;
 //! Since all library I/O operations are asynchronous,
 //! one needs to keep track of their status: whether
 //! an I/O completed or not.
-class request
+class request : private noncopyable
 {
     friend int wait_any(request_ptr req_array[], int count);
-    template <class request_iterator_> friend
+    template <class request_iterator_>
+    friend
     request_iterator_ wait_any(request_iterator_ reqs_begin, request_iterator_ reqs_end);
     friend class file;
     friend class disk_queue;
@@ -213,21 +218,17 @@ class request
     friend class request_ptr;
 
 protected:
-    virtual bool add_waiter (onoff_switch * sw) = 0;
-    virtual void delete_waiter (onoff_switch * sw) = 0;
+    virtual bool add_waiter(onoff_switch * sw) = 0;
+    virtual void delete_waiter(onoff_switch * sw) = 0;
     //virtual void enqueue () = 0;
-    virtual void serve () = 0;
+    virtual void serve() = 0;
     //virtual unsigned size() const;
 
     completion_handler on_complete;
     int ref_cnt;
     std::auto_ptr<stxxl::io_error> error;
 
-#ifdef STXXL_BOOST_THREADS
-    boost::mutex ref_cnt_mutex;
-#else
     mutex ref_cnt_mutex;
-#endif
 
 public:
     enum request_type { READ, WRITE };
@@ -239,7 +240,7 @@ protected:
     size_t bytes;
     request_type type;
 
-    void completed ()
+    void completed()
     {
         on_complete(this);
     }
@@ -247,24 +248,17 @@ protected:
     // returns number of references
     int nref()
     {
-#ifdef STXXL_BOOST_THREADS
-        boost::mutex::scoped_lock Lock(ref_cnt_mutex);
+        scoped_mutex_lock Lock(ref_cnt_mutex);
         return ref_cnt;
-#else
-        ref_cnt_mutex.lock();
-        int ref_cnt_ = ref_cnt;
-        ref_cnt_mutex.unlock();
-        return ref_cnt_;
-#endif
     }
 
 public:
-    request(        completion_handler on_compl,
-                    file * file__,
-                    void * buffer_,
-                    stxxl::int64 offset_,
-                    size_t bytes_,
-                    request_type type_) :
+    request(completion_handler on_compl,
+            file * file__,
+            void * buffer_,
+            stxxl::int64 offset_,
+            size_t bytes_,
+            request_type type_) :
         on_complete(on_compl), ref_cnt(0),
         file_(file__),
         buffer(buffer_),
@@ -272,22 +266,22 @@ public:
         bytes(bytes_),
         type(type_)
     {
-        STXXL_VERBOSE3("request " << unsigned (this) << ": creation, cnt: " << ref_cnt);
+        STXXL_VERBOSE3("request " << static_cast<void *>(this) << ": creation, cnt: " << ref_cnt);
     }
     //! \brief Suspends calling thread until completion of the request
-    virtual void wait () = 0;
+    virtual void wait() = 0;
     //! \brief Polls the status of the request
     //! \return \c true if request is completed, otherwise \c false
-    virtual bool poll () = 0;
+    virtual bool poll() = 0;
     //! \brief Identifies the type of request I/O implementation
     //! \return pointer to null terminated string of characters, containing the name of I/O implementation
-    virtual const char * io_type ()
+    virtual const char * io_type()
     {
         return "none";
     }
     virtual ~request()
     {
-        STXXL_VERBOSE3("request " << unsigned (this) << ": deletion, cnt: " << ref_cnt);
+        STXXL_VERBOSE3("request " << static_cast<void *>(this) << ": deletion, cnt: " << ref_cnt);
     }
     file * get_file() const { return file_; }
     void * get_buffer() const { return buffer; }
@@ -328,41 +322,21 @@ public:
     }
 
 private:
-    // Following methods are declared but not implemented
-    // intentionally to forbid their usage
-    request(const request &);
-    request & operator=(const request &);
-    request();
-
     void add_ref()
     {
-#ifdef STXXL_BOOST_THREADS
-        boost::mutex::scoped_lock Lock(ref_cnt_mutex);
+        scoped_mutex_lock Lock(ref_cnt_mutex);
         ref_cnt++;
-        STXXL_VERBOSE3("request add_ref() " << unsigned (this) << ": adding reference, cnt: " << ref_cnt);
-
-#else
-        ref_cnt_mutex.lock();
-        ref_cnt++;
-        STXXL_VERBOSE3("request add_ref() " << unsigned (this) << ": adding reference, cnt: " << ref_cnt);
-        ref_cnt_mutex.unlock();
-#endif
+        STXXL_VERBOSE3("request add_ref() " << static_cast<void *>(this) << ": adding reference, cnt: " << ref_cnt);
     }
+
     bool sub_ref()
     {
-#ifdef STXXL_BOOST_THREADS
-        boost::mutex::scoped_lock Lock(ref_cnt_mutex);
-        int val = --ref_cnt;
-        STXXL_VERBOSE3("request sub_ref() " << unsigned (this) << ": subtracting reference cnt: " << ref_cnt);
-        Lock.unlock();
-
-#else
-        ref_cnt_mutex.lock();
-        int val = --ref_cnt;
-        STXXL_VERBOSE3("request sub_ref() " << unsigned (this) << ": subtracting reference cnt: " << ref_cnt);
-
-        ref_cnt_mutex.unlock();
-#endif
+        int val;
+        {
+            scoped_mutex_lock Lock(ref_cnt_mutex);
+            val = --ref_cnt;
+            STXXL_VERBOSE3("request sub_ref() " << static_cast<void *>(this) << ": subtracting reference cnt: " << ref_cnt);
+        }
         assert(val >= 0);
         return (val == 0);
     }
@@ -392,54 +366,55 @@ class request_ptr
         {
             if (ptr->sub_ref())
             {
-                STXXL_VERBOSE3("the last copy " << unsigned (ptr) << " this=" << unsigned (this));
+                STXXL_VERBOSE3("the last copy " << static_cast<void *>(ptr) << " this=" << static_cast<void *>(this));
                 delete ptr;
                 ptr = NULL;
             }
             else
             {
-                STXXL_VERBOSE3("more copies " << unsigned (ptr) << " this=" << unsigned (this));
+                STXXL_VERBOSE3("more copies " << static_cast<void *>(ptr) << " this=" << static_cast<void *>(this));
             }
         }
     }
+
 public:
     //! \brief Constructs an \c request_ptr from \c request pointer
     request_ptr(request * ptr_ = NULL) : ptr(ptr_)
     {
-        STXXL_VERBOSE3("create constructor (request =" << unsigned (ptr) << ") this=" << unsigned (this));
+        STXXL_VERBOSE3("create constructor (request =" << static_cast<void *>(ptr) << ") this=" << static_cast<void *>(this));
         add_ref();
     }
     //! \brief Constructs an \c request_ptr from a \c request_ptr object
     request_ptr(const request_ptr & p) : ptr(p.ptr)
     {
-        STXXL_VERBOSE3("copy constructor (copying " << unsigned (ptr) << ") this=" << unsigned (this));
+        STXXL_VERBOSE3("copy constructor (copying " << static_cast<void *>(ptr) << ") this=" << static_cast<void *>(this));
         add_ref();
     }
     //! \brief Destructor
     ~request_ptr()
     {
-        STXXL_VERBOSE3("Destructor of a request_ptr pointing to " << unsigned (ptr) << " this=" << unsigned (this));
+        STXXL_VERBOSE3("Destructor of a request_ptr pointing to " << static_cast<void *>(ptr) << " this=" << static_cast<void *>(this));
         sub_ref();
     }
     //! \brief Assignment operator from \c request_ptr object
     //! \return reference to itself
-    request_ptr & operator= (const request_ptr & p)
+    request_ptr & operator = (const request_ptr & p)
     {
         // assert(p.ptr);
         return (*this = p.ptr);
     }
     //! \brief Assignment operator from \c request pointer
     //! \return reference to itself
-    request_ptr & operator= (request * p)
+    request_ptr & operator = (request * p)
     {
-        STXXL_VERBOSE3("assign operator begin (assigning " << unsigned (p) << ") this=" << unsigned (this));
+        STXXL_VERBOSE3("assign operator begin (assigning " << static_cast<void *>(p) << ") this=" << static_cast<void *>(this));
         if (p != ptr)
         {
             sub_ref();
             ptr = p;
             add_ref();
         }
-        STXXL_VERBOSE3("assign operator end (assigning " << unsigned (p) << ") this=" << unsigned (this));
+        STXXL_VERBOSE3("assign operator end (assigning " << static_cast<void *>(p) << ") this=" << static_cast<void *>(this));
         return *this;
     }
     //! \brief "Star" operator
@@ -485,14 +460,14 @@ inline void wait_all(request_ptr req_array[], int count);
 //! \param count size of req_array
 //! \param index contains index of the \b first completed request if any
 //! \return \c true if any of requests is completed, then index contains valid value, otherwise \c false
-inline bool poll_any (request_ptr req_array[], int count, int &index);
+inline bool poll_any(request_ptr req_array[], int count, int & index);
 
 
 void wait_all(request_ptr req_array[], int count)
 {
     for (int i = 0; i < count; i++)
     {
-        req_array[i]->wait ();
+        req_array[i]->wait();
     }
 }
 
@@ -501,12 +476,12 @@ void wait_all(request_iterator_ reqs_begin, request_iterator_ reqs_end)
 {
     while (reqs_begin != reqs_end)
     {
-        (request_ptr(*reqs_begin))->wait ();
+        (request_ptr(*reqs_begin))->wait();
         ++reqs_begin;
     }
 }
 
-bool poll_any (request_ptr req_array[], int count, int &index)
+bool poll_any(request_ptr req_array[], int count, int & index)
 {
     index = -1;
     for (int i = 0; i < count; i++)
@@ -534,24 +509,22 @@ request_iterator_ poll_any(request_iterator_ reqs_begin, request_iterator_ reqs_
 }
 
 
-int wait_any (request_ptr req_array[], int count)
+int wait_any(request_ptr req_array[], int count)
 {
-    START_COUNT_WAIT_TIME
+    stats::scoped_wait_timer wait_timer;
+
     onoff_switch sw;
     int i = 0, index = -1;
 
     for ( ; i < count; i++)
     {
-        if (req_array[i]->add_waiter (&sw))
+        if (req_array[i]->add_waiter(&sw))
         {
             // already done
             index = i;
 
             while (--i >= 0)
-                req_array[i]->delete_waiter (&sw);
-
-
-            END_COUNT_WAIT_TIME
+                req_array[i]->delete_waiter(&sw);
 
             req_array[index]->check_errors();
 
@@ -559,30 +532,30 @@ int wait_any (request_ptr req_array[], int count)
         }
     }
 
-    sw.wait_for_on ();
+    sw.wait_for_on();
 
     for (i = 0; i < count; i++)
     {
-        req_array[i]->delete_waiter (&sw);
-        if (index < 0 && req_array[i]->poll ())
+        req_array[i]->delete_waiter(&sw);
+        if (index < 0 && req_array[i]->poll())
             index = i;
     }
 
-    END_COUNT_WAIT_TIME
     return index;
 }
 
 template <class request_iterator_>
 request_iterator_ wait_any(request_iterator_ reqs_begin, request_iterator_ reqs_end)
 {
-    START_COUNT_WAIT_TIME
+    stats::scoped_wait_timer wait_timer;
+
     onoff_switch sw;
 
     request_iterator_ cur = reqs_begin, result = reqs_end;
 
     for ( ; cur != reqs_end; cur++)
     {
-        if ((request_ptr(*cur))->add_waiter (&sw))
+        if ((request_ptr(*cur))->add_waiter(&sw))
         {
             // already done
             result = cur;
@@ -590,12 +563,10 @@ request_iterator_ wait_any(request_iterator_ reqs_begin, request_iterator_ reqs_
             if (cur != reqs_begin)
             {
                 while (--cur != reqs_begin)
-                    (request_ptr(*cur))->delete_waiter (&sw);
+                    (request_ptr(*cur))->delete_waiter(&sw);
 
-                (request_ptr(*cur))->delete_waiter (&sw);
+                (request_ptr(*cur))->delete_waiter(&sw);
             }
-
-            END_COUNT_WAIT_TIME
 
             (request_ptr(*result))->check_errors();
 
@@ -603,33 +574,28 @@ request_iterator_ wait_any(request_iterator_ reqs_begin, request_iterator_ reqs_
         }
     }
 
-    sw.wait_for_on ();
+    sw.wait_for_on();
 
     for (cur = reqs_begin; cur != reqs_end; cur++)
     {
-        (request_ptr(*cur))->delete_waiter (&sw);
-        if (result == reqs_end && (request_ptr(*cur))->poll ())
+        (request_ptr(*cur))->delete_waiter(&sw);
+        if (result == reqs_end && (request_ptr(*cur))->poll())
             result = cur;
     }
 
-    END_COUNT_WAIT_TIME
     return result;
 }
 
-class disk_queue
+class disk_queue : private noncopyable
 {
 public:
     enum priority_op { READ, WRITE, NONE };
+
 private:
-#ifdef STXXL_BOOST_THREADS
-    boost::mutex write_mutex;
-    boost::mutex read_mutex;
-#else
     mutex write_mutex;
     mutex read_mutex;
-#endif
-    std::queue < request_ptr > write_queue;
-    std::queue < request_ptr > read_queue;
+    std::queue<request_ptr> write_queue;
+    std::queue<request_ptr> read_queue;
 
     semaphore sem;
 
@@ -642,63 +608,55 @@ private:
 #endif
 
 
-#ifdef STXXL_IO_STATS
-    stats * iostats;
-#endif
+    static void * worker(void * arg);
 
-    static void * worker (void * arg);
 public:
-    disk_queue (int n = 1);             // max number of requests simultaneously submitted to disk
+    disk_queue(int n = 1);             // max number of requests simultaneously submitted to disk
 
-    void set_priority_op (priority_op op)
+    void set_priority_op(priority_op op)
     {
         _priority_op = op;
     }
-    void add_readreq (request_ptr & req);
-    void add_writereq (request_ptr & req);
-    ~disk_queue ();
+    void add_readreq(request_ptr & req);
+    void add_writereq(request_ptr & req);
+    ~disk_queue();
 };
 
 //! \brief Encapsulates disk queues
 //! \remark is a singleton
-class disk_queues
+class disk_queues : public singleton<disk_queues>
 {
+    friend class singleton<disk_queues>;
+
 protected:
-    std::map < DISKID, disk_queue * > queues;
-    disk_queues () { }
+    std::map<DISKID, disk_queue *> queues;
+    disk_queues() { }
+
 public:
-    void add_readreq (request_ptr & req, DISKID disk)
+    void add_readreq(request_ptr & req, DISKID disk)
     {
-        if (queues.find (disk) == queues.end ())
+        if (queues.find(disk) == queues.end())
         {
             // create new disk queue
-            queues[disk] = new disk_queue ();
+            queues[disk] = new disk_queue();
         }
-        queues[disk]->add_readreq (req);
+        queues[disk]->add_readreq(req);
     }
-    void add_writereq (request_ptr & req, DISKID disk)
+    void add_writereq(request_ptr & req, DISKID disk)
     {
-        if (queues.find (disk) == queues.end ())
+        if (queues.find(disk) == queues.end())
         {
             // create new disk queue
-            queues[disk] = new disk_queue ();
+            queues[disk] = new disk_queue();
         }
-        queues[disk]->add_writereq (req);
+        queues[disk]->add_writereq(req);
     }
-    ~disk_queues ()
+    ~disk_queues()
     {
         // deallocate all queues
-        for (std::map < DISKID, disk_queue * > ::iterator i =
-                 queues.begin (); i != queues.end (); i++)
+        for (std::map<DISKID, disk_queue *>::iterator i =
+                 queues.begin(); i != queues.end(); i++)
             delete (*i).second;
-    };
-    static disk_queues * get_instance ()
-    {
-        if (!instance)
-            instance = new disk_queues ();
-
-
-        return instance;
     }
     //! \brief Changes requests priorities
     //! \param op one of:
@@ -707,17 +665,14 @@ public:
     //!                 - NONE, read and write requests are served by turns, alternately
     void set_priority_op(disk_queue::priority_op op)
     {
-        for (std::map < DISKID, disk_queue * > ::iterator i =
-                 queues.begin (); i != queues.end (); i++)
-            i->second->set_priority_op (op);
+        for (std::map<DISKID, disk_queue *>::iterator i =
+                 queues.begin(); i != queues.end(); i++)
+            i->second->set_priority_op(op);
     }
-private:
-    static disk_queues * instance;
 };
 
 //! \}
 
 __STXXL_END_NAMESPACE
 
-
-#endif
+#endif // !STXXL_IOBASE_HEADER

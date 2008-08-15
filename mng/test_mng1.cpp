@@ -1,9 +1,21 @@
-#include "stxxl.h"
+/***************************************************************************
+ *  mng/test_mng1.cpp
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
+#include <stxxl/mng>
 
 
 int main()
 {
-    typedef stxxl::typed_block < 128 * 1024, double > block_type;
+    typedef stxxl::typed_block<128 * 1024, double> block_type;
     std::vector<block_type::bid_type> bids;
     std::vector<stxxl::request_ptr> requests;
     stxxl::block_manager * bm = stxxl::block_manager::get_instance();
@@ -20,7 +32,5 @@ int main()
     }
     stxxl::wait_all(requests.begin(), requests.end());
     bm->delete_blocks(bids.begin(), bids.end());
-    return 1;
+    return 0;
 }
-
-

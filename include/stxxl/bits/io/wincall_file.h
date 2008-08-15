@@ -1,24 +1,26 @@
-#ifndef WINCALL_HEADER
-#define WINCALL_HEADER
-
 /***************************************************************************
- *            wincall_file.h
+ *  include/stxxl/bits/io/wincall_file.h
  *
- *  Fri Aug 22 17:00:00 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@ira.uka.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2005-2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
+#ifndef STXXL_WINCALL_FILE_HEADER
+#define STXXL_WINCALL_FILE_HEADER
 
 #ifdef STXXL_BOOST_CONFIG
  #include <boost/config.hpp>
 #endif
 
-
 #ifdef BOOST_MSVC
 
-#include "stxxl/bits/io/wfs_file.h"
-#include "stxxl/bits/common/debug.h"
+#include <stxxl/bits/io/wfs_file.h>
+#include <stxxl/bits/common/debug.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -29,7 +31,6 @@ __STXXL_BEGIN_NAMESPACE
 //! \brief Implementation of file based on Windows native I/O calls
 class wincall_file : public wfs_file_base
 {
-protected:
 public:
     //! \brief constructs file object
     //! \param filename path of file
@@ -56,6 +57,7 @@ public:
 class wincall_request : public wfs_request_base
 {
     friend class wincall_file;
+
 protected:
     wincall_request(
         wincall_file * f,
@@ -64,22 +66,16 @@ protected:
         size_t b,
         request_type t,
         completion_handler on_cmpl);
-    void serve ();
-public:
-    const char * io_type ();
-private:
-    // Following methods are declared but not implemented
-    // intentionally to forbid their usage
-    wincall_request(const wincall_request &);
-    wincall_request & operator=(const wincall_request &);
-    wincall_request();
-};
+    void serve();
 
+public:
+    const char * io_type();
+};
 
 //! \}
 
 __STXXL_END_NAMESPACE
 
-#endif // BOOST_MSVC
+#endif // #ifdef BOOST_MSVC
 
-#endif // WINCALL_HEADER
+#endif // !STXXL_WINCALL_FILE_HEADER

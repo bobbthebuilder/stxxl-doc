@@ -1,16 +1,17 @@
-#ifndef STATE_HEADER
-#define STATE_HEADER
-
 /***************************************************************************
- *            state.h
+ *  include/stxxl/bits/common/state.h
  *
- *  Sat Aug 24 23:53:53 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include <stxxl/bits/noncopyable.h>
-#include "stxxl/bits/common/utils.h"
+#ifndef STXXL_STATE_HEADER
+#define STXXL_STATE_HEADER
 
 #ifdef STXXL_BOOST_THREADS
  #include <boost/thread/mutex.hpp>
@@ -18,6 +19,9 @@
 #else
  #include <pthread.h>
 #endif
+
+#include <stxxl/bits/noncopyable.h>
+#include <stxxl/bits/common/utils.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -32,30 +36,29 @@ class state : private noncopyable
     pthread_cond_t cond;
 #endif
     int _state;
+
 public:
-    state (int s = 0) : _state (s)
+    state(int s = 0) : _state(s)
     {
 #ifndef STXXL_BOOST_THREADS
-        stxxl_nassert (pthread_mutex_init (&mutex, NULL), resource_error);
-        stxxl_nassert (pthread_cond_init (&cond, NULL), resource_error);
+        check_pthread_call(pthread_mutex_init(&mutex, NULL));
+        check_pthread_call(pthread_cond_init(&cond, NULL));
 #endif
-    };
-    ~state ()
+    }
+    ~state()
     {
 #ifndef STXXL_BOOST_THREADS
-        int res = pthread_mutex_trylock (&mutex);
+        int res = pthread_mutex_trylock(&mutex);
 
         if (res == 0 || res == EBUSY) {
-            stxxl_nassert (pthread_mutex_unlock(&mutex), resource_error);
+            check_pthread_call(pthread_mutex_unlock(&mutex));
         } else
             stxxl_function_error(resource_error);
-        stxxl_nassert (pthread_mutex_destroy
-                       (&mutex), resource_error);
-
-        stxxl_nassert (pthread_cond_destroy (&cond), resource_error);
+        check_pthread_call(pthread_mutex_destroy(&mutex));
+        check_pthread_call(pthread_cond_destroy(&cond));
 #endif
-    };
-    void set_to (int new_state)
+    }
+    void set_to(int new_state)
     {
 #ifdef STXXL_BOOST_THREADS
         boost::mutex::scoped_lock Lock(mutex);
@@ -63,13 +66,13 @@ public:
         Lock.unlock();
         cond.notify_all();
 #else
-        stxxl_nassert (pthread_mutex_lock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_lock(&mutex));
         _state = new_state;
-        stxxl_nassert (pthread_mutex_unlock (&mutex), resource_error);
-        stxxl_nassert (pthread_cond_broadcast (&cond), resource_error);
+        check_pthread_call(pthread_mutex_unlock(&mutex));
+        check_pthread_call(pthread_cond_broadcast(&cond));
 #endif
     }
-    void wait_for (int needed_state)
+    void wait_for(int needed_state)
     {
 #ifdef STXXL_BOOST_THREADS
         boost::mutex::scoped_lock Lock(mutex);
@@ -77,24 +80,23 @@ public:
             cond.wait(Lock);
 
 #else
-        stxxl_nassert (pthread_mutex_lock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_lock(&mutex));
         while (needed_state != _state)
-            stxxl_nassert (pthread_cond_wait
-                           (&cond, &mutex), resource_error);
+            check_pthread_call(pthread_cond_wait(&cond, &mutex));
 
-        stxxl_nassert (pthread_mutex_unlock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_unlock(&mutex));
 #endif
     }
-    int operator ()  ()
+    int operator () ()
     {
 #ifdef STXXL_BOOST_THREADS
         boost::mutex::scoped_lock Lock(mutex);
         return _state;
 #else
         int res;
-        stxxl_nassert (pthread_mutex_lock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_lock(&mutex));
         res = _state;
-        stxxl_nassert (pthread_mutex_unlock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_unlock(&mutex));
         return res;
 #endif
     }
@@ -102,4 +104,4 @@ public:
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_STATE_HEADER

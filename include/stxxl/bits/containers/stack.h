@@ -1,22 +1,26 @@
+/***************************************************************************
+ *  include/stxxl/bits/containers/stack.h
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2003-2004 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
 #ifndef STXXL_STACK_HEADER
 #define STXXL_STACK_HEADER
 
-/***************************************************************************
- *            stack.h
- *
- *  Tue May 27 14:12:24 2003
- *  Copyright  2003  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
-
-#include "stxxl/bits/mng/mng.h"
-#include "stxxl/bits/common/simple_vector.h"
-#include "stxxl/bits/common/tmeta.h"
-#include "stxxl/bits/mng/write_pool.h"
-#include "stxxl/bits/mng/prefetch_pool.h"
-
 #include <stack>
 #include <vector>
+
+#include <stxxl/bits/mng/mng.h>
+#include <stxxl/bits/common/simple_vector.h>
+#include <stxxl/bits/common/tmeta.h>
+#include <stxxl/bits/mng/write_pool.h>
+#include <stxxl/bits/mng/prefetch_pool.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -26,7 +30,7 @@ __STXXL_BEGIN_NAMESPACE
 
 template <class ValTp,
           unsigned BlocksPerPage = 4,
-          unsigned BlkSz = STXXL_DEFAULT_BLOCK_SIZE (ValTp),
+          unsigned BlkSz = STXXL_DEFAULT_BLOCK_SIZE(ValTp),
           class AllocStr = STXXL_DEFAULT_ALLOC_STRATEGY,
           class SzTp = stxxl::int64>
 struct stack_config_generator
@@ -161,7 +165,7 @@ public:
             bids.resize(bids.size() + blocks_per_page);
             typename std::vector<bid_type>::iterator cur_bid = bids.end() - blocks_per_page;
             block_manager::get_instance()->new_blocks(
-                offset_allocator < alloc_strategy > (cur_bid - bids.begin(), alloc_strategy_), cur_bid, bids.end());
+                offset_allocator<alloc_strategy>(cur_bid - bids.begin(), alloc_strategy_), cur_bid, bids.end());
 
             simple_vector<request_ptr> requests(blocks_per_page);
 
@@ -229,6 +233,7 @@ public:
 
         current_element = element((--cache_offset) - 1);
     }
+
 private:
     value_type * element(unsigned_type offset)
     {
@@ -373,7 +378,7 @@ public:
             bids.resize(bids.size() + blocks_per_page);
             typename std::vector<bid_type>::iterator cur_bid = bids.end() - blocks_per_page;
             block_manager::get_instance()->new_blocks(
-                offset_allocator < alloc_strategy > (cur_bid - bids.begin(), alloc_strategy_), cur_bid, bids.end());
+                offset_allocator<alloc_strategy>(cur_bid - bids.begin(), alloc_strategy_), cur_bid, bids.end());
 
             for (int i = 0; i < blocks_per_page; ++i, ++cur_bid)
             {
@@ -466,8 +471,8 @@ private:
     std::vector<bid_type> bids;
     alloc_strategy alloc_strategy_;
     unsigned_type pref_aggr;
-    prefetch_pool<block_type> &p_pool;
-    write_pool<block_type>    &w_pool;
+    prefetch_pool<block_type> & p_pool;
+    write_pool<block_type> & w_pool;
 
 public:
     //! \brief Constructs stack
@@ -475,7 +480,7 @@ public:
     //! \param w_pool_ write pool, that will be used for block writing
     //! \param prefetch_aggressiveness number of blocks that will be used from prefetch pool
     grow_shrink_stack2(
-        prefetch_pool < block_type > & p_pool_,
+        prefetch_pool<block_type> & p_pool_,
         write_pool<block_type> & w_pool_,
         unsigned_type prefetch_aggressiveness = 0) :
         size_(0),
@@ -509,7 +514,7 @@ public:
             const int_type bids_size = bids.size();
             const int_type last_pref = STXXL_MAX(int_type(bids_size) - int_type(pref_aggr), (int_type)0);
             int_type i;
-            for (i = bids_size - 1; i >= last_pref; --i )
+            for (i = bids_size - 1; i >= last_pref; --i)
             {
                 if (p_pool.in_prefetching(bids[i]))
                     p_pool.read(cache, bids[i])->wait();
@@ -551,12 +556,12 @@ public:
             bids.resize(bids.size() + 1);
             typename std::vector<bid_type>::iterator cur_bid = bids.end() - 1;
             block_manager::get_instance()->new_blocks(
-                offset_allocator < alloc_strategy > (cur_bid - bids.begin(), alloc_strategy_), cur_bid, bids.end());
+                offset_allocator<alloc_strategy>(cur_bid - bids.begin(), alloc_strategy_), cur_bid, bids.end());
             w_pool.write(cache, bids.back());
             cache = w_pool.steal();
             const int_type bids_size = bids.size();
-            const int_type last_pref = STXXL_MAX(int_type(bids_size) - int_type(pref_aggr) - 1, (int_type) 0);
-            for (int_type i = bids_size - 2; i >= last_pref; --i )
+            const int_type last_pref = STXXL_MAX(int_type(bids_size) - int_type(pref_aggr) - 1, (int_type)0);
+            for (int_type i = bids_size - 2; i >= last_pref; --i)
             {
                 if (p_pool.in_prefetching(bids[i]))
                     p_pool.read(cache, bids[i])->wait();
@@ -592,7 +597,7 @@ public:
         assert(size_ > 0);
         assert(cache_offset > 0);
         assert(cache_offset <= block_type::size);
-        if (cache_offset == 1 && (!bids.empty()) )
+        if (cache_offset == 1 && (!bids.empty()))
         {
             STXXL_VERBOSE2("grow_shrink_stack2::pop() shrinking, size = " << size_);
 
@@ -614,7 +619,7 @@ public:
             block_manager::get_instance()->delete_block(last_block);
             const int_type bids_size = bids.size();
             const int_type last_pref = STXXL_MAX(int_type(bids_size) - int_type(pref_aggr), (int_type)0);
-            for (int_type i = bids_size - 1; i >= last_pref; --i )
+            for (int_type i = bids_size - 1; i >= last_pref; --i)
             {
                 p_pool.hint(bids[i]); // prefetch
             }
@@ -636,19 +641,18 @@ public:
         {
             const int_type bids_size = bids.size();
             const int_type last_pref = STXXL_MAX(int_type(bids_size) - int_type(pref_aggr), (int_type)0);
-            for (int_type i = bids_size - new_p - 1; i >= last_pref; --i )
+            for (int_type i = bids_size - new_p - 1; i >= last_pref; --i)
             {
                 if (p_pool.in_prefetching(bids[i]))
                     p_pool.read(cache, bids[i])->wait();
                 //  clean prefetch buffers
             }
         }
-        else
-        if (pref_aggr < new_p)
+        else if (pref_aggr < new_p)
         {
             const int_type bids_size = bids.size();
             const int_type last_pref = STXXL_MAX(int_type(bids_size) - int_type(new_p), (int_type)0);
-            for (int_type i = bids_size - 1; i >= last_pref; --i )
+            for (int_type i = bids_size - 1; i >= last_pref; --i)
             {
                 p_pool.hint(bids[i]); // prefetch
             }
@@ -841,33 +845,32 @@ enum stack_behaviour { normal, grow_shrink, grow_shrink2 };
 //!      grow-shrink stack of \c double's with 1 block per page and block size 512 KB
 //!      (total memory occupied = 1 MB).
 //! For configured stack method semantics see documentation of the STL \c std::stack.
-template  <
-           class ValTp,
-           stack_externality Externality = external,
-           stack_behaviour Behaviour = normal,
-           unsigned BlocksPerPage = 4,
-           unsigned BlkSz = STXXL_DEFAULT_BLOCK_SIZE (ValTp),
+template <
+    class ValTp,
+    stack_externality Externality = external,
+    stack_behaviour Behaviour = normal,
+    unsigned BlocksPerPage = 4,
+    unsigned BlkSz = STXXL_DEFAULT_BLOCK_SIZE(ValTp),
 
-           class IntStackTp = std::stack<ValTp>,
-           unsigned_type MigrCritSize = (2 * BlocksPerPage * BlkSz),
+    class IntStackTp = std::stack<ValTp>,
+    unsigned_type MigrCritSize = (2 * BlocksPerPage * BlkSz),
 
-           class AllocStr = STXXL_DEFAULT_ALLOC_STRATEGY,
-           class SzTp = stxxl::int64
->
+    class AllocStr = STXXL_DEFAULT_ALLOC_STRATEGY,
+    class SzTp = stxxl::int64
+    >
 class STACK_GENERATOR
 {
     typedef stack_config_generator<ValTp, BlocksPerPage, BlkSz, AllocStr, SzTp> cfg;
 
-    typedef typename IF < Behaviour == grow_shrink,
-    grow_shrink_stack<cfg>,
-    grow_shrink_stack2<cfg> > ::result GrShrTp;
-    typedef typename IF < Behaviour == normal, normal_stack<cfg>, GrShrTp > ::result ExtStackTp;
-    typedef typename IF < Externality == migrating,
-    migrating_stack<MigrCritSize, ExtStackTp, IntStackTp>, ExtStackTp > ::result MigrOrNotStackTp;
+    typedef typename IF<Behaviour == grow_shrink,
+                        grow_shrink_stack<cfg>,
+                        grow_shrink_stack2<cfg> >::result GrShrTp;
+    typedef typename IF<Behaviour == normal, normal_stack<cfg>, GrShrTp>::result ExtStackTp;
+    typedef typename IF<Externality == migrating,
+                        migrating_stack<MigrCritSize, ExtStackTp, IntStackTp>, ExtStackTp>::result MigrOrNotStackTp;
 
 public:
-
-    typedef typename IF < Externality == internal, IntStackTp, MigrOrNotStackTp > ::result result;
+    typedef typename IF<Externality == internal, IntStackTp, MigrOrNotStackTp>::result result;
 };
 
 //! \}
@@ -878,32 +881,32 @@ __STXXL_END_NAMESPACE
 namespace std
 {
     template <class Config_>
-    void swap(      stxxl::normal_stack < Config_ > & a,
-                    stxxl::normal_stack<Config_> & b)
+    void swap(stxxl::normal_stack<Config_> & a,
+              stxxl::normal_stack<Config_> & b)
     {
         a.swap(b);
     }
 
     template <class Config_>
-    void swap(      stxxl::grow_shrink_stack < Config_ > & a,
-                    stxxl::grow_shrink_stack<Config_> & b)
+    void swap(stxxl::grow_shrink_stack<Config_> & a,
+              stxxl::grow_shrink_stack<Config_> & b)
     {
         a.swap(b);
     }
 
     template <class Config_>
-    void swap(      stxxl::grow_shrink_stack2 < Config_ > & a,
-                    stxxl::grow_shrink_stack2<Config_> & b)
+    void swap(stxxl::grow_shrink_stack2<Config_> & a,
+              stxxl::grow_shrink_stack2<Config_> & b)
     {
         a.swap(b);
     }
 
     template <stxxl::unsigned_type CritSize, class ExternalStack, class InternalStack>
-    void swap(      stxxl::migrating_stack < CritSize, ExternalStack, InternalStack > & a,
-                    stxxl::migrating_stack<CritSize, ExternalStack, InternalStack> & b)
+    void swap(stxxl::migrating_stack<CritSize, ExternalStack, InternalStack> & a,
+              stxxl::migrating_stack<CritSize, ExternalStack, InternalStack> & b)
     {
         a.swap(b);
     }
 }
 
-#endif
+#endif // !STXXL_STACK_HEADER

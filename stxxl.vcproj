@@ -73,20 +73,36 @@
 					RelativePath=".\utils\createdisks.cpp"
 					>
 				</File>
+				<File
+					RelativePath=".\utils\log2.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\utils\malloc.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\utils\off_t_size.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\utils\pq_param.cpp"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="io"
 				>
+				<File
+					RelativePath=".\io\benchmark_disks.cpp"
+					>
+				</File>
 				<File
 					RelativePath=".\io\boostfd_file.cpp"
 					>
 				</File>
 				<File
 					RelativePath=".\io\diskqueue.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\io\disktest.cpp"
 					>
 				</File>
 				<File
@@ -98,6 +114,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\io\sd_test.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\io\simdisk_file.cpp"
 					>
 				</File>
@@ -106,11 +126,15 @@
 					>
 				</File>
 				<File
-					RelativePath=".\io\test.cpp"
+					RelativePath=".\io\test_io.cpp"
 					>
 				</File>
 				<File
 					RelativePath=".\io\ufs_file.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\io\unittest.cpp"
 					>
 				</File>
 				<File
@@ -130,6 +154,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\mng\test_block_alloc_strategy.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\mng\test_buf_streams.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\mng\test_mng.cpp"
 					>
 				</File>
@@ -142,17 +174,21 @@
 					>
 				</File>
 				<File
-					RelativePath=".\mng\test_streams.cpp"
+					RelativePath=".\mng\test_write_pool.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\mng\test_write_pool.cpp"
+					RelativePath=".\mng\unittest.cpp"
 					>
 				</File>
 			</Filter>
 			<Filter
 				Name="containers"
 				>
+				<File
+					RelativePath=".\containers\app_config.h"
+					>
+				</File>
 				<File
 					RelativePath=".\containers\bench_pqueue.cpp"
 					>
@@ -166,10 +202,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\containers\ext_merger.cpp"
-					>
-				</File>
-				<File
 					RelativePath=".\containers\leda_sm_pq_benchmark.cpp"
 					>
 				</File>
@@ -178,11 +210,15 @@
 					>
 				</File>
 				<File
-					RelativePath=".\containers\pq_benchmark.cpp"
+					RelativePath=".\containers\map_test_handlers.h"
 					>
 				</File>
 				<File
-					RelativePath=".\containers\rnd_test.cpp"
+					RelativePath=".\containers\monotonic_pq.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\containers\pq_benchmark.cpp"
 					>
 				</File>
 				<File
@@ -195,6 +231,14 @@
 				</File>
 				<File
 					RelativePath=".\containers\test_ext_merger.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\containers\test_ext_merger2.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\containers\test_iterators.cpp"
 					>
 				</File>
 				<File
@@ -211,10 +255,6 @@
 				</File>
 				<File
 					RelativePath=".\containers\test_migr_stack.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\containers\test_mstack.cpp"
 					>
 				</File>
 				<File
@@ -246,46 +286,26 @@
 					>
 				</File>
 				<Filter
-					Name="map.impl"
+					Name="btree"
 					>
 					<File
-						RelativePath=".\containers\map.impl\speed_test_map_erase.cpp"
+						RelativePath=".\containers\btree\test_btree.cpp"
 						>
 					</File>
 					<File
-						RelativePath=".\containers\map.impl\speed_test_map_insert.cpp"
+						RelativePath=".\containers\btree\test_const_scan.cpp"
 						>
 					</File>
 					<File
-						RelativePath=".\containers\map.impl\speed_test_map_iterate.cpp"
+						RelativePath=".\containers\btree\test_corr_insert_erase.cpp"
 						>
 					</File>
 					<File
-						RelativePath=".\containers\map.impl\speed_test_map_search.cpp"
+						RelativePath=".\containers\btree\test_corr_insert_find.cpp"
 						>
 					</File>
 					<File
-						RelativePath=".\containers\map.impl\test.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\test_map_erase.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\test_map_insert.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\test_map_iterator.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\test_map_random.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\test_map_search.cpp"
+						RelativePath=".\containers\btree\test_corr_insert_scan.cpp"
 						>
 					</File>
 				</Filter>
@@ -295,10 +315,6 @@
 				>
 				<File
 					RelativePath=".\algo\async_schedule.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\algo\asynch_schedule.cpp"
 					>
 				</File>
 				<File
@@ -314,10 +330,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\algo\test.cpp"
-					>
-				</File>
-				<File
 					RelativePath=".\algo\test_asch.cpp"
 					>
 				</File>
@@ -326,7 +338,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\algo\test_ksort1.cpp"
+					RelativePath=".\algo\test_ksort_all_parameters.cpp"
 					>
 				</File>
 				<File
@@ -338,6 +350,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\algo\test_random_shuffle.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\algo\test_scan.cpp"
 					>
 				</File>
@@ -346,7 +362,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\algo\test_sort1.cpp"
+					RelativePath=".\algo\test_sort_all_parameters.cpp"
 					>
 				</File>
 				<File
@@ -354,7 +370,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\algo\test_stable_ksort1.cpp"
+					RelativePath=".\algo\test_stable_ksort_all_parameters.cpp"
 					>
 				</File>
 			</Filter>
@@ -362,23 +378,19 @@
 				Name="stream"
 				>
 				<File
-					RelativePath=".\stream\push_sort.cpp"
+					RelativePath=".\stream\test_push_sort.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\stream\se_lcp.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\stream\sorted_runs.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\stream\stream.cpp"
+					RelativePath=".\stream\test_sorted_runs.cpp"
 					>
 				</File>
 				<File
 					RelativePath=".\stream\test_stream.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\stream\test_stream1.cpp"
 					>
 				</File>
 			</Filter>
@@ -397,6 +409,22 @@
 					RelativePath=".\common\rand.cpp"
 					>
 				</File>
+				<File
+					RelativePath=".\common\seed.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\common\stxxl_info.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\common\test_random.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\common\version.cpp"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
@@ -408,75 +436,71 @@
 				Name="common"
 				>
 				<File
-					RelativePath=".\common\aligned_alloc.h"
+					RelativePath=".\include\stxxl\bits\common\aligned_alloc.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\debug.h"
+					RelativePath=".\include\stxxl\bits\common\debug.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\exceptions.h"
+					RelativePath=".\include\stxxl\bits\common\exceptions.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\gprof.h"
+					RelativePath=".\include\stxxl\bits\common\log.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\log.h"
+					RelativePath=".\include\stxxl\bits\common\mutex.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\mutex.h"
+					RelativePath=".\include\stxxl\bits\common\rand.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\myutils.h"
+					RelativePath=".\include\stxxl\bits\common\seed.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\perm.h"
+					RelativePath=".\include\stxxl\bits\common\semaphore.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\rand.h"
+					RelativePath=".\include\stxxl\bits\common\settings.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\rwlock.h"
+					RelativePath=".\include\stxxl\bits\common\simple_vector.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\semaphore.h"
+					RelativePath=".\include\stxxl\bits\common\state.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\simple_vector.h"
+					RelativePath=".\include\stxxl\bits\common\switch.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\state.h"
+					RelativePath=".\include\stxxl\bits\common\timer.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\switch.h"
+					RelativePath=".\include\stxxl\bits\common\tmeta.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\timer.h"
+					RelativePath=".\include\stxxl\bits\common\tuple.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\tmeta.h"
+					RelativePath=".\include\stxxl\bits\common\types.h"
 					>
 				</File>
 				<File
-					RelativePath=".\common\tuple.h"
-					>
-				</File>
-				<File
-					RelativePath=".\common\utils.h"
+					RelativePath=".\include\stxxl\bits\common\utils.h"
 					>
 				</File>
 			</Filter>
@@ -484,47 +508,47 @@
 				Name="io"
 				>
 				<File
-					RelativePath=".\io\boostfd_file.h"
+					RelativePath=".\include\stxxl\bits\io\boostfd_file.h"
 					>
 				</File>
 				<File
-					RelativePath=".\io\completion_handler.h"
+					RelativePath=".\include\stxxl\bits\io\completion_handler.h"
 					>
 				</File>
 				<File
-					RelativePath=".\io\io.h"
+					RelativePath=".\include\stxxl\bits\io\io.h"
 					>
 				</File>
 				<File
-					RelativePath=".\io\iobase.h"
+					RelativePath=".\include\stxxl\bits\io\iobase.h"
 					>
 				</File>
 				<File
-					RelativePath=".\io\iostats.h"
+					RelativePath=".\include\stxxl\bits\io\iostats.h"
 					>
 				</File>
 				<File
-					RelativePath=".\io\mmap_file.h"
+					RelativePath=".\include\stxxl\bits\io\mmap_file.h"
 					>
 				</File>
 				<File
-					RelativePath=".\io\simdisk_file.h"
+					RelativePath=".\include\stxxl\bits\io\simdisk_file.h"
 					>
 				</File>
 				<File
-					RelativePath=".\io\syscall_file.h"
+					RelativePath=".\include\stxxl\bits\io\syscall_file.h"
 					>
 				</File>
 				<File
-					RelativePath=".\io\ufs_file.h"
+					RelativePath=".\include\stxxl\bits\io\ufs_file.h"
 					>
 				</File>
 				<File
-					RelativePath=".\io\wfs_file.h"
+					RelativePath=".\include\stxxl\bits\io\wfs_file.h"
 					>
 				</File>
 				<File
-					RelativePath=".\io\wincall_file.h"
+					RelativePath=".\include\stxxl\bits\io\wincall_file.h"
 					>
 				</File>
 			</Filter>
@@ -532,39 +556,35 @@
 				Name="mng"
 				>
 				<File
-					RelativePath=".\mng\adaptor.h"
+					RelativePath=".\include\stxxl\bits\mng\adaptor.h"
 					>
 				</File>
 				<File
-					RelativePath=".\mng\async_schedule.h"
+					RelativePath=".\include\stxxl\bits\mng\block_prefetcher.h"
 					>
 				</File>
 				<File
-					RelativePath=".\mng\block_prefetcher.h"
+					RelativePath=".\include\stxxl\bits\mng\buf_istream.h"
 					>
 				</File>
 				<File
-					RelativePath=".\mng\buf_istream.h"
+					RelativePath=".\include\stxxl\bits\mng\buf_ostream.h"
 					>
 				</File>
 				<File
-					RelativePath=".\mng\buf_ostream.h"
+					RelativePath=".\include\stxxl\bits\mng\buf_writer.h"
 					>
 				</File>
 				<File
-					RelativePath=".\mng\buf_writer.h"
+					RelativePath=".\include\stxxl\bits\mng\mng.h"
 					>
 				</File>
 				<File
-					RelativePath=".\mng\mng.h"
+					RelativePath=".\include\stxxl\bits\mng\prefetch_pool.h"
 					>
 				</File>
 				<File
-					RelativePath=".\mng\prefetch_pool.h"
-					>
-				</File>
-				<File
-					RelativePath=".\mng\write_pool.h"
+					RelativePath=".\include\stxxl\bits\mng\write_pool.h"
 					>
 				</File>
 			</Filter>
@@ -572,122 +592,66 @@
 				Name="containers"
 				>
 				<File
-					RelativePath=".\containers\app_config.h"
+					RelativePath=".\include\stxxl\bits\containers\deque.h"
 					>
 				</File>
 				<File
-					RelativePath=".\containers\deque.h"
+					RelativePath=".\include\stxxl\bits\containers\map.h"
 					>
 				</File>
 				<File
-					RelativePath=".\containers\map.h"
+					RelativePath=".\include\stxxl\bits\containers\pager.h"
 					>
 				</File>
 				<File
-					RelativePath=".\containers\map_test_handlers.h"
+					RelativePath=".\include\stxxl\bits\containers\priority_queue.h"
 					>
 				</File>
 				<File
-					RelativePath=".\containers\pager.h"
+					RelativePath=".\include\stxxl\bits\containers\queue.h"
 					>
 				</File>
 				<File
-					RelativePath=".\containers\priority_queue.h"
+					RelativePath=".\include\stxxl\bits\containers\stack.h"
 					>
 				</File>
 				<File
-					RelativePath=".\containers\queue.h"
-					>
-				</File>
-				<File
-					RelativePath=".\containers\stack.h"
-					>
-				</File>
-				<File
-					RelativePath=".\containers\vector.h"
+					RelativePath=".\include\stxxl\bits\containers\vector.h"
 					>
 				</File>
 				<Filter
-					Name="map.impl"
+					Name="btree"
 					>
 					<File
-						RelativePath=".\containers\map.impl\bt_counter.h"
+						RelativePath=".\include\stxxl\bits\containers\btree\btree.h"
 						>
 					</File>
 					<File
-						RelativePath=".\containers\map.impl\btnode.h"
+						RelativePath=".\include\stxxl\bits\containers\btree\btree_pager.h"
 						>
 					</File>
 					<File
-						RelativePath=".\containers\map.impl\btnode_iterator.h"
+						RelativePath=".\include\stxxl\bits\containers\btree\iterator.h"
 						>
 					</File>
 					<File
-						RelativePath=".\containers\map.impl\btnode_manager.h"
+						RelativePath=".\include\stxxl\bits\containers\btree\iterator_map.h"
 						>
 					</File>
 					<File
-						RelativePath=".\containers\map.impl\btree.h"
+						RelativePath=".\include\stxxl\bits\containers\btree\leaf.h"
 						>
 					</File>
 					<File
-						RelativePath=".\containers\map.impl\btree_completion_handler.h"
+						RelativePath=".\include\stxxl\bits\containers\btree\node.h"
 						>
 					</File>
 					<File
-						RelativePath=".\containers\map.impl\btree_iterator.h"
+						RelativePath=".\include\stxxl\bits\containers\btree\node_cache.h"
 						>
 					</File>
 					<File
-						RelativePath=".\containers\map.impl\btree_queue.h"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\btree_request.h"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\fbtnode.h"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\map.h"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\map_async.h"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\map_impl.h"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\map_iterator.h"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\map_queue.h"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\map_request.h"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\map_test.h"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\my_type.h"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\smart_ptr.h"
-						>
-					</File>
-					<File
-						RelativePath=".\containers\map.impl\test_handlers.h"
+						RelativePath=".\include\stxxl\bits\containers\btree\root_node.h"
 						>
 					</File>
 				</Filter>
@@ -696,51 +660,51 @@
 				Name="algo"
 				>
 				<File
-					RelativePath=".\algo\adaptor.h"
+					RelativePath=".\include\stxxl\bits\algo\adaptor.h"
 					>
 				</File>
 				<File
-					RelativePath=".\algo\async_schedule.h"
+					RelativePath=".\include\stxxl\bits\algo\async_schedule.h"
 					>
 				</File>
 				<File
-					RelativePath=".\algo\inmemsort.h"
+					RelativePath=".\include\stxxl\bits\mng\block_alloc_interleaved.h"
 					>
 				</File>
 				<File
-					RelativePath=".\algo\interleaved_alloc.h"
+					RelativePath=".\include\stxxl\bits\algo\inmemsort.h"
 					>
 				</File>
 				<File
-					RelativePath=".\algo\intksort.h"
+					RelativePath=".\include\stxxl\bits\algo\intksort.h"
 					>
 				</File>
 				<File
-					RelativePath=".\algo\ksort.h"
+					RelativePath=".\include\stxxl\bits\algo\ksort.h"
 					>
 				</File>
 				<File
-					RelativePath=".\algo\ksort_exp.h"
+					RelativePath=".\include\stxxl\bits\algo\losertree.h"
 					>
 				</File>
 				<File
-					RelativePath=".\algo\losertree.h"
+					RelativePath=".\include\stxxl\bits\algo\random_shuffle.h"
 					>
 				</File>
 				<File
-					RelativePath=".\algo\run_cursor.h"
+					RelativePath=".\include\stxxl\bits\algo\run_cursor.h"
 					>
 				</File>
 				<File
-					RelativePath=".\algo\scan.h"
+					RelativePath=".\include\stxxl\bits\algo\scan.h"
 					>
 				</File>
 				<File
-					RelativePath=".\algo\sort.h"
+					RelativePath=".\include\stxxl\bits\algo\sort.h"
 					>
 				</File>
 				<File
-					RelativePath=".\algo\stable_ksort.h"
+					RelativePath=".\include\stxxl\bits\algo\stable_ksort.h"
 					>
 				</File>
 			</Filter>
@@ -748,11 +712,43 @@
 				Name="stream"
 				>
 				<File
-					RelativePath=".\stream\sort_stream.h"
+					RelativePath=".\include\stxxl\bits\stream\sort_stream.h"
 					>
 				</File>
 				<File
-					RelativePath=".\stream\stream.h"
+					RelativePath=".\include\stxxl\bits\stream\stream.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="bits"
+				>
+				<File
+					RelativePath=".\include\stxxl\bits\compat_auto_ptr.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\stxxl\bits\compat_hash_map.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\stxxl\bits\compat_hash_set.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\bits\intel_compatibility.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\stxxl\bits\namespace.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\stxxl\bits\noncopyable.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\stxxl\bits\version.h"
 					>
 				</File>
 			</Filter>
@@ -764,7 +760,7 @@
 			>
 		</Filter>
 		<File
-			RelativePath=".\readme.txt"
+			RelativePath=".\README"
 			>
 		</File>
 	</Files>

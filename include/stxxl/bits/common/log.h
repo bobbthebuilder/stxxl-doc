@@ -1,33 +1,40 @@
-#ifndef HEADER_STXXL_LOG
-#define HEADER_STXXL_LOG
-
 /***************************************************************************
- *            log.h
+ *  include/stxxl/bits/common/log.h
  *
- *  Wed Jul 27 10:54:00 2004
- *  Copyright  2005  Roman Dementiev
- *  Email dementiev@ira.uka.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2004-2005 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl/bits/namespace.h"
+#ifndef STXXL_LOG_HEADER
+#define STXXL_LOG_HEADER
 
 #include <iostream>
 #include <fstream>
 
+#include <stxxl/bits/namespace.h>
+#include <stxxl/bits/singleton.h>
+
 
 __STXXL_BEGIN_NAMESPACE
 
-class logger
+class logger : public singleton<logger>
 {
-    static logger * instance;
+    friend class singleton<logger>;
+
     std::ofstream log_stream_;
     std::ofstream errlog_stream_;
+
     inline logger() :
         log_stream_("stxxl.log"),
         errlog_stream_("stxxl.errlog")
     { }
-public:
 
+public:
     inline std::ofstream & log_stream()
     {
         return log_stream_;
@@ -37,16 +44,8 @@ public:
     {
         return errlog_stream_;
     }
-
-    inline static logger * get_instance ()
-    {
-        if (!instance)
-            instance = new logger ();
-
-        return instance;
-    }
 };
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_LOG_HEADER

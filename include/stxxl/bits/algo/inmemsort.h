@@ -1,18 +1,22 @@
-#ifndef IN_MEMORY_SORT_HEADER
-#define IN_MEMORY_SORT_HEADER
-
 /***************************************************************************
- *            inmemsort.h
+ *  include/stxxl/bits/algo/inmemsort.h
  *
- *  Mon Apr  7 14:23:34 2003
- *  Copyright  2003  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2003 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl/bits/namespace.h"
-#include "stxxl/bits/common/simple_vector.h"
-#include "stxxl/bits/algo/adaptor.h"
-#include "stxxl/bits/mng/adaptor.h"
+#ifndef STXXL_IN_MEMORY_SORT_HEADER
+#define STXXL_IN_MEMORY_SORT_HEADER
+
+#include <stxxl/bits/namespace.h>
+#include <stxxl/bits/common/simple_vector.h>
+#include <stxxl/bits/algo/adaptor.h>
+#include <stxxl/bits/mng/adaptor.h>
 
 #include <algorithm>
 
@@ -25,7 +29,7 @@ void stl_in_memory_sort(ExtIterator_ first, ExtIterator_ last, StrictWeakOrderin
     typedef typename ExtIterator_::vector_type::value_type value_type;
     typedef typename ExtIterator_::block_type block_type;
 
-    STXXL_VERBOSE("stl_in_memory_sort, range: " << (last - first) );
+    STXXL_VERBOSE("stl_in_memory_sort, range: " << (last - first));
     unsigned_type nblocks = last.bid() - first.bid() + (last.block_offset() ? 1 : 0);
     simple_vector<block_type> blocks(nblocks);
     simple_vector<request_ptr> reqs(nblocks);
@@ -40,11 +44,21 @@ void stl_in_memory_sort(ExtIterator_ first, ExtIterator_ last, StrictWeakOrderin
     unsigned_type last_block_correction = last.block_offset() ? (block_type::size - last.block_offset()) : 0;
     if (block_type::has_filler)
         std::sort(
-            TwoToOneDimArrayRowAdaptor < block_type,
-            typename block_type::value_type, block_type::size > (blocks.begin(), first.block_offset() ),
-            TwoToOneDimArrayRowAdaptor < block_type,
-            typename block_type::value_type, block_type::size > (blocks.begin(),
-                                                                 nblocks * block_type::size - last_block_correction),
+#if 1
+            ArrayOfSequencesIterator<
+                block_type, typename block_type::value_type, block_type::size
+                >(blocks.begin(), first.block_offset()),
+            ArrayOfSequencesIterator<
+                block_type, typename block_type::value_type, block_type::size
+                >(blocks.begin(), nblocks * block_type::size - last_block_correction),
+#else
+            TwoToOneDimArrayRowAdaptor<
+                block_type, typename block_type::value_type, block_type::size
+                >(blocks.begin(), first.block_offset()),
+            TwoToOneDimArrayRowAdaptor<
+                block_type, typename block_type::value_type, block_type::size
+                >(blocks.begin(), nblocks * block_type::size - last_block_correction),
+#endif
             cmp);
 
     else
@@ -62,4 +76,4 @@ void stl_in_memory_sort(ExtIterator_ first, ExtIterator_ last, StrictWeakOrderin
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_IN_MEMORY_SORT_HEADER

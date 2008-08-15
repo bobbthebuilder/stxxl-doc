@@ -1,13 +1,14 @@
 /***************************************************************************
- *            test_migr_stack.cpp
+ *  containers/test_migr_stack.cpp
  *
- *  Fri May  2 13:34:25 2003
- *  Copyright  2003  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2003 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
  **************************************************************************/
-
-
-#include "stxxl/stack"
 
 //! \example containers/test_migr_stack.cpp
 //! This is an example of how to use \c stxxl::STACK_GENERATOR class
@@ -15,14 +16,14 @@
 //! external implementation \c normal_stack , \b four blocks per page,
 //! block size \b 4096 bytes, and internal implementation
 //! \c std::stack<int>
-using namespace stxxl;
+
+#include <stxxl/stack>
+
 
 int main()
 {
     const unsigned critical_size = 8 * 4096;
-    typedef STACK_GENERATOR < int, \
-    migrating, normal, 4, 4096, std::stack<int>, critical_size > ::result migrating_stack_type;
-
+    typedef stxxl::STACK_GENERATOR<int, stxxl::migrating, stxxl::normal, 4, 4096, std::stack<int>, critical_size>::result migrating_stack_type;
 
     STXXL_MSG("Starting test.");
 
@@ -36,7 +37,7 @@ int main()
         my_stack.push(i);
         assert(my_stack.top() == i);
         assert(my_stack.size() == i + 1);
-        assert((my_stack.size() >= critical_size) == my_stack.external() );
+        assert((my_stack.size() >= critical_size) == my_stack.external());
     }
 
     STXXL_MSG("Testing swap.");
@@ -53,7 +54,7 @@ int main()
         assert(my_stack.size() == i + 1);
         my_stack.pop();
         assert(my_stack.size() == i);
-        assert(my_stack.external() == (test_size >= int (critical_size)));
+        assert(my_stack.external() == (test_size >= int(critical_size)));
     }
 
     STXXL_MSG("Test passed.");

@@ -1,34 +1,42 @@
-#ifndef HEADER_STXXL_DEBUG
-#define HEADER_STXXL_DEBUG
-
 /***************************************************************************
- *            debug.h
+ *  include/stxxl/bits/common/debug.h
  *
- *  Thu Dec 30 14:52:00 2004
- *  Copyright  2004  Roman Dementiev
- *  Email dementiev@ira.uka.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2004 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
+#ifndef STXXL_DEBUG_HEADER
+#define STXXL_DEBUG_HEADER
 
 #ifdef STXXL_BOOST_CONFIG
  #include <boost/config.hpp>
 #endif
 
-#include "stxxl/bits/namespace.h"
-#include "stxxl/bits/common/mutex.h"
-
-#include <map>
-
-#ifdef BOOST_MSVC
- #include <hash_map>
-#else
- #include <ext/hash_map>
-#endif
+#include <stxxl/bits/namespace.h>
+#include <stxxl/bits/singleton.h>
+#include <stxxl/bits/common/mutex.h>
+#include <stxxl/bits/compat_hash_map.h>
 
 
 __STXXL_BEGIN_NAMESPACE
 
-class debugmon
+#ifdef STXXL_DEBUGMON
+ #define STXXL_DEBUGMON_DO(action) debugmon::get_instance()->action
+#else
+ #define STXXL_DEBUGMON_DO(action)
+#endif
+
+class debugmon : public singleton<debugmon>
 {
+    friend class singleton<debugmon>;
+
+#ifdef STXXL_DEBUGMON
+
     struct tag
     {
         bool ongoing;
@@ -37,65 +45,36 @@ class debugmon
     };
     struct hash_fct
     {
-        inline size_t operator ()  (char * arg) const
+        inline size_t operator () (char * arg) const
         {
-            return long (arg);
+            return long(arg);
         }
-    };
-    struct eqt
-    {
-        inline bool operator ()  (char * arg1, char * arg2) const
-        {
-            return arg1 == arg2;
-        }
-    };
 #ifdef BOOST_MSVC
-    struct my_hash_comp
-    {
-        size_t operator() (char * arg) const
+        bool operator () (char * a, char * b) const
         {
-            return long (arg);
-        }
-        bool operator() (char * a, char * b) const
-        {
-            return (long (a) < long (b));
+            return (long(a) < long(b));
         }
         enum
-        {               // parameters for hash table
-            bucket_size = 4,                    // 0 < bucket_size
-            min_buckets = 8
-        };              // min_buckets = 2 ^^ N, 0 < N
+        {                       // parameters for hash table
+            bucket_size = 4,    // 0 < bucket_size
+            min_buckets = 8     // min_buckets = 2 ^^ N, 0 < N
+        };
+#endif
     };
-    stdext::hash_map<char *, tag, my_hash_comp > tags;
-#else
-    __gnu_cxx::hash_map<char *, tag, hash_fct, eqt > tags;
-#endif
 
-#ifdef STXXL_BOOST_THREADS
-    boost::mutex mutex1;
-#else
+    compat_hash_map<char *, tag, hash_fct>::result tags;
+
     mutex mutex1;
-#endif
 
-    static debugmon * instance;
+#endif // #ifdef STXXL_DEBUGMON
 
-    inline debugmon() { }
 public:
-
     void block_allocated(char * ptr, char * end, size_t size);
     void block_deallocated(char * ptr);
     void io_started(char * ptr);
     void io_finished(char * ptr);
-
-    inline static debugmon * get_instance ()
-    {
-        if (!instance)
-            instance = new debugmon ();
-
-        return instance;
-    }
 };
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_DEBUG_HEADER

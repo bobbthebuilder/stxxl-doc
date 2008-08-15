@@ -1,17 +1,18 @@
-#ifndef MYUTILS_HEADER
-#define MYUTILS_HEADER
-
 /***************************************************************************
- *            utils.h
+ *  include/stxxl/bits/common/utils.h
  *
- *  Sat Aug 24 23:54:29 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002-2006 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *  Copyright (C) 2007, 2008 Andreas Beckmann <beckmann@cs.uni-frankfurt.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#ifdef STXXL_BOOST_CONFIG
- #include <boost/config.hpp>
-#endif
+#ifndef STXXL_UTILS_HEADER
+#define STXXL_UTILS_HEADER
 
 #include <iostream>
 #include <sstream>
@@ -29,45 +30,78 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#ifdef STXXL_BOOST_CONFIG
+ #include <boost/config.hpp>
+#endif
+
 #ifdef STXXL_BOOST_FILESYSTEM
  #include <boost/filesystem/operations.hpp>
 #endif
 
-#include "stxxl/bits/namespace.h"
-#include "stxxl/bits/common/log.h"
-#include "stxxl/bits/common/exceptions.h"
-#include "stxxl/bits/common/types.h"
-#include "stxxl/bits/common/timer.h"
+#include <stxxl/bits/namespace.h>
+#include <stxxl/bits/common/log.h>
+#include <stxxl/bits/common/exceptions.h>
+#include <stxxl/bits/common/types.h>
+#include <stxxl/bits/common/timer.h>
+#include <stxxl/bits/common/is_sorted.h>
+
 
 __STXXL_BEGIN_NAMESPACE
 
-template<typename U>
+template <typename U>
 inline void UNUSED(const U &)
 { }
+
+#ifdef BOOST_MSVC
+  #define __STXXL_DEPRECATED(x) __declspec(deprecated) x
+#else
+  #define __STXXL_DEPRECATED(x) x __attribute__ ((__deprecated__))
+#endif
+
+////////////////////////////////////////////////////////////////////////////
 
 #define __STXXL_STRING(x) # x
 
 
-#define STXXL_MSG(x) \
-    { std::cout << "[STXXL-MSG] " << x << std::endl << std::flush; \
-      stxxl::logger::get_instance()->log_stream() << "[STXXL-MSG] " << x << std::endl << std::flush; \
+#define _STXXL_PRINT(label, outstream, log_stream, message) \
+    { std::ostringstream str_; \
+      str_ << "[" label "] " << message << std::endl; \
+      outstream << str_.str() << std::flush; \
+      stxxl::logger::get_instance()->log_stream() << str_.str() << std::flush; \
     }
 
-#define STXXL_ERRMSG(x) \
-    { std::cerr << "[STXXL-ERRMSG] " << x << std::endl << std::flush; \
-      stxxl::logger::get_instance()->errlog_stream() << "[STXXL-ERRMSG] " << x << std::endl << std::flush; \
-    }
+#define STXXL_MSG(x) _STXXL_PRINT("STXXL-MSG", std::cout, log_stream, x)
 
+#define STXXL_ERRMSG(x) _STXXL_PRINT("STXXL-ERRMSG", std::cerr, errlog_stream, x)
+
+
+#ifdef STXXL_FORCE_VERBOSE_LEVEL
+#undef STXXL_VERBOSE_LEVEL
+#define STXXL_VERBOSE_LEVEL STXXL_FORCE_VERBOSE_LEVEL
+#endif
+
+#ifdef STXXL_DEFAULT_VERBOSE_LEVEL
+#ifndef STXXL_VERBOSE_LEVEL
+#define STXXL_VERBOSE_LEVEL STXXL_DEFAULT_VERBOSE_LEVEL
+#endif
+#endif
 
 #ifndef STXXL_VERBOSE_LEVEL
-#define STXXL_VERBOSE_LEVEL 0
+#define STXXL_VERBOSE_LEVEL -1
+#endif
+
+// STXXL_VERBOSE0 should be used for current debugging activity only,
+// and afterwards be replaced by STXXL_VERBOSE1 or higher.
+// Code that actively uses STXXL_VERBOSE0 should never get into a release.
+
+#if STXXL_VERBOSE_LEVEL > -1
+ #define STXXL_VERBOSE0(x) _STXXL_PRINT("STXXL-VERBOSE0", std::cout, log_stream, x)
+#else
+ #define STXXL_VERBOSE0(x)
 #endif
 
 #if STXXL_VERBOSE_LEVEL > 0
- #define STXXL_VERBOSE1(x) \
-    { std::cout << "[STXXL-VERBOSE1] " << x << std::endl << std::flush; \
-      stxxl::logger::get_instance()->log_stream() << "[STXXL-VERBOSE1] " << x << std::endl << std::flush; \
-    }
+ #define STXXL_VERBOSE1(x) _STXXL_PRINT("STXXL-VERBOSE1", std::cout, log_stream, x)
 #else
  #define STXXL_VERBOSE1(x)
 #endif
@@ -75,23 +109,18 @@ inline void UNUSED(const U &)
 #define STXXL_VERBOSE(x) STXXL_VERBOSE1(x)
 
 #if STXXL_VERBOSE_LEVEL > 1
- #define STXXL_VERBOSE2(x) \
-    { std::cout << "[STXXL-VERBOSE2] " << x << std::endl << std::flush; \
-      stxxl::logger::get_instance()->log_stream() << "[STXXL-VERBOSE2] " << x << std::endl << std::flush; \
-    };
+ #define STXXL_VERBOSE2(x) _STXXL_PRINT("STXXL-VERBOSE2", std::cout, log_stream, x)
 #else
  #define STXXL_VERBOSE2(x)
 #endif
 
 #if STXXL_VERBOSE_LEVEL > 2
- #define STXXL_VERBOSE3(x) \
-    { std::cout << "[STXXL-VERBOSE3] " << x << std::endl << std::flush; \
-      stxxl::logger::get_instance()->log_stream() << "[STXXL-VERBOSE3] " << x << std::endl << std::flush; \
-    };
+ #define STXXL_VERBOSE3(x) _STXXL_PRINT("STXXL-VERBOSE3", std::cout, log_stream, x)
 #else
  #define STXXL_VERBOSE3(x)
 #endif
 
+////////////////////////////////////////////////////////////////////////////
 
 #ifdef BOOST_MSVC
  #define STXXL_PRETTY_FUNCTION_NAME __FUNCTION__
@@ -100,126 +129,72 @@ inline void UNUSED(const U &)
 #endif
 
 #define STXXL_FORMAT_ERROR_MSG(str_, errmsg_) \
-    std::ostringstream str_; str_ << "Error in " << errmsg_;
+    std::ostringstream str_; str_ << "Error in " << errmsg_
 
+#define STXXL_THROW(exception_type, location, error_message) \
+    { \
+        std::ostringstream msg_; \
+        msg_ << "Error in " << location << ": " << error_message; \
+        throw exception_type(msg_.str()); \
+    }
 
-#ifndef STXXL_DEBUG_ON
- #define STXXL_DEBUG_ON 1
-#endif
+#define STXXL_THROW2(exception_type, error_message) \
+    STXXL_THROW(exception_type, "function " << STXXL_PRETTY_FUNCTION_NAME, \
+                "Info: " << error_message << " " << strerror(errno))
 
-inline std::string perror_string()
+template <typename E>
+inline void stxxl_util_function_error(const char * func_name, const char * expr = 0, const char * error = 0)
 {
-    return std::string(strerror(errno));
-}
-
-template<typename E>
-inline void stxxl_util_function_error(const char *func_name)
-{
-#if STXXL_DEBUG_ON
     std::ostringstream str_;
-    str_ << "Error in function " << func_name << " " << perror_string();
+    str_ << "Error in function " << func_name << " " << (expr ? expr : strerror(errno));
+    if (error)
+        str_ << " " << error;
     throw E(str_.str());
-#else
-    UNUSED(func_name);
-#endif
 }
 
- #define stxxl_function_error(exception_type) \
+#define stxxl_function_error(exception_type) \
     stxxl::stxxl_util_function_error<exception_type>(STXXL_PRETTY_FUNCTION_NAME)
 
-template<typename E>
-inline void stxxl_util_nassert(int cond, const char *expr, const char *func_name)
+template <typename E>
+inline bool helper_check_success(bool success, const char * func_name, const char * expr = 0, const char * error = 0)
 {
-    if (cond) {
-#if STXXL_DEBUG_ON
-        std::ostringstream str_;
-        str_ << "Error in function: " << func_name << " " << expr;
-        throw E(str_.str());
-#else
-        UNUSED(expr);
-        UNUSED(func_name);
-#endif
-    }
+    if (!success)
+        stxxl_util_function_error<E>(func_name, expr, error);
+    return success;
 }
 
- #define stxxl_nassert(expr, exception_type) \
-    stxxl::stxxl_util_nassert<exception_type>(expr, __STXXL_STRING (expr), STXXL_PRETTY_FUNCTION_NAME)
-
-// returns true if cond succeeded
-template<typename E>
-inline bool stxxl_util_try(int cond, const char *func_name)
+template <typename E, typename INT>
+inline bool helper_check_eq_0(INT res, const char * func_name, const char * expr, bool res_2_strerror = false)
 {
-    if (cond < 0) {
-#if STXXL_DEBUG_ON
-        std::ostringstream str_;
-        str_ << "Error in function " << func_name << " " << perror_string();
-        throw E(str_.str());
-#else
-        UNUSED(func_name);
-#endif
-        return false;
-    }
-    return true;
+    return helper_check_success<E>(res == 0, func_name, expr, res_2_strerror ? strerror(res) : 0);
 }
 
-template<typename E, typename INT>
-inline bool helper_check_ge_0(INT res, const char *func_name)
+#define check_pthread_call(expr) \
+    stxxl::helper_check_eq_0<stxxl::resource_error>(expr, STXXL_PRETTY_FUNCTION_NAME, __STXXL_STRING(expr), true)
+
+template <typename E, typename INT>
+inline bool helper_check_ge_0(INT res, const char * func_name)
 {
-    if (res >= 0) {
-        UNUSED(func_name);
-        return true;
-    } else {
-#if STXXL_DEBUG_ON
-        std::ostringstream str_;
-        str_ << "Error in function " << func_name << " " << perror_string();
-        throw E(str_.str());
-#endif
-        return false;
-    }
+    return helper_check_success<E>(res >= 0, func_name);
 }
 
 #define stxxl_check_ge_0(expr, exception_type) \
     stxxl::helper_check_ge_0<exception_type>(expr, STXXL_PRETTY_FUNCTION_NAME)
 
-template<typename E, typename INT>
-inline bool helper_check_ne_0(INT res, const char *func_name)
+template <typename E, typename INT>
+inline bool helper_check_ne_0(INT res, const char * func_name)
 {
-    if (res != 0) {
-        UNUSED(func_name);
-        return true;
-    } else {
-#if STXXL_DEBUG_ON
-        std::ostringstream str_;
-        str_ << "Error in function " << func_name << " " << perror_string();
-        throw E(str_.str());
-#endif
-        return false;
-    }
+    return helper_check_success<E>(res != 0, func_name);
 }
 
 #define stxxl_check_ne_0(expr, exception_type) \
     stxxl::helper_check_ne_0<exception_type>(expr, STXXL_PRETTY_FUNCTION_NAME)
 
-#if STXXL_DEBUG_ON
+#ifdef BOOST_MSVC
 
- #define stxxl_ifcheck_i(expr, info, exception_type) \
-    if ((expr) < 0) \
+#define stxxl_win_lasterror_exit(errmsg, exception_type) \
     { \
-        std::ostringstream str_; \
-        str_ << "Error in function " << \
-        STXXL_PRETTY_FUNCTION_NAME << " Info: " << \
-        info << " " << perror_string(); \
-        throw exception_type(str_.str()); \
-    }
-
- #define stxxl_debug(expr) expr
-
-
- #ifdef BOOST_MSVC
-
-  #define stxxl_win_lasterror_exit(errmsg, exception_type)  \
-    { \
-        TCHAR szBuf[80];  \
+        TCHAR szBuf[80]; \
         LPVOID lpMsgBuf; \
         DWORD dw = GetLastError(); \
         FormatMessage( \
@@ -228,40 +203,22 @@ inline bool helper_check_ne_0(INT res, const char *func_name)
             NULL, \
             dw, \
             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), \
-            (LPTSTR) &lpMsgBuf, \
-            0, NULL ); \
+            (LPTSTR)&lpMsgBuf, \
+            0, NULL); \
         std::ostringstream str_; \
         str_ << "Error in " << errmsg << ", error code " << dw << ": " << ((char *)lpMsgBuf); \
         LocalFree(lpMsgBuf); \
-        throw exception_type(str_.str());  \
+        throw exception_type(str_.str()); \
     }
-
- #endif
-
-#else
-
- #define stxxl_ifcheck_i(expr, info, exception_type) expr; if (0) { }
-
- #define stxxl_debug(expr)
-
- #ifdef BOOST_MSVC
-  #define stxxl_win_lasterror_exit(errmsg) stxxl::UNUSED(42)
- #endif
 
 #endif
 
-inline double
-stxxl_timestamp ()
-{
-    return timestamp();
-}
+////////////////////////////////////////////////////////////////////////////
 
-
-inline
-std::string
-stxxl_tmpfilename (std::string dir, std::string prefix)
+inline std::string
+stxxl_tmpfilename(std::string dir, std::string prefix)
 {
-    //stxxl_debug(cerr <<" TMP:"<< dir.c_str() <<":"<< prefix.c_str()<< endl);
+    //STXXL_VERBOSE0(" TMP:"<< dir.c_str() <<":"<< prefix.c_str());
     int rnd;
     char buffer[1024];
     std::string result;
@@ -272,8 +229,8 @@ stxxl_tmpfilename (std::string dir, std::string prefix)
 
     do
     {
-        rnd = rand ();
-        sprintf (buffer, "%d", rnd);
+        rnd = rand();
+        sprintf(buffer, "%d", rnd);
         result = dir + prefix + buffer;
     }
 #ifdef STXXL_BOOST_FILESYSTEM
@@ -281,7 +238,7 @@ stxxl_tmpfilename (std::string dir, std::string prefix)
 
     return result;
 #else
-    while (!lstat (result.c_str (), &st));
+    while (!lstat(result.c_str(), &st));
 
     if (errno != ENOENT)
         stxxl_function_error(io_error);
@@ -290,58 +247,71 @@ stxxl_tmpfilename (std::string dir, std::string prefix)
 #endif
 }
 
-inline
-std::vector < std::string >
-split (const std::string & str, const std::string & sep)
+////////////////////////////////////////////////////////////////////////////
+
+inline std::vector<std::string>
+split(const std::string & str, const std::string & sep)
 {
-    std::vector < std::string > result;
-    if (str.empty ())
+    std::vector<std::string> result;
+    if (str.empty())
         return result;
 
-    std::string::size_type CurPos (0), LastPos (0);
+    std::string::size_type CurPos(0), LastPos(0);
     while (1)
     {
-        CurPos = str.find (sep, LastPos);
+        CurPos = str.find(sep, LastPos);
         if (CurPos == std::string::npos)
             break;
 
         std::string sub =
-            str.substr (LastPos,
-                        std::string::size_type (CurPos -
-                                                LastPos));
-        if (sub.size ())
-            result.push_back (sub);
+            str.substr(LastPos,
+                       std::string::size_type(CurPos -
+                                              LastPos));
+        if (sub.size())
+            result.push_back(sub);
 
-        LastPos = CurPos + sep.size ();
+        LastPos = CurPos + sep.size();
     }
 
-    std::string sub = str.substr (LastPos);
-    if (sub.size ())
-        result.push_back (sub);
+    std::string sub = str.substr(LastPos);
+    if (sub.size())
+        result.push_back(sub);
 
     return result;
 }
 
+////////////////////////////////////////////////////////////////////////////
+
 #define str2int(str) atoi(str.c_str())
 
-inline
-std::string
-int2str (int i)
+inline std::string int2str(int i)
 {
     char buf[32];
-    sprintf (buf, "%d", i);
-    return std::string (buf);
+    sprintf(buf, "%d", i);
+    return std::string(buf);
 }
 
-#define STXXL_MIN(a, b) ( (std::min)(a, b) )
-#define STXXL_MAX(a, b) ( (std::max)(a, b) )
+inline stxxl::int64 atoint64(const char * s)
+{
+#ifdef BOOST_MSVC
+    return _atoi64(s);
+#else
+    return atoll(s);
+#endif
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+#define STXXL_MIN(a, b) ((std::min)(a, b))
+#define STXXL_MAX(a, b) ((std::max)(a, b))
 
 #define STXXL_L2_SIZE  (512 * 1024)
 
-#define div_and_round_up(a, b) ( (a) / (b) + !(!((a) % (b))))
+#define div_and_round_up(a, b) ((a) / (b) + !(!((a) % (b))))
 
 #define log2(x) (log(x) / log(2.))
 
+////////////////////////////////////////////////////////////////////////////
 
 //#define HAVE_BUILTIN_EXPECT
 
@@ -357,33 +327,7 @@ int2str (int i)
  #define UNLIKELY(c)   c
 #endif
 
-
-//#define COUNT_WAIT_TIME
-
-#ifdef COUNT_WAIT_TIME
-
- #define START_COUNT_WAIT_TIME  double count_wait_begin = stxxl_timestamp();
- #define END_COUNT_WAIT_TIME    stxxl::wait_time_counter += (stxxl_timestamp() - count_wait_begin);
-
- #define reset_io_wait_time() stxxl::wait_time_counter = 0.0;
-
- #define io_wait_time() (stxxl::wait_time_counter)
-
-#else
-
- #define START_COUNT_WAIT_TIME
- #define END_COUNT_WAIT_TIME
-
-inline void reset_io_wait_time()
-{ }
-
-inline double io_wait_time()
-{
-    return -1.0;
-}
-
-#endif
-
+////////////////////////////////////////////////////////////////////////////
 
 inline uint64 longhash1(uint64 key_)
 {
@@ -398,44 +342,32 @@ inline uint64 longhash1(uint64 key_)
     return key_;
 }
 
-
-template <class _ForwardIter>
-bool is_sorted(_ForwardIter __first, _ForwardIter __last)
-{
-    if (__first == __last)
-        return true;
-
-    _ForwardIter __next = __first;
-    for (++__next; __next != __last; __first = __next, ++__next) {
-        if (*__next < *__first)
-            return false;
-    }
-
-    return true;
-}
-
-template <class _ForwardIter, class _StrictWeakOrdering>
-bool is_sorted(_ForwardIter __first, _ForwardIter __last,
-               _StrictWeakOrdering __comp)
-{
-    if (__first == __last)
-        return true;
-
-    _ForwardIter __next = __first;
-    for (++__next; __next != __last; __first = __next, ++__next) {
-        if (__comp(*__next, *__first))
-            return false;
-    }
-
-    return true;
-}
+////////////////////////////////////////////////////////////////////////////
 
 template <class T>
-void swap_1D_arrays(T * a, T * b, unsigned_type size)
+inline void swap_1D_arrays(T * a, T * b, unsigned_type size)
 {
     for (unsigned_type i = 0; i < size; ++i)
         std::swap(a[i], b[i]);
 }
+
+////////////////////////////////////////////////////////////////////////////
+
+template <class T>
+class new_alloc;
+
+template <typename T, typename U>
+struct new_alloc_rebind;
+
+template <typename T>
+struct new_alloc_rebind<T, T>{
+    typedef new_alloc<T> other;
+};
+
+template <typename T, typename U>
+struct new_alloc_rebind {
+    typedef std::allocator<U> other;
+};
 
 
 // designed for typed_block (to use with std::vector )
@@ -444,25 +376,25 @@ class new_alloc {
 public:
     // type definitions
     typedef T value_type;
-    typedef T *       pointer;
+    typedef T * pointer;
     typedef const T * const_pointer;
-    typedef T &       reference;
+    typedef T & reference;
     typedef const T & const_reference;
     typedef std::size_t size_type;
     typedef std::ptrdiff_t difference_type;
 
-    // rebind allocator to type U
+    // rebind allocator to type U, use new_alloc only if U == T
     template <class U>
     struct rebind {
-        typedef new_alloc<U> other;
+        typedef typename new_alloc_rebind<T, U>::other other;
     };
 
     // return address of values
-    pointer address (reference value) const
+    pointer address(reference value) const
     {
         return &value;
     }
-    const_pointer address (const_reference value) const
+    const_pointer address(const_reference value) const
     {
         return &value;
     }
@@ -470,65 +402,65 @@ public:
     new_alloc() throw () { }
     new_alloc(const new_alloc &) throw () { }
     template <class U>
-    new_alloc (const new_alloc<U> &) throw () { }
+    new_alloc(const new_alloc<U> &) throw () { }
     ~new_alloc() throw () { }
 
-    // return maximum number of elements that can be allocated
-    size_type max_size () const throw ()
+    template <class U>
+    operator std::allocator<U>()
     {
-        return (std::numeric_limits < std::size_t > ::max)() / sizeof(T);
+        static std::allocator<U> helper_allocator;
+        return helper_allocator;
+    }
+
+    // return maximum number of elements that can be allocated
+    size_type max_size() const throw ()
+    {
+        return (std::numeric_limits<std::size_t>::max) () / sizeof(T);
     }
 
     // allocate but don't initialize num elements of type T
-    pointer allocate (size_type num, const void * = 0)
+    pointer allocate(size_type num, const void * = 0)
     {
-        pointer ret = (pointer)(T::operator new(num * sizeof(T)));
+        pointer ret = (pointer)(T::operator new (num * sizeof(T)));
         return ret;
     }
 
     // initialize elements of allocated storage p with value value
-    void construct (pointer p, const T & value)
+    void construct(pointer p, const T & value)
     {
         // initialize memory with placement new
         new ((void *)p)T(value);
     }
 
     // destroy elements of initialized storage p
-    void destroy (pointer p)
+    void destroy(pointer p)
     {
         // destroy objects by calling their destructor
         p->~T();
     }
 
     // deallocate storage p of deleted elements
-    void deallocate (pointer p, size_type /*num*/)
+    void deallocate(pointer p, size_type /*num*/)
     {
-        T::operator delete((void *)p);
+        T::operator delete ((void *)p);
     }
 };
 
 // return that all specializations of this allocator are interchangeable
 template <class T1, class T2>
-bool operator== (const new_alloc<T1> &,
-                 const new_alloc<T2> &) throw ()
+inline bool operator == (const new_alloc<T1> &,
+                         const new_alloc<T2> &) throw ()
 {
     return true;
 }
+
 template <class T1, class T2>
-bool operator!= (const new_alloc<T1> &,
-                 const new_alloc<T2> &) throw ()
+inline bool operator != (const new_alloc<T1> &,
+                         const new_alloc<T2> &) throw ()
 {
     return false;
 }
 
-inline unsigned_type sort_memory_usage_factor()
-{
-#ifdef __MCSTL__
-    return (mcstl::HEURISTIC::sort_algorithm == mcstl::HEURISTIC::MWMS && mcstl::HEURISTIC::num_threads > 1) ? 2 : 1;   //memory overhead for multiway mergesort
-#else
-    return 1;   //no overhead
-#endif
-}
-
 __STXXL_END_NAMESPACE
-#endif
+
+#endif // !STXXL_UTILS_HEADER

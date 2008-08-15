@@ -1,16 +1,20 @@
 /***************************************************************************
- *            leaf.h
+ *  include/stxxl/bits/containers/btree/leaf.h
  *
- *  Mon Feb  6 17:04:11 2006
- *  Copyright  2006  Roman Dementiev
- *  Email
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
 #ifndef STXXL_CONTAINERS_BTREE__LEAF_H
 #define STXXL_CONTAINERS_BTREE__LEAF_H
 
-#include "stxxl/bits/containers/btree/iterator.h"
-#include "stxxl/bits/containers/btree/node_cache.h"
+#include <stxxl/bits/containers/btree/iterator.h>
+#include <stxxl/bits/containers/btree/node_cache.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -21,7 +25,7 @@ namespace btree
     class node_cache;
 
     template <class KeyType_, class DataType_, class KeyCmp_, unsigned RawSize_, class BTreeType>
-    class normal_leaf
+    class normal_leaf : private noncopyable
     {
     public:
         typedef normal_leaf<KeyType_, DataType_, KeyCmp_, RawSize_, BTreeType> SelfType;
@@ -31,7 +35,7 @@ namespace btree
         typedef KeyType_ key_type;
         typedef DataType_ data_type;
         typedef KeyCmp_ key_compare;
-        typedef std::pair<key_type, data_type>  value_type;
+        typedef std::pair<key_type, data_type> value_type;
         typedef value_type & reference;
         typedef const value_type & const_reference;
 
@@ -45,7 +49,7 @@ namespace btree
             unsigned cur_size;
         };
 
-        typedef typed_block < raw_size, value_type, 0, InfoType > block_type;
+        typedef typed_block<raw_size, value_type, 0, InfoType> block_type;
         enum {
             nelements = block_type::size - 1,
             max_size = nelements,
@@ -55,16 +59,11 @@ namespace btree
         typedef BTreeType btree_type;
         typedef typename btree_type::size_type size_type;
         typedef btree_iterator_base<btree_type> iterator_base;
-        typedef btree_iterator<btree_type>  iterator;
+        typedef btree_iterator<btree_type> iterator;
         typedef btree_const_iterator<btree_type> const_iterator;
 
         typedef node_cache<normal_leaf, btree_type> leaf_cache_type;
 
-
-    private:
-        normal_leaf();
-        normal_leaf(const normal_leaf &);
-        normal_leaf & operator = (const normal_leaf &);
     public:
         struct value_compare : public std::binary_function<value_type, value_type, bool>
         {
@@ -72,11 +71,12 @@ namespace btree
 
             value_compare(key_compare c) : comp(c) { }
 
-            bool operator() (const value_type & x, const value_type & y) const
+            bool operator () (const value_type & x, const value_type & y) const
             {
                 return comp(x.first, y.first);
             }
         };
+
     private:
         block_type * block_;
         btree_type * btree_;
@@ -84,7 +84,7 @@ namespace btree
         key_compare cmp_;
         value_compare vcmp_;
 
-        void split(std::pair < key_type, bid_type > & splitter)
+        void split(std::pair<key_type, bid_type> & splitter)
         {
             bid_type NewBid;
             btree_->leaf_cache_.get_new_node(NewBid);                     // new (left) leaf
@@ -117,8 +117,8 @@ namespace btree
             std::copy(block_->begin(), block_->begin() + end_of_smaller_part, NewLeaf->block_->begin());
             NewLeaf->block_->info.cur_size = end_of_smaller_part;
             // copy the larger part
-            std::copy(      block_->begin() + end_of_smaller_part,
-                            block_->begin() + old_size, block_->begin());
+            std::copy(block_->begin() + end_of_smaller_part,
+                      block_->begin() + old_size, block_->begin());
             block_->info.cur_size = old_size - end_of_smaller_part;
             assert(size() + NewLeaf->size() == old_size);
 
@@ -128,7 +128,7 @@ namespace btree
             {
                 btree_->iterator_map_.unregister_iterator(**it2fix);
 
-                if ((*it2fix)->pos < end_of_smaller_part)  // belongs to the smaller part
+                if ((*it2fix)->pos < end_of_smaller_part) // belongs to the smaller part
                     (*it2fix)->bid = NewBid;
 
                 else
@@ -137,7 +137,6 @@ namespace btree
 
                 btree_->iterator_map_.register_iterator(**it2fix);
             }
-
 
 
             STXXL_VERBOSE1("btree::normal_leaf split leaf " << this
@@ -164,8 +163,8 @@ namespace btree
             delete block_;
         }
 
-        normal_leaf(    btree_type * btree__,
-                        key_compare cmp) :
+        normal_leaf(btree_type * btree__,
+                    key_compare cmp) :
             block_(new block_type),
             btree_(btree__),
             cmp_(cmp),
@@ -174,11 +173,11 @@ namespace btree
             assert(min_nelements() >= 2);
             assert(2 * min_nelements() - 1 <= max_nelements());
             assert(max_nelements() <= nelements);
-            assert(unsigned (block_type::size) >= nelements + 1);                   // extra space for an overflow
+            assert(unsigned(block_type::size) >= nelements + 1);                   // extra space for an overflow
         }
 
-        bool overflows () const { return block_->info.cur_size > max_nelements(); }
-        bool underflows () const { return block_->info.cur_size < min_nelements(); }
+        bool overflows() const { return block_->info.cur_size > max_nelements(); }
+        bool underflows() const { return block_->info.cur_size < min_nelements(); }
 
         unsigned max_nelements() const { return max_size; }
         unsigned min_nelements() const { return min_size; }
@@ -302,7 +301,7 @@ namespace btree
 
         std::pair<iterator, bool> insert(
             const value_type & x,
-            std::pair<key_type, bid_type> &splitter)
+            std::pair<key_type, bid_type> & splitter)
         {
             assert(size() <= max_nelements());
             splitter.first = key_compare::max_value();
@@ -314,7 +313,7 @@ namespace btree
             {
                 // already exists
                 return std::pair<iterator, bool>(
-                           iterator (btree_, my_bid(), it - block_->begin()),
+                           iterator(btree_, my_bid(), it - block_->begin()),
                            false);
             }
 
@@ -332,11 +331,11 @@ namespace btree
             for ( ; it2fix != Iterators2Fix.end(); ++it2fix)
             {
                 btree_->iterator_map_.unregister_iterator(**it2fix);
-                ++ ((*it2fix)->pos);                        // fixing iterators
+                ++((*it2fix)->pos);                        // fixing iterators
                 btree_->iterator_map_.register_iterator(**it2fix);
             }
 
-            ++ (block_->info.cur_size);
+            ++(block_->info.cur_size);
 
             std::pair<iterator, bool> result(iterator(btree_, my_bid(), it - block_->begin()), true);
 
@@ -376,7 +375,7 @@ namespace btree
 
             btree_->iterator_map_.unregister_iterator(it);
 
-            ++ (it.pos);
+            ++(it.pos);
             if (it.pos == size() && succ().valid())
             {
                 // run to the end of the leaf
@@ -526,11 +525,11 @@ namespace btree
             {
                 STXXL_VERBOSE2("btree::normal_leaf updating iterator " << (*it2fix) << " (pos--)");
                 btree_->iterator_map_.unregister_iterator(**it2fix);
-                -- ((*it2fix)->pos);                        // fixing iterators
+                --((*it2fix)->pos);                        // fixing iterators
                 btree_->iterator_map_.register_iterator(**it2fix);
             }
 
-            -- (block_->info.cur_size);
+            --(block_->info.cur_size);
 
             return 1;
         }
@@ -614,8 +613,8 @@ namespace btree
                 // move elements to make space for Src elements
 
                 // copy Left to *this leaf
-                std::copy(      Left.block_->begin() + newLeftSize,
-                                Left.block_->begin() + Left.size(), block_->begin());
+                std::copy(Left.block_->begin() + newLeftSize,
+                          Left.block_->begin() + Left.size(), block_->begin());
 
                 std::vector<iterator_base *> Iterators2Fix1;
                 std::vector<iterator_base *> Iterators2Fix2;
@@ -639,7 +638,7 @@ namespace btree
                     STXXL_VERBOSE2("btree::normal_leaf updating iterator " << (*it2fix) <<
                                    " (pos-" << newLeftSize << " bid=" << my_bid() << ")");
                     btree_->iterator_map_.unregister_iterator(**it2fix);
-                    ((*it2fix)->bid) = my_bid();                             // fixing iterators
+                    ((*it2fix)->bid) = my_bid();                                 // fixing iterators
                     ((*it2fix)->pos) -= newLeftSize;                             // fixing iterators
                     btree_->iterator_map_.register_iterator(**it2fix);
                 }
@@ -651,11 +650,11 @@ namespace btree
                 const unsigned nEl2Move = size() - newRightSize;                        // #elements to move from *this to Left
 
                 // copy *this to Left
-                std::copy(      block_->begin(),
-                                block_->begin() + nEl2Move, Left.block_->begin() + Left.size());
+                std::copy(block_->begin(),
+                          block_->begin() + nEl2Move, Left.block_->begin() + Left.size());
                 // move elements in *this
-                std::copy(      block_->begin() + nEl2Move,
-                                block_->begin() + size(), block_->begin() );
+                std::copy(block_->begin() + nEl2Move,
+                          block_->begin() + size(), block_->begin());
 
                 std::vector<iterator_base *> Iterators2Fix1;
                 std::vector<iterator_base *> Iterators2Fix2;
@@ -680,12 +679,12 @@ namespace btree
                                    " (pos+" << Left.size() << " bid=" << Left.my_bid() << ")");
                     btree_->iterator_map_.unregister_iterator(**it2fix);
                     ((*it2fix)->bid) = Left.my_bid();                             // fixing iterators
-                    ((*it2fix)->pos) += Left.size();                             // fixing iterators
+                    ((*it2fix)->pos) += Left.size();                              // fixing iterators
                     btree_->iterator_map_.register_iterator(**it2fix);
                 }
             }
 
-            block_->info.cur_size = newRightSize;                     // update size
+            block_->info.cur_size = newRightSize;                         // update size
             Left.block_->info.cur_size = newLeftSize;                     // update size
 
             return Left.back().first;
@@ -694,7 +693,7 @@ namespace btree
         void push_back(const value_type & x)
         {
             (*this)[size()] = x;
-            ++ (block_->info.cur_size);
+            ++(block_->info.cur_size);
         }
     };
 }

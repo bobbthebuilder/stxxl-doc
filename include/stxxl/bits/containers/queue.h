@@ -1,23 +1,27 @@
+/***************************************************************************
+ *  include/stxxl/bits/containers/queue.h
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2005 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
 #ifndef STXXL_QUEUE_HEADER
 #define STXXL_QUEUE_HEADER
-
-/***************************************************************************
- *            queue.h
- *
- *  Wed Mar 23 14:20:30 2005
- *  Copyright  2005  Roman Dementiev
- *  Email dementiev@ira.uka.de
- ****************************************************************************/
-
-#include "stxxl/bits/mng/mng.h"
-#include "stxxl/bits/common/simple_vector.h"
-#include "stxxl/bits/common/tmeta.h"
-#include "stxxl/bits/mng/write_pool.h"
-#include "stxxl/bits/mng/prefetch_pool.h"
 
 #include <vector>
 #include <queue>
 #include <deque>
+
+#include <stxxl/bits/mng/mng.h>
+#include <stxxl/bits/common/simple_vector.h>
+#include <stxxl/bits/common/tmeta.h>
+#include <stxxl/bits/mng/write_pool.h>
+#include <stxxl/bits/mng/prefetch_pool.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -33,14 +37,13 @@ __STXXL_BEGIN_NAMESPACE
 //! - BlkSz size of the external memory block in bytes, default is \c STXXL_DEFAULT_BLOCK_SIZE(ValTp)
 //! - AllocStr parallel disk allocation strategy, default is \c STXXL_DEFAULT_ALLOC_STRATEGY
 //! - SzTp size data type, default is \c stxxl::uint64
-template <     class ValTp,
-          unsigned BlkSz = STXXL_DEFAULT_BLOCK_SIZE (ValTp),
+template <class ValTp,
+          unsigned BlkSz = STXXL_DEFAULT_BLOCK_SIZE(ValTp),
           class AllocStr = STXXL_DEFAULT_ALLOC_STRATEGY,
           class SzTp = stxxl::uint64>
 class queue : private noncopyable
 {
 public:
-
     typedef ValTp value_type;
     typedef AllocStr alloc_strategy;
     typedef SzTp size_type;
@@ -54,8 +57,8 @@ public:
 private:
     size_type size_;
     bool delete_pools;
-    write_pool<block_type> *w_pool;
-    prefetch_pool<block_type> *p_pool;
+    write_pool<block_type> * w_pool;
+    prefetch_pool<block_type> * p_pool;
     block_type * front_block;
     block_type * back_block;
     value_type * front_element;
@@ -67,7 +70,6 @@ private:
     unsigned_type blocks2prefetch;
 
 public:
-
     //! \brief Constructs empty queue with own write and prefetch block pool
 
     //! \param w_pool_size  number of blocks in the write pool, must be at least 2
@@ -100,7 +102,7 @@ public:
     //! \param blocks2prefetch_  defines the number of blocks to prefetch (\c front side) , default is 1
     //!  \warning Number of blocks in the write pool must be at least 2
     //!  \warning Number of blocks in the prefetch pool must be at least 1
-    queue(write_pool < block_type > &  w_pool_, prefetch_pool<block_type> & p_pool_, unsigned blocks2prefetch_ = 1) :
+    queue(write_pool<block_type> & w_pool_, prefetch_pool<block_type> & p_pool_, unsigned blocks2prefetch_ = 1) :
         size_(0),
         delete_pools(false),
         w_pool(&w_pool_),
@@ -108,10 +110,10 @@ public:
         alloc_counter(0),
         blocks2prefetch(blocks2prefetch_)
     {
-        if (w_pool->size() < 2 )
+        if (w_pool->size() < 2)
             w_pool->resize(2);
 
-        if (p_pool->size() < 2 )
+        if (p_pool->size() < 2)
             p_pool->resize(1);
 
         front_block = back_block = w_pool->steal();
@@ -206,7 +208,7 @@ public:
 
             assert(!bids.empty());
             request_ptr req = p_pool->read(front_block, bids.front());
-            for (unsigned_type i = 0; i < blocks2prefetch && i < bids.size() - 1; ++i )
+            for (unsigned_type i = 0; i < blocks2prefetch && i < bids.size() - 1; ++i)
             {             // give prefetching hints
                 STXXL_VERBOSE1("queue::pop Case Hints");
                 p_pool->hint(bids[i + 1], *w_pool);
@@ -282,9 +284,8 @@ public:
     }
 };
 
-
 //! \}
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_QUEUE_HEADER

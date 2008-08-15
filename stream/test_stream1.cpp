@@ -1,4 +1,16 @@
-#include "stxxl/stream"
+/***************************************************************************
+ *  stream/test_stream1.cpp
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2003 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
+#include <stxxl/stream>
 
 
 struct Input
@@ -8,7 +20,8 @@ struct Input
     value_type rnd_value;
     stxxl::random_number32 rnd;
     value_type crc;
-    Input(value_type init) : value(init) {
+    Input(value_type init) : value(init)
+    {
         rnd_value = rnd();
         crc = rnd_value;
     }
@@ -16,7 +29,7 @@ struct Input
     {
         return value == 1;
     }
-    Input & operator ++()
+    Input & operator ++ ()
     {
         --value;
         rnd_value = rnd();
@@ -34,27 +47,25 @@ struct Input
 struct Cmp : std::binary_function<unsigned, unsigned, bool>
 {
     typedef unsigned value_type;
-    bool operator ()  (const value_type & a, const value_type & b) const
+    bool operator () (const value_type & a, const value_type & b) const
     {
         return a < b;
     }
-    value_type max_value()
-    {
-        return 0xffffffff;
-    }
     value_type min_value()
     {
-        return 0x0;
+        return (std::numeric_limits<value_type>::min)();
+    }
+    value_type max_value()
+    {
+        return (std::numeric_limits<value_type>::max)();
     }
 };
-
-using namespace stxxl;
 
 #define MULT (1000)
 
 int main()
 {
-    typedef stream::runs_creator < Input, Cmp, 4096 * MULT, stxxl::RC > CreateRunsAlg;
+    typedef stxxl::stream::runs_creator<Input, Cmp, 4096 * MULT, stxxl::RC> CreateRunsAlg;
     typedef CreateRunsAlg::sorted_runs_type SortedRunsType;
 
     stxxl::stats * s = stxxl::stats::get_instance();
@@ -66,9 +77,9 @@ int main()
     Input in(size + 1);
     CreateRunsAlg SortedRuns(in, Cmp(), 1024 * 128 * MULT);
     SortedRunsType Runs = SortedRuns.result();
-    assert(check_sorted_runs(Runs, Cmp()));
+    assert(stxxl::stream::check_sorted_runs(Runs, Cmp()));
     // merge the runs
-    stream::runs_merger<SortedRunsType, Cmp> merger(Runs, Cmp(), MULT * 1024 * 128);
+    stxxl::stream::runs_merger<SortedRunsType, Cmp> merger(Runs, Cmp(), MULT * 1024 * 128);
     stxxl::vector<Input::value_type> array;
     STXXL_MSG(size << " " << Runs.elements);
     STXXL_MSG("CRC: " << in.crc);
@@ -82,7 +93,7 @@ int main()
         ++merger;
     }
     STXXL_MSG("CRC: " << crc);
-    assert(is_sorted(array.begin(), array.end(), Cmp()));
+    assert(stxxl::is_sorted(array.begin(), array.end(), Cmp()));
     assert(merger.empty());
 
     std::cout << *s;

@@ -1,14 +1,17 @@
 /***************************************************************************
- *            bench_pqueue.cpp
+ *  containers/bench_pqueue.cpp
  *
- *  Fri Jul  4 11:31:34 2003
- *  Copyright  2003  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2003 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl.h"
+#include <stxxl/priority_queue>
 
-using namespace stxxl;
 
 #define RECORD_SIZE 20
 
@@ -20,7 +23,12 @@ struct my_type
     key_type key;
     char data[RECORD_SIZE - sizeof(key_type)];
     my_type() { }
-    explicit my_type(key_type k) : key(k) { }
+    explicit my_type(key_type k) : key(k)
+    {
+        #ifdef STXXL_VALGRIND_AVOID_UNINITIALIZED_WRITE_ERRORS
+        memset(data, 0, sizeof(data));
+        #endif
+    }
 };
 
 std::ostream & operator << (std::ostream & o, const my_type & obj)
@@ -29,15 +37,15 @@ std::ostream & operator << (std::ostream & o, const my_type & obj)
     return o;
 }
 
-struct my_cmp // greater
+struct my_cmp : std::binary_function<my_type, my_type, bool> // greater
 {
-    bool operator ()  (const my_type & a, const my_type & b) const
+    bool operator () (const my_type & a, const my_type & b) const
     {
         return a.key > b.key;
     }
     my_type min_value() const
     {
-        return my_type((std::numeric_limits < my_type::key_type > ::max)());
+        return my_type((std::numeric_limits<my_type::key_type>::max)());
     }
 };
 
@@ -54,10 +62,10 @@ int main()
  */
 // typedef priority_queue<priority_queue_config<my_type,my_cmp,
 //  32,512,64,3,(4*1024),0x7fffffff,1> > pq_type;
-    const unsigned volume = 2 * 1024 * 1024; // in KB
+    const unsigned volume = 3 * 1024 * 1024; // in KB
     const unsigned mem_for_queue = 256 * 1024 * 1024;
     const unsigned mem_for_pools = 512 * 1024 * 1024;
-    typedef PRIORITY_QUEUE_GENERATOR < my_type, my_cmp, mem_for_queue, volume / sizeof(my_type) > gen;
+    typedef stxxl::PRIORITY_QUEUE_GENERATOR<my_type, my_cmp, mem_for_queue, volume / sizeof(my_type)> gen;
     typedef gen::result pq_type;
     typedef pq_type::block_type block_type;
 
@@ -67,17 +75,17 @@ int main()
     STXXL_MSG("N : " << gen::N);
     STXXL_MSG("AE: " << gen::AE);
 
-    timer Timer;
+    stxxl::timer Timer;
     Timer.start();
 
-    prefetch_pool<block_type> p_pool((mem_for_pools / 2) / block_type::raw_size);
-    write_pool<block_type>    w_pool((mem_for_pools / 2) / block_type::raw_size);
+    stxxl::prefetch_pool<block_type> p_pool((mem_for_pools / 2) / block_type::raw_size);
+    stxxl::write_pool<block_type> w_pool((mem_for_pools / 2) / block_type::raw_size);
     pq_type p(p_pool, w_pool);
     stxxl::int64 nelements = stxxl::int64(volume / sizeof(my_type)) * 1024, i;
 
     STXXL_MSG("Internal memory consumption of the priority queue: " << p.mem_cons() << " bytes");
     STXXL_MSG("Max elements: " << nelements);
-    for (i = 0; i < nelements; i++ )
+    for (i = 0; i < nelements; i++)
     {
         if ((i % (1024 * 1024)) == 0)
             STXXL_MSG("Inserting element " << i);
@@ -89,9 +97,9 @@ int main()
     STXXL_MSG("Internal memory consumption of the priority queue: " << p.mem_cons() << " bytes");
     Timer.reset();
     Timer.start();
-    for (i = 0; i < (nelements); ++i )
+    for (i = 0; i < (nelements); ++i)
     {
-        assert( !p.empty() );
+        assert(!p.empty());
         //STXXL_MSG( p.top() );
         assert(p.top().key == i + 1);
         p.pop();

@@ -1,14 +1,22 @@
-#include "stxxl.h"
+/***************************************************************************
+ *  containers/test_iterators.cpp
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2007 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-// Test some iterator operations
-// March 29, 2007 (c) Roman Dementiev
-
+#include <stxxl.h>
 
 
 template <typename T>
 struct modify
 {
-    void operator ()  (T & obj) const
+    void operator () (T & obj) const
     {
         ++obj;
     }
@@ -80,7 +88,6 @@ void test_random_access(svt & sv)
 }
 
 
-
 typedef unsigned int key_type;
 typedef unsigned int data_type;
 
@@ -88,21 +95,21 @@ struct cmp : public std::less<key_type>
 {
     static key_type min_value()
     {
-        return (std::numeric_limits < key_type > ::min)();
+        return (std::numeric_limits<key_type>::min)();
     }
     static key_type max_value()
     {
-        return (std::numeric_limits < key_type > ::max)();
+        return (std::numeric_limits<key_type>::max)();
     }
 };
 
 
 template <>
-struct modify < std::pair < const key_type, data_type > >
+struct modify<std::pair<const key_type, data_type> >
 {
-    void operator ()  (std::pair < const key_type, data_type > & obj) const
+    void operator () (std::pair<const key_type, data_type> & obj) const
     {
-        ++ (obj.second);
+        ++(obj.second);
     }
 };
 
@@ -112,7 +119,7 @@ int main()
     test(Vector);
     test_random_access(Vector);
 
-    typedef stxxl::map < key_type, data_type, cmp, 4096, 4096 > map_type;
+    typedef stxxl::map<key_type, data_type, cmp, 4096, 4096> map_type;
     map_type Map(4096 * 10, 4096 * 10);
     test(Map);
 

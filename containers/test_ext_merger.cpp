@@ -1,21 +1,24 @@
 /***************************************************************************
- *            test_ext_merger.cpp
+ *  containers/test_ext_merger.cpp
  *
- *  Fri Jul  4 11:31:34 2003
- *  Copyright  2003  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2003 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl/priority_queue"
 #include <limits>
 #include <iterator>
+#include <stxxl/priority_queue>
 
-using namespace stxxl;
-using priority_queue_local::ext_merger;
-using priority_queue_local::loser_tree;
+using stxxl::priority_queue_local::ext_merger;
+using stxxl::priority_queue_local::loser_tree;
 
 typedef int my_type;
-typedef typed_block < 4096, my_type > block_type;
+typedef stxxl::typed_block<4096, my_type> block_type;
 
 
 struct dummy_merger
@@ -38,23 +41,31 @@ struct my_cmp : public std::greater<my_type>
 {
     my_type min_value() const
     {
-        return (std::numeric_limits < my_type > ::max)();
+        return (std::numeric_limits<my_type>::max)();
     }
     my_type max_value() const
     {
-        return (std::numeric_limits < my_type > ::min)();
+        return (std::numeric_limits<my_type>::min)();
     }
 };
 
+my_type * make_sequence(dummy_merger & dummy, int l)
+{
+    my_type * seq = new my_type[l + 1]; // + sentinel
+    dummy.multi_merge(seq, seq + l);
+    seq[l] = my_cmp().min_value();      // sentinel
+    return seq;
+}
+
 int main()
 {
-    prefetch_pool<block_type> p_pool(1);
-    write_pool<block_type> w_pool(2);
+    stxxl::prefetch_pool<block_type> p_pool(1);
+    stxxl::write_pool<block_type> w_pool(2);
     int cnt = 0;
     dummy_merger dummy(cnt);
     std::vector<my_type> output(1024 * 3);
 
-    ext_merger < block_type, my_cmp, 5 > merger(&p_pool, &w_pool);
+    ext_merger<block_type, my_cmp, 5> merger(&p_pool, &w_pool);
     merger.insert_segment(dummy, 1024 * 3);
     cnt = 20;
     merger.insert_segment(dummy, 1024 * 4);
@@ -65,20 +76,15 @@ int main()
     merger.insert_segment(dummy, 1024 * 4);
     merger.multi_merge(output.begin(), output.end());
 
-    //template <class ValTp_,class Cmp_,unsigned KNKMAX>
-    loser_tree < my_type, my_cmp, 10 > loser;
-    my_type * seq1 = new my_type[1024];
-    dummy.multi_merge(seq1, seq1 + 1024);
+    loser_tree<my_type, my_cmp, 8> loser;
+    my_type * seq1 = make_sequence(dummy, 1024);
     cnt = 20;
-    my_type * seq2 = new my_type[1024];
-    dummy.multi_merge(seq2, seq2 + 1024);
+    my_type * seq2 = make_sequence(dummy, 1024);
     cnt = 10;
-    my_type * seq3 = new my_type[1024];
-    dummy.multi_merge(seq3, seq3 + 1024);
+    my_type * seq3 = make_sequence(dummy, 1024);
     cnt = -100;
-    my_type * seq4 = new my_type[1024];
+    my_type * seq4 = make_sequence(dummy, 1024);
     my_type * out = new my_type[4 * 1024];
-    dummy.multi_merge(seq4, seq4 + 1024);
     loser.init();
     loser.insert_segment(seq1, 1024);
     loser.insert_segment(seq2, 1024);
@@ -88,5 +94,5 @@ int main()
     loser.multi_merge(out, out + 1024);
     std::copy(out, out + 1024, std::ostream_iterator<my_type>(std::cout, "\n"));
 
-    delete [] out;
+    delete[] out;
 }

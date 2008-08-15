@@ -1,15 +1,19 @@
-#ifndef BUF_OSTREAM_HEADER
-#define BUF_OSTREAM_HEADER
-
 /***************************************************************************
- *            buf_ostream.h
+ *  include/stxxl/bits/mng/buf_ostream.h
  *
- *  Tue Dec 31 17:16:10 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002-2004 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl/bits/mng/buf_writer.h"
+#ifndef STXXL_BUF_OSTREAM_HEADER
+#define STXXL_BUF_OSTREAM_HEADER
+
+#include <stxxl/bits/mng/buf_writer.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -33,6 +37,7 @@ protected:
     bid_iterator_type current_bid;
     int_type current_elem;
     block_type * current_blk;
+
 public:
     typedef typename block_type::const_reference const_reference;
     typedef typename block_type::reference reference;
@@ -71,7 +76,7 @@ public:
 
     //! \brief Returns reference to the current record
     //! \return reference to the current record
-    reference operator *()
+    reference operator * ()
     {
         return current_blk->elem[current_elem];
     }
@@ -101,4 +106,4 @@ public:
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_BUF_OSTREAM_HEADER

@@ -1,24 +1,27 @@
-#ifndef BUF_ISTREAM_HEADER
-#define BUF_ISTREAM_HEADER
-
 /***************************************************************************
- *            buf_istream.h
+ *  include/stxxl/bits/mng/buf_istream.h
  *
- *  Tue Dec 31 17:50:47 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002-2004 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl/bits/mng/mng.h"
-#include "stxxl/bits/mng/block_prefetcher.h"
-#include "stxxl/bits/algo/async_schedule.h"
+#ifndef STXXL_BUF_ISTREAM_HEADER
+#define STXXL_BUF_ISTREAM_HEADER
+
+#include <stxxl/bits/mng/mng.h>
+#include <stxxl/bits/mng/block_prefetcher.h>
+#include <stxxl/bits/algo/async_schedule.h>
 
 
 __STXXL_BEGIN_NAMESPACE
 
 //! \addtogroup schedlayer
 //! \{
-
 
 
 // a paranoid check
@@ -36,6 +39,7 @@ class buf_istream
     typedef BIDIteratorTp_ bid_iterator_type;
 
     buf_istream() { }
+
 protected:
     typedef block_prefetcher<block_type, bid_iterator_type> prefetcher_type;
     prefetcher_type * prefetcher;
@@ -46,6 +50,7 @@ protected:
 #ifdef BUF_ISTREAM_CHECK_END
     bool not_finished;
 #endif
+
 public:
     typedef typename block_type::reference reference;
     typedef buf_istream<block_type, bid_iterator_type> _Self;
@@ -73,7 +78,6 @@ public:
         nbuffers = STXXL_MAX(2 * ndisks, unsigned_type(nbuffers - 1));
         compute_prefetch_schedule(_begin, _end, prefetch_seq,
                                   nbuffers, ndisks);
-
 
 
         prefetcher = new prefetcher_type(_begin, _end, prefetch_seq, nbuffers);
@@ -115,14 +119,14 @@ public:
 
     //! \brief Returns reference to the current record in the stream
     //! \return reference to the current record in the stream
-    reference operator *()     /* const */
+    reference operator * ()     /* const */
     {
         return current_blk->elem[current_elem];
     }
 
     //! \brief Moves to the next record in the stream
     //! \return reference to itself after the advance
-    _Self & operator ++()
+    _Self & operator ++ ()
     {
 #ifdef BUF_ISTREAM_CHECK_END
         assert(not_finished);
@@ -146,7 +150,7 @@ public:
     virtual ~buf_istream()
     {
         delete prefetcher;
-        delete [] prefetch_seq;
+        delete[] prefetch_seq;
     }
 };
 
@@ -154,4 +158,4 @@ public:
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_BUF_ISTREAM_HEADER

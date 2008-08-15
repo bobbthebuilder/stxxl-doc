@@ -17,11 +17,14 @@
  * - prevention of OS file buffering overhead
  * - algorithm pipelining
  *
+ *
  * \section platforms Supported Operating Systems
  * - Linux (kernel >= 2.4.18)
  * - Solaris
+ * - Mac OS X
  * - other POSIX compatible systems should work, but have not been tested
- * - Windows XP/2000
+ * - Windows 2000/XP/Vista
+ *
  *
  * \section compilers Supported Compilers
  *
@@ -31,59 +34,123 @@
  * (systems, compilers or time) to test them.
  * Feedback is welcome.
  *
+ * The compilers marked with '*' are the developer's favorite choices
+ * and are most thoroughly tested.
+ *
  * \verbatim
-compiler      |  stxxl   stxxl     stxxl     stxxl
-              |          + mcstl   + boost   + mcstl
-              |                              + boost
---------------+----------------------------------------
-GCC 4.3       |    x       x         -²        -²
-GCC 4.2       |    x       x         x         x
-GCC 4.1       |    x      n/a        ?        n/a
-GCC 4.0       |    x      n/a        ?        n/a
-GCC 3.4       |    x      n/a        ?        n/a
-GCC 3.3       |    o      n/a        ?        n/a
-GCC 2.95      |    -      n/a        -        n/a
-ICPC 10.1.012 |    x       x¹        ?         ?
-ICPC 10.0.026 |    x       x¹        ?         ?
-ICPC 9.1.052  |    x¹      -         ?         ?
-ICPC 9.0.032  |    x¹      -         ?         ?
-MSVC 2005 8.0 |    x      n/a        x        n/a
+                |         parallel            parallel
+                |  stxxl   stxxl     stxxl     stxxl
+  compiler      |                   + boost   + boost
+----------------+----------------------------------------
+* GCC 4.3 c++0x |    x     PMODE²      x       PMODE²
+  GCC 4.3       |    x     PMODE²      x       PMODE²
+* GCC 4.2       |    x     MCSTL       x       MCSTL
+  GCC 4.1       |    x       -         x         -
+  GCC 4.0       |    x       -         x         -
+  GCC 3.4       |    x       -         x         -
+  GCC 3.3       |    o       -         o         -
+  GCC 2.95      |    -       -         -         -
+* ICPC 10.1.017 |    x¹    MCSTL¹      x¹      MCSTL¹
+  ICPC 10.0.026 |    x¹    MCSTL¹      x¹      MCSTL¹
+  ICPC 9.1.053  |    x¹      -         x¹        -
+  ICPC 9.0.032  |    x¹      -         x¹        -
+  MSVC 2008 9.0 |    -       -         x         -
+  MSVC 2005 8.0 |    -       -         x         -
 
  x   = full support
  o   = partial support
  -   = unsupported
  ?   = untested
- n/a = compiler does not support OpenMP which is needed by MCSTL
+ MCSTL = supports parallelization using the MCSTL library
+ PMODE = supports parallelization using libstdc++ parallel mode
  ¹   = you may have to add a -gcc-name=<gcc-x.y> option if the system default
        gcc does not come in the correct version:
        icpc 9.0: use gcc 3.x
        icpc 9.1: use gcc before 4.2
        icpc 10.x with mcstl support: use gcc 4.2
- ²   = Boost currently does not support g++ 4.3
+ ²   = MCSTL has been superseded by the libstdc++ parallel mode in GCC 4.3,
+       requires g++ 4.3.2 (prerelease) or later
 \endverbatim
+ *
+ *
+ * \section boost Supported BOOST versions
+ *
+ * The <a href="http://www.boost.org">Boost</a> libraries are required on
+ * Windows platforms using MSVC compiler and optional on other platforms.
+ *
+ * \c S<small>TXXL</small> has been tested with Boost 1.34.1.
+ * It also compiles using Boost 1.35.0 without problems,
+ * but hasn't been thoroughly tested in this setting.
+ * Other versions may work, too, but older versions won't get support.
  *
  *
  * \section installation Installation and Usage Instructions
  *
  * - \link installation_linux_gcc Installation (Linux/g++) \endlink
  * - \link installation_solaris_gcc Installation (Solaris/g++) \endlink
- * - \link installation_msvc Installation (Windows/MS Visual C++ 7.1) \endlink
+ * - \link installation_msvc Installation (Windows/MS Visual C++ 8.0) \endlink
  * - \link installation_old Installation of the older Stxxl versions (earlier than 0.9) (Linux/g++) \endlink
  *
- * Questions concerning use and development of the \c S<small>TXXL</small>
+ * - \link install-svn Installing from subversion \endlink
+ *
+ *
+ * \section questions Questions
+ *
+ * - Questions concerning use and development of the \c S<small>TXXL</small>
  * library and bug reports should be posted to the
  * <b><a href="http://sourceforge.net/forum/?group_id=131632">FORUMS</a></b>
  * or mailed to <A href="http://i10www.ira.uka.de/dementiev/">Roman Dementiev</A>.
+ *
+ * - \link FAQ FAQ - Frequently Asked Questions \endlink
+ *
+ *
+ * \section license License
+ *
+ * \c S<small>TXXL</small> is distributed under the Boost Software License, Version 1.0.<br>
+ * You can find a copy of the license in the accompanying file \c LICENSE_1_0.txt or online at
+ * <a href="http://www.boost.org/LICENSE_1_0.txt">http://www.boost.org/LICENSE_1_0.txt</a>.
+ */
+
+
+/*!
+ * \page FAQ FAQ - Frequently Asked Questions
+ *
+ * \section FAQ-latest Latest version of this FAQ
+ * The most recent version of this FAQ can always be found
+ * <a href="http://algo2.iti.uni-karlsruhe.de/dementiev/stxxl/trunk/FAQ.html">here</a>.
+ *
+ *
+ * \section q1 References to Elements in External Memory Data Structures
+ *
+ * You should not pass or store references to elements in an external memory
+ * data structure. When the reference is used, the block that contains the
+ * element may be no longer in internal memory.<br>
+ * Use/pass an iterator (reference) instead.<br>
+ * For stxxl::vector with \c n pages and LRU replacement strategy it
+ * can be guaranteed that the last \c n references
+ * obtained using stxxl::vector operator [] or dereferencing
+ * an iterator are valid. <br>
+ *
+ *
+ * \section q2 Thread-Safety
+ *
+ * The I/O and block management layers are thread-safe (since release 1.1.1).
+ * The user layer data structures are not thread-safe.<br>
+ * I.e. you may access <b>different</b> \c S<small>TXXL</small> data structures from concurrent threads without problems,
+ * but you should not share a data structure between threads (without implementing proper locking yourself).<br>
+ * This is a design choice, having the data structures thread-safe would mean a significant performance loss.
  *
  */
 
 
 /*!
- * \page installation Installation
+ * \page install Installation
  * - \link installation_linux_gcc Installation (Linux/g++) \endlink
  * - \link installation_solaris_gcc Installation (Solaris/g++) \endlink
- * - \link installation_msvc Installation (Windows/MS Visual C++ 7.1) \endlink
+ * - \link installation_msvc Installation (Windows/MS Visual C++ 8.0) \endlink
  * - \link installation_old Installation of the older Stxxl versions (earlier than 0.9) (Linux/g++) \endlink
+ *
+ * - \link install-svn Installing from subversion \endlink
  */
 
 
@@ -96,7 +163,9 @@ MSVC 2005 8.0 |    x      n/a        x        n/a
  *   <A href="http://sourceforge.net/project/showfiles.php?group_id=131632&package_id=144407">SourceForge</A>.
  * - Unpack in some directory executing: \c tar \c zfxv \c stxxl-x.y.z.tgz ,
  * - Change to \c stxxl directory: \c cd \c stxxl-x.y.z ,
- * - Change \c make.settings.gnu or \c make.settings.local file according to your system configuration:
+ * - Run: \verbatim make config_gnu \endverbatim to create a template \c make.settings.local file.
+ *   Note: this will produce some warnings and abort with an error, which is intended.
+ * - Change the \c make.settings.local file according to your system configuration:
  *   - \c S<small>TXXL</small> root directory \c STXXL_ROOT variable
  *     ( \c directory_where_you_unpacked_the_tar_ball/stxxl-x.y.z )
  *   - if you want \c S<small>TXXL</small> to use <A href="http://www.boost.org">Boost</A> libraries
@@ -108,9 +177,11 @@ MSVC 2005 8.0 |    x      n/a        x        n/a
  *     - change \c MCSTL_ROOT variable according to the MCSTL root path
  *     - use the targets \c library_g++_mcstl and \c tests_g++_mcstl
  *       instead of the ones listed below
- *   - (optionally) set \c OPT variable to \c -O3 or other g++ optimization level you like
+ *   - (optionally) set \c OPT variable to \c -O3 or other g++ optimization level you like (default: \c -O3 )
  *   - (optionally) set \c DEBUG variable to \c -g or other g++ debugging option
- *     if you want to produce a debug version of the Stxxl library or Stxxl examples
+ *     if you want to produce a debug version of the Stxxl library or Stxxl examples (default: not set)
+ *   - for more variables to tune take a look at \c make.settings.gnu ,
+ *     they are usually overridden by settings in \c make.settings.local
  * - Run: \verbatim make library_g++ \endverbatim
  * - Run: \verbatim make tests_g++ \endverbatim (optional, if you want to compile and run some test programs)
  *
@@ -224,7 +295,7 @@ my_example.bin: my_example.o
 
 
 /*!
- * \page installation_msvc Installation (Windows/MS Visual C++ 7.1 - Stxxl from version 0.9)
+ * \page installation_msvc Installation (Windows/MS Visual C++ 8.0 - Stxxl from version 0.9)
  *
  * \section download Download and library compilation
  *
@@ -244,9 +315,8 @@ my_example.bin: my_example.o
  *   The file is located in the \c STXXL_ROOT directory
  * - Press F7 to build the library.
  *   The library file (libstxxl.lib) should appear in \c STXXL_ROOT\\lib directory
- * - In the configuration manager ('Build' drop-down menu) choose 'Library and tests'
- *   as active solution configuration. Press OK.
- * - Press F7 to build \c stxxl test programs.
+ *   Or build the library and the \c stxxl test programs by pressing Ctrl-Alt-F7
+ *   (or choosing from 'Build' drop-down menu Rebuild Solution)
  *
  *
  * \section compile_apps Application compilation
@@ -354,9 +424,9 @@ my_example.bin: my_example.o
  *     (you should have the Boost libraries already installed)
  *     - change \c USE_BOOST variable to \c yes
  *     - change \c BOOST_ROOT variable according to the Boost root path
- *   - (optionally) set \c OPT variable to \c -O3 or other g++ optimization level you like
+ *   - (optionally) set \c OPT variable to \c -O3 or other g++ optimization level you like (default: \c -O3 )
  *   - (optionally) set \c DEBUG variable to \c -g or other g++ debugging option
- *     if you want to produce a debug version of the Stxxl library or Stxxl examples
+ *     if you want to produce a debug version of the Stxxl library or Stxxl examples (default: not set)
  * - Run: \verbatim make library_g++ \endverbatim
  * - Run: \verbatim make tests_g++ \endverbatim (optional, if you want to compile and run some test programs)
  *
@@ -412,19 +482,6 @@ my_example.bin: my_example.o
  * the running time will be halved. Adding more disks might also increase performance significantly.
  *
  *
- * \section filesystem Recommended file system
- *
- * FIXME: XFS on Solaris ???
- *
- * Our library take benefit of direct user memory - disk transfers (direct access) which avoids
- * superfluous copies.
- * We recommend to use the
- * \c XFS file system <A href="http://oss.sgi.com/projects/xfs/">link</A> that
- * gives good read and write performance for large files.
- * Note that file creation speed of \c XFS is slow, so that disk
- * files should be precreated.
- *
- *
  * \section configuration Disk configuration file
  *
  * You must define the disk configuration for an
@@ -470,7 +527,7 @@ my_example.bin: my_example.o
 /*!
  * \page installation_old Installation (Linux/g++ - Stxxl versions earlier than 0.9)
  *
- * \section download Download
+ * \section download Download and library compilation
  *
  * - Download stxxl_0.77.tgz from
  *   <A href="http://sourceforge.net/project/showfiles.php?group_id=131632&package_id=144407&release_id=541515">SourceForge</A>.
@@ -559,3 +616,52 @@ my_example.bin: my_example.o
  * \verbatim utils/createdisks.bin capacity full_disk_filename... \endverbatim
  *
  * */
+
+
+/*!
+ * \page install-svn Installing from subversion
+ *
+ * \section checkout Retrieving the source from subversion
+ *
+ * The \c S<small>TXXL</small> sourcecode is available in a subversion repository on sourceforge.net.<br>
+ * To learn more about subversion and (command line and graphical) subversion clients
+ * visit <a href="http://subversion.tigris.org/">http://subversion.tigris.org/</a>.
+ *
+ * The main development line (in subversion called the "trunk") is located at
+ * \c https://stxxl.svn.sourceforge.net/svnroot/stxxl/trunk
+ * <br>Alternatively you might use a branch where a new feature is being developed.
+ * Branches have URLs like
+ * \c https://stxxl.svn.sourceforge.net/svnroot/stxxl/branches/foobar
+ *
+ * For the following example let's assume you want to download the latest trunk version
+ * using the command line client and store it in a directory called \c stxxl-trunk
+ * (which should not exist, yet).
+ * Otherwise replace URL and path to your needs.
+ *
+ * Run: \verbatim svn checkout https://stxxl.svn.sourceforge.net/svnroot/stxxl/trunk stxxl-trunk \endverbatim
+ * Change to stxxl directory: \verbatim cd stxxl-trunk \endverbatim
+ *
+ * \section svn_continue_installation Continue Installation
+ *
+ * Now follow the regular installation and usage instructions,
+ * skipping over the tarball download and extraction parts.<br>
+ * For the \c STXXL_ROOT variable value choose something like
+ * \c \$(HOME)/path/to/stxxl-trunk
+ *
+ * - \link installation_linux_gcc Installation (Linux/g++) \endlink
+ * - \link installation_solaris_gcc Installation (Solaris/g++) \endlink
+ * - \link installation_msvc Installation (Windows/MS Visual C++ 8.0) \endlink
+ *
+ * \section update Updating an existing subversion checkout
+ *
+ * Once you have checked out the source code you can easily update it to the latest version later on.
+ *
+ * Change to stxxl directory:
+ * \verbatim cd ...path/to/stxxl-trunk \endverbatim
+ * Run
+ * \verbatim svn update \endverbatim
+ * Usually you don't have to reconfigure anything, so just rebuild:
+ * - \verbatim make library_g++ \endverbatim
+ * - \verbatim make tests_g++ \endverbatim (optional, if you want to compile and run some test programs)
+ * */
+

@@ -1,25 +1,29 @@
-#ifndef MMAP_HEADER
-#define MMAP_HEADER
-
 /***************************************************************************
- *            mmap_file.h
+ *  include/stxxl/bits/io/mmap_file.h
  *
- *  Sat Aug 24 23:54:54 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl/bits/io/ufs_file.h"
+#ifndef STXXL_MMAP_FILE_HEADER
+#define STXXL_MMAP_FILE_HEADER
 
 #ifdef STXXL_BOOST_CONFIG
  #include <boost/config.hpp>
 #endif
 
-#ifdef BOOST_MSVC
+#ifndef BOOST_MSVC
 // mmap call does not exist in Windows
-#else
 
- #include <sys/mman.h>
+#include <sys/mman.h>
+
+#include <stxxl/bits/io/ufs_file.h>
+
 
 __STXXL_BEGIN_NAMESPACE
 
@@ -37,8 +41,8 @@ public:
     //! \param filename path of file
     //! \param mode open mode, see \c stxxl::file::open_modes
     //! \param disk disk(file) identifier
-    inline mmap_file (const std::string & filename, int mode, int disk = -1) :
-        ufs_file_base (filename, mode, disk)
+    inline mmap_file(const std::string & filename, int mode, int disk = -1) :
+        ufs_file_base(filename, mode, disk)
     { }
     request_ptr aread(
         void * buffer,
@@ -56,12 +60,13 @@ public:
 class mmap_request : public ufs_request_base
 {
     friend class mmap_file;
+
 protected:
-    inline mmap_request (mmap_file * f,
-                         void * buf, stxxl::int64 off, size_t b,
-                         request_type t,
-                         completion_handler on_cmpl) :
-        ufs_request_base (f, buf, off, b, t, on_cmpl)
+    inline mmap_request(mmap_file * f,
+                        void * buf, stxxl::int64 off, size_t b,
+                        request_type t,
+                        completion_handler on_cmpl) :
+        ufs_request_base(f, buf, off, b, t, on_cmpl)
     { }
     void serve();
 
@@ -70,18 +75,12 @@ public:
     {
         return "mmap";
     }
-private:
-    // Following methods are declared but not implemented
-    // intentionally to forbid their usage
-    mmap_request(const mmap_request &);
-    mmap_request & operator=(const mmap_request &);
-    mmap_request();
 };
 
 //! \}
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // #ifndef BOOST_MSVC
 
-#endif
+#endif // !STXXL_MMAP_FILE_HEADER

@@ -1,12 +1,23 @@
+/***************************************************************************
+ *  include/stxxl/bits/common/types.h
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2007 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
 #ifndef STXXL_TYPES_HEADER
 #define STXXL_TYPES_HEADER
-
-
-#include "stxxl/bits/namespace.h"
 
 #ifdef STXXL_BOOST_CONFIG
  #include <boost/config.hpp>
 #endif
+
+#include <stxxl/bits/namespace.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -31,17 +42,17 @@ enum { my_pointer_size = sizeof(void *) };
 
 template <int PtrSize>
 struct choose_int_types
-{};
+{ };
 
 template <>
-struct choose_int_types < 4 >  // for 32-bit processors/compilers
+struct choose_int_types<4>  // for 32-bit processors/compilers
 {
     typedef int int_type;
     typedef unsigned unsigned_type;
 };
 
 template <>
-struct choose_int_types < 8 > // for 64-bit processors/compilers
+struct choose_int_types<8> // for 64-bit processors/compilers
 {
     typedef long long int int_type;
     typedef long long unsigned unsigned_type;
@@ -50,8 +61,6 @@ struct choose_int_types < 8 > // for 64-bit processors/compilers
 typedef choose_int_types<my_pointer_size>::int_type int_type;
 typedef choose_int_types<my_pointer_size>::unsigned_type unsigned_type;
 
-
-
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_TYPES_HEADER

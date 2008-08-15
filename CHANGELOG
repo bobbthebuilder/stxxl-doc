@@ -1,11 +1,106 @@
-Version 1.1.1 (UNRELEASED)
+Version 1.2.1 (14 August 2008)
 
-* fixed a rare assertion in stxxl::priority_queue
+* add support for the libstdc++ parallel_mode (successor of MCSTL),
+  new make targets: library_g++_pmode, tests_g++_pmode, clean_g++_pmode
+  (requires g++ 4.3.2 or later)
+* new stxxl file type stxxl::mem_file (for debugging purposes only),
+  helps debugging with valgrind because no memory cell ever
+  leaves valgrind's control
+* properly destroy the singleton objects (block manager, disk queue threads,
+  logger, stats, config, ...) at program exit
+* fixed a bug (recursive locking) in recursive block allocation
+* added a test program for recursive block allocation
+* sensible dependencies for nmake (MSVC): only rebuild files as necessary
+* improve performance of createdisks
+* human-readable output for I/O stats
+* replace hard coded min/max values by std::numeric_limits<>::min/max in
+  examples
+* fix a case where only half of the available memory was used during
+  recursive merging
+* verify stxxl::set_seed() functionality in tests
+* remove stxxl disk files created from default configuration (no .stxxl
+  file found) and other temporary files at program end
+* stop using deprecated functions, switch to the replacements instead
+* unify the mutex lock handling by introducing stxxl::scoped_mutex_lock
+* unify the I/O wait time counting to work like read/write time counting
+* simplify I/O time counting with scoped_{read,write,wait}_timer
+* add some more tests
+* more code cleanup + reformatting
+* move some more code to the library
+* reduce some include dependencies
+* build system tuning
+* propagate region deletion (when blocks are freed) to the file level
+* fix problem in sorters where blocks were released too early
+* specialize is_sorted() to use const_vector_iterators, no extra writes
+* add c++0x style const_iterator cbegin()/cend() to all containers
+
+------------------------------------------
+Version 1.2.0 (05 July 2008)
+
 * made the block management layer thread-safe
 * made all size_types unsigned
-* minor tweaks to the build system
-* check whether STXXL_ROOT has been set correctly
-* build system now only requires GNU make 3.78 or later
+* stxxl::priority_queue
+  - fixed a rare assertion
+  - fixed a race condition by using proper block hinting
+  - insert_queue: replaced std::priority_queue with a special
+    implementation internal_priority_queue that allows for
+    fast exporting of all elements
+  - even more bugs and inefficiencies fixed
+  - significant speed improvements
+* random number generators are now all seedable,
+  should allow redoing identical program runs for debugging purposes
+* stxxl::noncopyable, inspired by boost::noncopyable: inheriting from this
+  class forbids copying of objects when this is undesirable
+  - used in all classes that had implemented their own variants previously
+* stxxl::vector, all sorting functions: replaced TwoToOneDimArrayRowAdaptor
+  with ArrayOfSequencesIterator which is much faster, especially
+  if blocks have padding
+* if required, verify that the sentinels satisfy a strict weak ordering
+* stxxl::vector: several operations sped up, several more implemented
+* fix existing allocation strategies and add experimental support for
+  distinguishing between regular disks and flash devices
+* stxxl::stable_ksort
+  - add experimental warning, some parts are not yet implemented
+  - fixed an off-by-one error in memory allocation vs. usage
+* btree: fuse last two nodes/leaves if possible, rebalancing can fail
+* btree tests: ensure uniqueness of test data if required
+* reduce function call overhead of stxxl::debugmon if it's not activated
+* add public interface headers: stxxl/types, stxxl/aligned_alloc
+* add compatibility wrappers for standard extensions
+  hash_map, hash_set, auto_ptr
+* MCSTL is only supported with g++ 4.2 and icpc 10.x
+* lots of small bugfixes
+* made the TPIE, BDB and LEDA_SM tests compile again
+* general code cleanup
+  - fixed most compiler warnings
+  - elimination of duplicate and unused code
+  - cleaned up and sanitized debugging macros
+  - no more 'using namespace std' and 'using namespace stxxl'
+  - fixed ambiguities noted by g++ 4.3
+  - unify the #include directives
+  - add/unify/cleanup copyright headers
+* general code reformatting (uncrustify)
+* add support for new compiler releases
+* portability fixes for different platforms
+* implemented file truncation on windows platforms
+* build system
+  - lots of small modifications
+  - now only requires GNU make 3.78 or later
+  - check whether STXXL_ROOT has been set correctly and if unset, try
+    autoconfiguration by creating make.settings.local with defaults
+  - improved and simplified boost support for posix systems
+  - Mac OS X support
+* changed all tests so that they behave well in their default parameters,
+  system assumptions and return values and can be run from a script
+  - use aligned_alloc/aligned_dealloc appropriately
+* added some more test programs
+* add misc/run_all_tests that runs all tests with sensible parameters,
+  optionally via valgrind
+* checked all tests with valgrind
+  - fixed use of uninitialized memory when writing to normal files
+  - (optionally) initialize typed_blocks and payload data in test structs
+    to suppress (most) uninitialized write errors when writing to disk files
+  - fix mismatched new/delete in mcstl
 * update install and usage instructions
 * spell checked sources and documentation
 
@@ -25,7 +120,7 @@ Version 1.1.0 (31 July 2007)
   - the library build creates stxxl.mk which can be included in an applications Makefile to set the correct compiler/linker switches for stxxl
   - similarly mcstxxl.mk is created for a stxxl compiled with mcstl support
   - add dependency tracking and improve parallelism during build
-* compiler support matrix:
+* compiler support matrix: (for an up-to-date list, please see the doxygen documentation)
   compiler      |  stxxl    stxxl + mcstl
   --------------+------------------------
   GCC 4.3       |    x            x

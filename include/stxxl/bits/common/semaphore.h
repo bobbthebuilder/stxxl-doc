@@ -1,13 +1,17 @@
-#ifndef SEMAPHORE_HEADER
-#define SEMAPHORE_HEADER
-
 /***************************************************************************
- *            semaphore.h
+ *  include/stxxl/bits/common/semaphore.h
  *
- *  Sat Aug 24 23:53:49 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
+#ifndef STXXL_SEMAPHORE_HEADER
+#define STXXL_SEMAPHORE_HEADER
 
 #ifdef STXXL_BOOST_THREADS
  #include <boost/thread/mutex.hpp>
@@ -17,7 +21,7 @@
 #endif
 
 #include <stxxl/bits/noncopyable.h>
-#include "stxxl/bits/common/utils.h"
+#include <stxxl/bits/common/utils.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -32,28 +36,26 @@ class semaphore : private noncopyable
     pthread_mutex_t mutex;
     pthread_cond_t cond;
 #endif
+
 public:
-    semaphore (int init_value = 1) : v (init_value)
+    semaphore(int init_value = 1) : v(init_value)
     {
 #ifndef STXXL_BOOST_THREADS
-        stxxl_nassert (pthread_mutex_init (&mutex, NULL), resource_error);
-        stxxl_nassert (pthread_cond_init (&cond, NULL), resource_error);
+        check_pthread_call(pthread_mutex_init(&mutex, NULL));
+        check_pthread_call(pthread_cond_init(&cond, NULL));
 #endif
-    };
-    ~semaphore ()
+    }
+    ~semaphore()
     {
 #ifndef STXXL_BOOST_THREADS
-        int res = pthread_mutex_trylock (&mutex);
+        int res = pthread_mutex_trylock(&mutex);
 
         if (res == 0 || res == EBUSY) {
-            stxxl_nassert (pthread_mutex_unlock
-                           (&mutex), resource_error);
+            check_pthread_call(pthread_mutex_unlock(&mutex));
         } else
             stxxl_function_error(resource_error);
-        stxxl_nassert (pthread_mutex_destroy
-                       (&mutex), resource_error);
-
-        stxxl_nassert (pthread_cond_destroy (&cond), resource_error);
+        check_pthread_call(pthread_mutex_destroy(&mutex));
+        check_pthread_call(pthread_cond_destroy(&cond));
 #endif
     }
     // function increments the semaphore and signals any threads that
@@ -66,10 +68,10 @@ public:
         Lock.unlock();
         cond.notify_one();
 #else
-        stxxl_nassert (pthread_mutex_lock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_lock(&mutex));
         int res = ++v;
-        stxxl_nassert (pthread_mutex_unlock (&mutex), resource_error);
-        stxxl_nassert (pthread_cond_signal (&cond), resource_error);
+        check_pthread_call(pthread_mutex_unlock(&mutex));
+        check_pthread_call(pthread_cond_signal(&cond));
 #endif
         return res;
     }
@@ -84,13 +86,12 @@ public:
 
         int res = --v;
 #else
-        stxxl_nassert (pthread_mutex_lock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_lock(&mutex));
         while (v <= 0)
-            stxxl_nassert (pthread_cond_wait
-                           (&cond, &mutex), resource_error);
+            check_pthread_call(pthread_cond_wait(&cond, &mutex));
 
         int res = --v;
-        stxxl_nassert (pthread_mutex_unlock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_unlock(&mutex));
 #endif
         return res;
     }
@@ -99,15 +100,15 @@ public:
     // multiple threads must up on a semaphore before another thread
     // can go down, i.e., allows programmer to set the semaphore to
     // a negative value prior to using it for synchronization.
-    int decrement ()
+    int decrement()
     {
 #ifdef STXXL_BOOST_THREADS
         boost::mutex::scoped_lock Lock(mutex);
         return (--v);
 #else
-        stxxl_nassert (pthread_mutex_lock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_lock(&mutex));
         int res = --v;
-        stxxl_nassert (pthread_mutex_unlock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_unlock(&mutex));
         return res;
 #endif
     }
@@ -116,14 +117,13 @@ public:
     // after the function unlocks the critical section.
     //int operator()
     //{
-    //      stxxl_nassert(pthread_mutex_lock(&mutex),resource_error);
+    //      check_pthread_call(pthread_mutex_lock(&mutex));
     //      int res = v;
-    //      stxxl_nassert(pthread_mutex_unlock(&mutex),resource_error);
+    //      check_pthread_call(pthread_mutex_unlock(&mutex));
     //      return res;
     //};
 };
 
-
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_SEMAPHORE_HEADER

@@ -1,17 +1,21 @@
-#ifndef BUFFERED_WRITER_HEADER
-#define BUFFERED_WRITER_HEADER
-
 /***************************************************************************
- *            buf_writer.h
+ *  include/stxxl/bits/mng/buf_writer.h
  *
- *  Mon Dec 30 10:57:58 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002-2004 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
+#ifndef STXXL_BUFFERED_WRITER_HEADER
+#define STXXL_BUFFERED_WRITER_HEADER
 
 #include <vector>
 
-#include "stxxl/bits/mng/mng.h"
+#include <stxxl/bits/mng/mng.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -31,6 +35,7 @@ template <typename block_type>
 class buffered_writer
 {
     buffered_writer() { }
+
 protected:
     typedef typename block_type::bid_type bid_type;
 
@@ -48,17 +53,17 @@ protected:
     {
         stxxl::int64 offset;
         int_type ibuffer;
-        batch_entry (stxxl::int64 o, int b) : offset (o), ibuffer (b) { };
+        batch_entry(stxxl::int64 o, int b) : offset(o), ibuffer(b) { }
     };
     struct batch_entry_cmp
     {
-        bool operator ()  (const batch_entry & a, const batch_entry & b) const
+        bool operator () (const batch_entry & a, const batch_entry & b) const
         {
             return (a.offset > b.offset);
         }
     };
 
-    typedef std::priority_queue < batch_entry, std::vector < batch_entry >, batch_entry_cmp > batch_type;
+    typedef std::priority_queue<batch_entry, std::vector<batch_entry>, batch_entry_cmp> batch_type;
     batch_type batch_write_blocks;      // sorted sequence of blocks to write
 
 public:
@@ -67,7 +72,7 @@ public:
     //! \param write_batch_size number of blocks to accumulate in
     //!        order to flush write requests (bulk buffered writing)
     buffered_writer(unsigned_type write_buf_size, unsigned_type write_batch_size) :
-        nwriteblocks ((write_buf_size > 2) ? write_buf_size : 2),
+        nwriteblocks((write_buf_size > 2) ? write_buf_size : 2),
         writebatchsize(write_batch_size ? write_batch_size : 1)
     {
         write_buffers = new block_type[nwriteblocks];
@@ -75,30 +80,30 @@ public:
         write_bids = new bid_type[nwriteblocks];
 
         for (unsigned_type i = 0; i < nwriteblocks; i++)
-            free_write_blocks.push_back (i);
+            free_write_blocks.push_back(i);
 
 
         disk_queues::get_instance()->set_priority_op(disk_queue::WRITE);
     }
     //! \brief Returns free block from the internal buffer pool
     //! \return pointer to the block from the internal buffer pool
-    block_type * get_free_block ()
+    block_type * get_free_block()
     {
         int_type ibuffer;
-        for (std::vector < int_type > ::iterator it = busy_write_blocks.begin ();
-             it != busy_write_blocks.end (); ++it)
+        for (std::vector<int_type>::iterator it = busy_write_blocks.begin();
+             it != busy_write_blocks.end(); ++it)
         {
             if (write_reqs[ibuffer = (*it)]->poll())
             {
-                busy_write_blocks.erase (it);
-                free_write_blocks.push_back (ibuffer);
+                busy_write_blocks.erase(it);
+                free_write_blocks.push_back(ibuffer);
 
                 break;
             }
         }
-        if (UNLIKELY (free_write_blocks.empty ()))
+        if (UNLIKELY(free_write_blocks.empty()))
         {
-            int_type size = busy_write_blocks.size ();
+            int_type size = busy_write_blocks.size();
             request_ptr * reqs = new request_ptr[size];
             int_type i = 0;
             for ( ; i < size; ++i)
@@ -107,8 +112,8 @@ public:
             }
             int_type completed = wait_any(reqs, size);
             int_type completed_global = busy_write_blocks[completed];
-            delete [] reqs;
-            busy_write_blocks.erase (busy_write_blocks.begin () + completed);
+            delete[] reqs;
+            busy_write_blocks.erase(busy_write_blocks.begin() + completed);
 
             return (write_buffers + completed_global);
         }
@@ -122,20 +127,20 @@ public:
     //! \remark parameter \c filled_block must be value returned by \c get_free_block() or \c write() methods
     //! \param bid block identifier, a place to write data of the \c filled_block
     //! \return pointer to the new free block from the pool
-    block_type * write (block_type * filled_block, const bid_type & bid)        // writes filled_block and returns a new block
+    block_type * write(block_type * filled_block, const bid_type & bid)        // writes filled_block and returns a new block
     {
-        if (batch_write_blocks.size () >= writebatchsize)
+        if (batch_write_blocks.size() >= writebatchsize)
         {
             // flush batch
-            while (!batch_write_blocks.empty ())
+            while (!batch_write_blocks.empty())
             {
-                int_type ibuffer = batch_write_blocks.top ().ibuffer;
-                batch_write_blocks.pop ();
+                int_type ibuffer = batch_write_blocks.top().ibuffer;
+                batch_write_blocks.pop();
 
                 if (write_reqs[ibuffer].valid())
                     write_reqs[ibuffer]->wait();
 
-                write_reqs[ibuffer] = write_buffers[ibuffer].write (write_bids[ibuffer]);
+                write_reqs[ibuffer] = write_buffers[ibuffer].write(write_bids[ibuffer]);
 
                 busy_write_blocks.push_back(ibuffer);
             }
@@ -146,15 +151,15 @@ public:
         write_bids[ibuffer] = bid;
         batch_write_blocks.push(batch_entry(bid.offset, ibuffer));
 
-        return get_free_block ();
+        return get_free_block();
     }
     //! \brief Flushes not yet written buffers
     void flush()
     {
         int_type ibuffer;
-        while (!batch_write_blocks.empty ())
+        while (!batch_write_blocks.empty())
         {
-            ibuffer = batch_write_blocks.top ().ibuffer;
+            ibuffer = batch_write_blocks.top().ibuffer;
             batch_write_blocks.pop();
 
             if (write_reqs[ibuffer].valid())
@@ -162,31 +167,31 @@ public:
 
             write_reqs[ibuffer] = write_buffers[ibuffer].write(write_bids[ibuffer]);
 
-            busy_write_blocks.push_back (ibuffer);
+            busy_write_blocks.push_back(ibuffer);
         }
-        for (std::vector < int_type > ::const_iterator it =
-                 busy_write_blocks.begin ();
-             it != busy_write_blocks.end (); it++)
+        for (std::vector<int_type>::const_iterator it =
+                 busy_write_blocks.begin();
+             it != busy_write_blocks.end(); it++)
         {
             ibuffer = *it;
-            write_reqs[ibuffer]->wait ();
+            write_reqs[ibuffer]->wait();
         }
 
-        assert(batch_write_blocks.empty ());
+        assert(batch_write_blocks.empty());
         free_write_blocks.clear();
         busy_write_blocks.clear();
 
         for (unsigned_type i = 0; i < nwriteblocks; i++)
-            free_write_blocks.push_back (i);
+            free_write_blocks.push_back(i);
     }
 
     //! \brief Flushes not yet written buffers and frees used memory
-    virtual ~buffered_writer ()
+    virtual ~buffered_writer()
     {
         int_type ibuffer;
-        while (!batch_write_blocks.empty ())
+        while (!batch_write_blocks.empty())
         {
-            ibuffer = batch_write_blocks.top ().ibuffer;
+            ibuffer = batch_write_blocks.top().ibuffer;
             batch_write_blocks.pop();
 
             if (write_reqs[ibuffer].valid())
@@ -194,19 +199,19 @@ public:
 
             write_reqs[ibuffer] = write_buffers[ibuffer].write(write_bids[ibuffer]);
 
-            busy_write_blocks.push_back (ibuffer);
+            busy_write_blocks.push_back(ibuffer);
         }
-        for (std::vector < int_type > ::const_iterator it =
-                 busy_write_blocks.begin ();
-             it != busy_write_blocks.end (); it++)
+        for (std::vector<int_type>::const_iterator it =
+                 busy_write_blocks.begin();
+             it != busy_write_blocks.end(); it++)
         {
             ibuffer = *it;
-            write_reqs[ibuffer]->wait ();
+            write_reqs[ibuffer]->wait();
         }
 
-        delete [] write_reqs;
-        delete [] write_buffers;
-        delete [] write_bids;
+        delete[] write_reqs;
+        delete[] write_buffers;
+        delete[] write_bids;
     }
 };
 
@@ -214,4 +219,4 @@ public:
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_BUFFERED_WRITER_HEADER

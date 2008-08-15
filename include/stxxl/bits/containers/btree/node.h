@@ -1,16 +1,20 @@
 /***************************************************************************
- *            node.h
+ *  include/stxxl/bits/containers/btree/node.h
  *
- *  Tue Feb 14 21:02:51 2006
- *  Copyright  2006  Roman Dementiev
- *  Email
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
 #ifndef STXXL_CONTAINERS_BTREE__NODE_H
 #define STXXL_CONTAINERS_BTREE__NODE_H
 
-#include "stxxl/bits/containers/btree/iterator.h"
-#include "stxxl/bits/containers/btree/node_cache.h"
+#include <stxxl/bits/containers/btree/iterator.h>
+#include <stxxl/bits/containers/btree/node_cache.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -21,7 +25,7 @@ namespace btree
     class node_cache;
 
     template <class KeyType_, class KeyCmp_, unsigned RawSize_, class BTreeType>
-    class normal_node
+    class normal_node : private noncopyable
     {
     public:
         typedef normal_node<KeyType_, KeyCmp_, RawSize_, BTreeType> SelfType;
@@ -37,7 +41,7 @@ namespace btree
         typedef BID<raw_size> bid_type;
         typedef bid_type node_bid_type;
         typedef SelfType node_type;
-        typedef std::pair<key_type, bid_type>  value_type;
+        typedef std::pair<key_type, bid_type> value_type;
         typedef value_type & reference;
         typedef const value_type & const_reference;
 
@@ -47,7 +51,7 @@ namespace btree
             bid_type me;
             unsigned cur_size;
         };
-        typedef typed_block < raw_size, value_type, 0, InfoType > block_type;
+        typedef typed_block<raw_size, value_type, 0, InfoType> block_type;
 
         enum {
             nelements = block_type::size - 1,
@@ -68,19 +72,14 @@ namespace btree
 
         typedef node_cache<normal_node, btree_type> node_cache_type;
 
-
     private:
-        normal_node();
-        normal_node(const normal_node &);
-        normal_node & operator = (const normal_node &);
-
         struct value_compare : public std::binary_function<value_type, bid_type, bool>
         {
             key_compare comp;
 
             value_compare(key_compare c) : comp(c) { }
 
-            bool operator() (const value_type & x, const value_type & y) const
+            bool operator () (const value_type & x, const value_type & y) const
             {
                 return comp(x.first, y.first);
             }
@@ -92,9 +91,8 @@ namespace btree
         value_compare vcmp_;
 
 
-
         template <class BIDType>
-        std::pair<key_type, bid_type> insert(const std::pair<key_type, BIDType> &splitter,
+        std::pair<key_type, bid_type> insert(const std::pair<key_type, BIDType> & splitter,
                                              const block_iterator & place2insert)
         {
             std::pair<key_type, bid_type> result(key_compare::max_value(), bid_type());
@@ -107,11 +105,11 @@ namespace btree
                 *(cur + 1) = *cur;
             // copy elements to make space for the new element
 
-            *place2insert = splitter;                     // insert
+            *place2insert = splitter;           // insert
 
-            ++ (block_->info.cur_size);
+            ++(block_->info.cur_size);
 
-            if (size() > max_nelements())                    // overflow! need to split
+            if (size() > max_nelements())       // overflow! need to split
             {
                 STXXL_VERBOSE1("btree::normal_node::insert overflow happened, splitting");
 
@@ -131,8 +129,8 @@ namespace btree
                 std::copy(block_->begin(), block_->begin() + end_of_smaller_part, NewNode->block_->begin());
                 NewNode->block_->info.cur_size = end_of_smaller_part;
                 // copy the larger part
-                std::copy(      block_->begin() + end_of_smaller_part,
-                                block_->begin() + old_size, block_->begin());
+                std::copy(block_->begin() + end_of_smaller_part,
+                          block_->begin() + old_size, block_->begin());
                 block_->info.cur_size = old_size - end_of_smaller_part;
                 assert(size() + NewNode->size() == old_size);
 
@@ -152,7 +150,7 @@ namespace btree
             typedef typename local_node_type::bid_type local_bid_type;
 
             block_iterator leftIt, rightIt;
-            if (UIt == (block_->begin() + size() - 1) )                  // UIt is the last entry in the root
+            if (UIt == (block_->begin() + size() - 1))                  // UIt is the last entry in the root
             {
                 assert(UIt != block_->begin());
                 rightIt = UIt;
@@ -166,8 +164,8 @@ namespace btree
             }
 
             // now fuse or balance nodes pointed by leftIt and rightIt
-            local_bid_type LeftBid = (local_bid_type) leftIt->second;
-            local_bid_type RightBid = (local_bid_type) rightIt->second;
+            local_bid_type LeftBid = (local_bid_type)leftIt->second;
+            local_bid_type RightBid = (local_bid_type)rightIt->second;
             local_node_type * LeftNode = cache_.get_node(LeftBid, true);
             local_node_type * RightNode = cache_.get_node(RightBid, true);
 
@@ -175,13 +173,13 @@ namespace btree
             if (TotalSize <= RightNode->max_nelements())
             {
                 // fuse
-                RightNode->fuse(*LeftNode);                         // add the content of LeftNode to RightNode
+                RightNode->fuse(*LeftNode);                                     // add the content of LeftNode to RightNode
 
                 cache_.unfix_node(RightBid);
-                cache_.delete_node(LeftBid);                         // 'delete_node' unfixes LeftBid also
+                cache_.delete_node(LeftBid);                                    // 'delete_node' unfixes LeftBid also
 
-                std::copy(leftIt + 1, block_->begin() + size(), leftIt );                        // delete left BID from the root
-                -- (block_->info.cur_size);
+                std::copy(leftIt + 1, block_->begin() + size(), leftIt);        // delete left BID from the root
+                --(block_->info.cur_size);
             }
             else
             {
@@ -204,8 +202,8 @@ namespace btree
             delete block_;
         }
 
-        normal_node(    btree_type * btree__,
-                        key_compare cmp) :
+        normal_node(btree_type * btree__,
+                    key_compare cmp) :
             block_(new block_type),
             btree_(btree__),
             cmp_(cmp),
@@ -214,7 +212,7 @@ namespace btree
             assert(min_nelements() >= 2);
             assert(2 * min_nelements() - 1 <= max_nelements());
             assert(max_nelements() <= nelements);
-            assert(unsigned (block_type::size) >= nelements + 1);                   // extra space for an overflow
+            assert(unsigned(block_type::size) >= nelements + 1);                   // extra space for an overflow
         }
 
         block_type & block()
@@ -222,8 +220,8 @@ namespace btree
             return *block_;
         }
 
-        bool overflows () const { return block_->info.cur_size > max_nelements(); }
-        bool underflows () const { return block_->info.cur_size < min_nelements(); }
+        bool overflows() const { return block_->info.cur_size > max_nelements(); }
+        bool underflows() const { return block_->info.cur_size < min_nelements(); }
 
         unsigned max_nelements() const { return max_size; }
         unsigned min_nelements() const { return min_size; }
@@ -321,7 +319,7 @@ namespace btree
         std::pair<iterator, bool> insert(
             const btree_value_type & x,
             unsigned height,
-            std::pair<key_type, bid_type> &splitter)
+            std::pair<key_type, bid_type> & splitter)
         {
             assert(size() <= max_nelements());
             splitter.first = key_compare::max_value();
@@ -344,7 +342,7 @@ namespace btree
                 btree_->leaf_cache_.unfix_node((leaf_bid_type)it->second);
                 //if(key_compare::max_value() == BotSplitter.first)
                 if (!(cmp_(key_compare::max_value(), BotSplitter.first) ||
-                      cmp_(BotSplitter.first, key_compare::max_value()) ))
+                      cmp_(BotSplitter.first, key_compare::max_value())))
                     return result;
                 // no overflow/splitting happened
 
@@ -364,7 +362,7 @@ namespace btree
                 btree_->node_cache_.unfix_node((node_bid_type)it->second);
                 //if(key_compare::max_value() == BotSplitter.first)
                 if (!(cmp_(key_compare::max_value(), BotSplitter.first) ||
-                      cmp_(BotSplitter.first, key_compare::max_value()) ))
+                      cmp_(BotSplitter.first, key_compare::max_value())))
                     return result;
                 // no overflow/splitting happened
 
@@ -655,8 +653,8 @@ namespace btree
                 // move elements to make space for Src elements
 
                 // copy Left to *this leaf
-                std::copy(      Left.block_->begin() + newLeftSize,
-                                Left.block_->begin() + Left.size(), block_->begin());
+                std::copy(Left.block_->begin() + newLeftSize,
+                          Left.block_->begin() + Left.size(), block_->begin());
             }
             else
             {
@@ -665,14 +663,14 @@ namespace btree
                 const unsigned nEl2Move = size() - newRightSize;                        // #elements to move from *this to Left
 
                 // copy *this to Left
-                std::copy(      block_->begin(),
-                                block_->begin() + nEl2Move, Left.block_->begin() + Left.size());
+                std::copy(block_->begin(),
+                          block_->begin() + nEl2Move, Left.block_->begin() + Left.size());
                 // move elements in *this
-                std::copy(      block_->begin() + nEl2Move,
-                                block_->begin() + size(), block_->begin() );
+                std::copy(block_->begin() + nEl2Move,
+                          block_->begin() + size(), block_->begin());
             }
 
-            block_->info.cur_size = newRightSize;                     // update size
+            block_->info.cur_size = newRightSize;                         // update size
             Left.block_->info.cur_size = newLeftSize;                     // update size
 
             return Left.back().first;
@@ -753,7 +751,7 @@ namespace btree
         void push_back(const value_type & x)
         {
             (*this)[size()] = x;
-            ++ (block_->info.cur_size);
+            ++(block_->info.cur_size);
         }
     };
 }

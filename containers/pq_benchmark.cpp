@@ -1,12 +1,24 @@
 /***************************************************************************
- *            pq_benchmark.cpp
+ *  containers/pq_benchmark.cpp
  *
- *  Wed Jul 12 18:25:58 2006
- *  Copyright  2006  User Roman Dementiev
- *  Email
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2006 Roman Dementiev <dementiev@ira.uka.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl.h"
+//! \example containers/pq_benchmark.cpp
+//! This is a benchmark mentioned in the paper
+//! R. Dementiev, L. Kettner, P. Sanders "STXXL: standard template library for XXL data sets"
+//! Software: Practice and Experience
+//! Volume 38, Issue 6, Pages 589-637, May 2008
+//! DOI: 10.1002/spe.844
+
+
+#include <stxxl/priority_queue>
 
 #define TOTAL_PQ_MEM_SIZE    (768 * 1024 * 1024)
 
@@ -23,7 +35,7 @@ struct my_record
 {
     int key;
     int data;
-    my_record() { }
+    my_record() : key(0), data(0) { }
     my_record(int k, int d) : key(k), data(d) { }
 };
 
@@ -54,22 +66,21 @@ bool operator > (const my_record & a, const my_record & b)
 }
 
 
-
-struct comp_type
+struct comp_type : std::binary_function<my_record, my_record, bool>
 {
-    bool operator ()  (const my_record & a, const my_record & b) const
+    bool operator () (const my_record & a, const my_record & b) const
     {
         return a > b;
     }
     static my_record min_value()
     {
-        return my_record((std::numeric_limits < int > ::max)(), 0);
+        return my_record((std::numeric_limits<int>::max)(), 0);
     }
 };
 
 
-typedef stxxl::PRIORITY_QUEUE_GENERATOR < my_record, comp_type,
-PQ_MEM_SIZE, MAX_ELEMENTS / (1024 / 8) > ::result pq_type;
+typedef stxxl::PRIORITY_QUEUE_GENERATOR<my_record, comp_type,
+                                        PQ_MEM_SIZE, MAX_ELEMENTS / (1024 / 8)>::result pq_type;
 
 typedef pq_type::block_type block_type;
 
@@ -86,7 +97,7 @@ inline int myrand()
 long long unsigned ran32State = 0xdeadbeef;
 inline long long unsigned myrand()
 {
-    return (ran32State = (ran32State * 0x5DEECE66DULL + 0xBULL) & 0xFFFFFFFFFFFFULL );
+    return (ran32State = (ran32State * 0x5DEECE66DULL + 0xBULL) & 0xFFFFFFFFFFFFULL);
 }
 #endif
 
@@ -94,7 +105,7 @@ inline long long unsigned myrand()
 void run_stxxl_insert_all_delete_all(stxxl::uint64 ops)
 {
     stxxl::prefetch_pool<block_type> p_pool(PREFETCH_POOL_SIZE / BLOCK_SIZE);
-    stxxl::write_pool<block_type>    w_pool(WRITE_POOL_SIZE / BLOCK_SIZE);
+    stxxl::write_pool<block_type> w_pool(WRITE_POOL_SIZE / BLOCK_SIZE);
 
     pq_type PQ(p_pool, w_pool);
 
@@ -124,7 +135,7 @@ void run_stxxl_insert_all_delete_all(stxxl::uint64 ops)
     }
 
     STXXL_MSG("Insertions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
+              " seconds : " << (double(ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
 
     std::cout << *Stats;
     Stats->reset();
@@ -148,7 +159,7 @@ void run_stxxl_insert_all_delete_all(stxxl::uint64 ops)
     }
 
     STXXL_MSG("Deletions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
+              " seconds : " << (double(ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
 
     std::cout << *Stats;
 }
@@ -157,7 +168,7 @@ void run_stxxl_insert_all_delete_all(stxxl::uint64 ops)
 void run_stxxl_intermixed(stxxl::uint64 ops)
 {
     stxxl::prefetch_pool<block_type> p_pool(PREFETCH_POOL_SIZE / BLOCK_SIZE);
-    stxxl::write_pool<block_type>    w_pool(WRITE_POOL_SIZE / BLOCK_SIZE);
+    stxxl::write_pool<block_type> w_pool(WRITE_POOL_SIZE / BLOCK_SIZE);
 
     pq_type PQ(p_pool, w_pool);
 
@@ -187,7 +198,7 @@ void run_stxxl_intermixed(stxxl::uint64 ops)
     }
 
     STXXL_MSG("Insertions elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
+              " seconds : " << (double(ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
 
     std::cout << *Stats;
     Stats->reset();
@@ -216,7 +227,7 @@ void run_stxxl_intermixed(stxxl::uint64 ops)
     STXXL_MSG("Records in PQ: " << PQ.size());
 
     STXXL_MSG("Deletions/Insertion elapsed time: " << (Timer.mseconds() / 1000.) <<
-              " seconds : " << (double (ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
+              " seconds : " << (double(ops) / (Timer.mseconds() / 1000.)) << " key/data pairs per sec");
 
     std::cout << *Stats;
 }
@@ -236,11 +247,11 @@ int main(int argc, char * argv[])
         STXXL_MSG("Usage: " << argv[0] << " version #ops");
         STXXL_MSG("\t version = 1: insert-all-delete-all stxxl pq");
         STXXL_MSG("\t version = 2: intermixed insert/delete stxxl pq");
-        return 0;
+        return -1;
     }
 
     int version = atoi(argv[1]);
-    stxxl::uint64 ops = atoll(argv[2]);
+    stxxl::int64 ops = stxxl::atoint64(argv[2]);
 
 
     STXXL_MSG("Running version      : " << version);

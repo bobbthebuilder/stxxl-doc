@@ -1,17 +1,21 @@
-#ifndef SCAN_HEADER
-#define SCAN_HEADER
-
 /***************************************************************************
- *            scan.h
+ *  include/stxxl/bits/algo/scan.h
  *
- *  Tue Dec 31 20:27:24 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002-2004 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl/bits/namespace.h"
-#include "stxxl/bits/mng/buf_istream.h"
-#include "stxxl/bits/mng/buf_ostream.h"
+#ifndef STXXL_SCAN_HEADER
+#define STXXL_SCAN_HEADER
+
+#include <stxxl/bits/namespace.h>
+#include <stxxl/bits/mng/buf_istream.h>
+#include <stxxl/bits/mng/buf_ostream.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -31,7 +35,7 @@ __STXXL_BEGIN_NAMESPACE
 template <typename _ExtIterator, typename _UnaryFunction>
 _UnaryFunction for_each(_ExtIterator _begin, _ExtIterator _end, _UnaryFunction _functor, int_type nbuffers)
 {
-    typedef buf_istream < typename _ExtIterator::block_type, typename _ExtIterator::bids_container_iterator > buf_istream_type;
+    typedef buf_istream<typename _ExtIterator::block_type, typename _ExtIterator::bids_container_iterator> buf_istream_type;
 
     _begin.flush();     // flush container
 
@@ -82,8 +86,8 @@ _UnaryFunction for_each(_ExtIterator _begin, _ExtIterator _end, _UnaryFunction _
 template <typename _ExtIterator, typename _UnaryFunction>
 _UnaryFunction for_each_m(_ExtIterator _begin, _ExtIterator _end, _UnaryFunction _functor, int_type nbuffers)
 {
-    typedef buf_istream < typename _ExtIterator::block_type, typename _ExtIterator::bids_container_iterator > buf_istream_type;
-    typedef buf_ostream < typename _ExtIterator::block_type, typename _ExtIterator::bids_container_iterator > buf_ostream_type;
+    typedef buf_istream<typename _ExtIterator::block_type, typename _ExtIterator::bids_container_iterator> buf_istream_type;
+    typedef buf_ostream<typename _ExtIterator::block_type, typename _ExtIterator::bids_container_iterator> buf_ostream_type;
 
     _begin.flush();     // flush container
 
@@ -139,7 +143,7 @@ template <typename _ExtIterator, typename _Generator>
 void generate(_ExtIterator _begin, _ExtIterator _end, _Generator _generator, int_type nbuffers)
 {
     typedef typename _ExtIterator::block_type block_type;
-    typedef buf_ostream < block_type, typename _ExtIterator::bids_container_iterator > buf_ostream_type;
+    typedef buf_ostream<block_type, typename _ExtIterator::bids_container_iterator> buf_ostream_type;
 
 
     while (_begin.block_offset())    //  go to the beginning of the block
@@ -191,7 +195,7 @@ void generate(_ExtIterator _begin, _ExtIterator _end, _Generator _generator, int
 template <typename _ExtIterator, typename _EqualityComparable>
 _ExtIterator find(_ExtIterator _begin, _ExtIterator _end, const _EqualityComparable & _value, int_type nbuffers)
 {
-    typedef buf_istream < typename _ExtIterator::block_type, typename _ExtIterator::bids_container_iterator > buf_istream_type;
+    typedef buf_istream<typename _ExtIterator::block_type, typename _ExtIterator::bids_container_iterator> buf_istream_type;
 
     _begin.flush();     // flush container
 
@@ -221,4 +225,4 @@ _ExtIterator find(_ExtIterator _begin, _ExtIterator _end, const _EqualityCompara
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_SCAN_HEADER

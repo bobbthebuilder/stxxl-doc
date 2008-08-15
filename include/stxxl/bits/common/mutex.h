@@ -1,25 +1,31 @@
-#ifndef MUTEX_HEADER
-#define MUTEX_HEADER
-
 /***************************************************************************
- *            mutex.h
+ *  include/stxxl/bits/common/mutex.h
  *
- *  Sat Aug 24 23:53:20 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *  Copyright (C) 2008 Andreas Beckmann <beckmann@cs.uni-frankfurt.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
+#ifndef STXXL_MUTEX_HEADER
+#define STXXL_MUTEX_HEADER
+
+#include <stxxl/bits/namespace.h>
 
 #ifdef STXXL_BOOST_THREADS
 
-// stxxl::mutex is not needed since boost:mutex exists
  #include <boost/thread/mutex.hpp>
 
 #else
 
  #include <pthread.h>
 
-#include <stxxl/bits/noncopyable.h>
-#include <stxxl/bits/common/utils.h>
+ #include <stxxl/bits/noncopyable.h>
+ #include <stxxl/bits/common/utils.h>
 
 #endif
 
@@ -28,36 +34,80 @@ __STXXL_BEGIN_NAMESPACE
 
 #ifdef STXXL_BOOST_THREADS
 
+typedef boost::mutex mutex;
+
 #else
 
 class mutex : private noncopyable
 {
     pthread_mutex_t _mutex;
+
 public:
-
-    mutex ()
+    mutex()
     {
-        stxxl_nassert (pthread_mutex_init (&_mutex, NULL), resource_error);
-    };
+        check_pthread_call(pthread_mutex_init(&_mutex, NULL));
+    }
 
-    ~mutex ()
+    ~mutex()
     {
-        int res = pthread_mutex_trylock (&_mutex);
+        int res = pthread_mutex_trylock(&_mutex);
 
         if (res == 0 || res == EBUSY) {
-            stxxl_nassert(pthread_mutex_unlock(&_mutex), resource_error);
+            check_pthread_call(pthread_mutex_unlock(&_mutex));
         } else
             stxxl_function_error(resource_error);
 
-        stxxl_nassert(pthread_mutex_destroy(&_mutex), resource_error);
-    };
-    void lock ()
-    {
-        stxxl_nassert(pthread_mutex_lock (&_mutex), resource_error);
+        check_pthread_call(pthread_mutex_destroy(&_mutex));
     }
-    void unlock ()
+    void lock()
     {
-        stxxl_nassert(pthread_mutex_unlock (&_mutex), resource_error);
+        check_pthread_call(pthread_mutex_lock(&_mutex));
+    }
+    void unlock()
+    {
+        check_pthread_call(pthread_mutex_unlock(&_mutex));
+    }
+};
+
+#endif
+
+#ifdef STXXL_BOOST_THREADS
+
+typedef boost::mutex::scoped_lock scoped_mutex_lock;
+
+#else
+
+//! \brief Aquire a lock that's valid until the end of scope
+class scoped_mutex_lock
+{
+    mutex & mtx;
+    bool is_locked;
+
+public:
+    scoped_mutex_lock(mutex & mtx_) : mtx(mtx_), is_locked(false)
+    {
+        lock();
+    }
+
+    ~scoped_mutex_lock()
+    {
+        unlock();
+    }
+
+    void lock()
+    {
+        if (!is_locked) {
+            mtx.lock();
+            is_locked = true;
+        }
+    }
+
+    void unlock()
+    {
+        if (is_locked) {
+            mtx.unlock();
+            is_locked = false;
+        }
     }
 };
 
@@ -65,4 +115,4 @@ public:
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_MUTEX_HEADER

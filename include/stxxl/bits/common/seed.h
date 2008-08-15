@@ -1,14 +1,19 @@
+/***************************************************************************
+ *  include/stxxl/bits/common/seed.h
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2007 Andreas Beckmann <beckmann@mpi-inf.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
 #ifndef STXXL_SEED_HEADER
 #define STXXL_SEED_HEADER
 
-/***************************************************************************
- *            seed.h
- *
- *  Fri Nov 16 13:33:05 CET 2007
- *  Copyright (C) 2007  Andreas Beckmann <beckmann@mpi-inf.mpg.de>
- ****************************************************************************/
-
-#include "stxxl/bits/namespace.h"
+#include <stxxl/bits/namespace.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -22,4 +27,4 @@ unsigned get_next_seed();
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_SEED_HEADER

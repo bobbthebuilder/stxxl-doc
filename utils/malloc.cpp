@@ -1,14 +1,26 @@
+/***************************************************************************
+ *  utils/malloc.cpp
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2003 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
 #include <iostream>
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 #include <cstdlib>
-#include "stxxl/bits/common/utils.h"
-
-using namespace std;
-
+#include <stxxl/bits/common/utils.h>
 
 
 void print_malloc_stats()
 {
+#ifndef __APPLE__
     struct mallinfo info = mallinfo();
     STXXL_MSG("MALLOC statistics BEGIN");
     STXXL_MSG("===============================================================");
@@ -23,10 +35,18 @@ void print_malloc_stats()
     STXXL_MSG("number of bytes allocated but not in use       : " << info.fordblks);
     STXXL_MSG("top-most, releasable (via malloc_trim) space   : " << info.keepcost);
     STXXL_MSG("================================================================");
+#else
+    STXXL_MSG("MALLOC statistics are not supported on this platform");
+#endif
 }
 
 int main(int argc, char * argv[])
 {
+    using std::cin;
+    using std::cout;
+    using std::cerr;
+    using std::endl;
+
     if (argc < 2)
     {
         cerr << "Usage: " << argv[0] << " bytes_to_allocate" << endl;
@@ -35,13 +55,14 @@ int main(int argc, char * argv[])
     sbrk(128 * 1024 * 1024);
     cout << "Nothing allocated" << endl;
     print_malloc_stats();
+    cout << "Press any non-whitespace key followed by <Return> to continue or Ctrl-C to abort" << endl;
     char tmp;
     cin >> tmp;
     const unsigned bytes = atoi(argv[1]);
     char * ptr = new char[bytes];
     cout << "Allocated " << bytes << " bytes" << endl;
     print_malloc_stats();
-    delete [] ptr;
+    delete[] ptr;
     cout << "Deallocated " << endl;
     print_malloc_stats();
 }

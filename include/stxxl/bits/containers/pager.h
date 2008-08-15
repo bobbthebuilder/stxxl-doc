@@ -1,20 +1,24 @@
-#ifndef PAGER_HEADER
-#define PAGER_HEADER
-
 /***************************************************************************
- *            pager.h
+ *  include/stxxl/bits/containers/pager.h
  *
- *  Sun Oct  6 14:49:19 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002-2003 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
+#ifndef STXXL_PAGER_HEADER
+#define STXXL_PAGER_HEADER
+
+#include <list>
 
 #include <stxxl/bits/noncopyable.h>
-#include "stxxl/bits/common/rand.h"
-#include "stxxl/bits/common/simple_vector.h"
-
-#include <memory>
-#include <list>
+#include <stxxl/bits/common/rand.h>
+#include <stxxl/bits/common/simple_vector.h>
+#include <stxxl/bits/compat_auto_ptr.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -33,10 +37,11 @@ template <unsigned npages_>
 class random_pager
 {
     random_number<random_uniform_fast> rnd;
+
 public:
     enum { n_pages = npages_ };
-    random_pager() { };
-    ~random_pager() { };
+    random_pager() { }
+    ~random_pager() { }
     int_type kick()
     {
         return rnd(npages_);
@@ -54,7 +59,7 @@ class lru_pager : private noncopyable
 {
     typedef std::list<int_type> list_type;
 
-    std::auto_ptr<list_type> history;
+    compat_auto_ptr<list_type>::result history;
     simple_vector<list_type::iterator> history_entry;
 
 public:
@@ -80,7 +85,7 @@ public:
     {
         // workaround for buggy GCC 3.4 STL
         //std::swap(history,obj.history);
-        std::auto_ptr<list_type> tmp = obj.history;
+        compat_auto_ptr<list_type>::result tmp = obj.history;
         obj.history = history;
         history = tmp;
         std::swap(history_entry, obj.history_entry);
@@ -94,11 +99,11 @@ __STXXL_END_NAMESPACE
 namespace std
 {
     template <unsigned npages_>
-    void swap(      stxxl::lru_pager < npages_ > & a,
-                    stxxl::lru_pager<npages_> & b)
+    void swap(stxxl::lru_pager<npages_> & a,
+              stxxl::lru_pager<npages_> & b)
     {
         a.swap(b);
     }
 }
 
-#endif
+#endif // !STXXL_PAGER_HEADER

@@ -1,6 +1,17 @@
-# $Id$
+############################################################################
+#  test/compile-stxxl-headers/Makefile
+#
+#  Part of the STXXL. See http://stxxl.sourceforge.net
+#
+#  Copyright (C) 2007 Andreas Beckmann <beckmann@mpi-inf.mpg.de>
+#
+#  Distributed under the Boost Software License, Version 1.0.
+#  (See accompanying file LICENSE_1_0.txt or copy at
+#  http://www.boost.org/LICENSE_1_0.txt)
+############################################################################
 
 INSTANCE	?= stxxl
+INSTANCE	?= pmstxxl
 INSTANCE	?= mcstxxl
 
 TOPDIR		?= ../..
@@ -9,7 +20,7 @@ include $(TOPDIR)/make.settings
 
 CXX		 = $(STXXL_CXX)
 OPT		 = -O3
-WARNINGS	 = -W -Wall
+WARNINGS	 = $(STXXL_WARNFLAGS)
 
 CPPFLAGS	+= $(STXXL_CPPFLAGS)
 CPPFLAGS	+= $(OPT) $(WARNINGS)
@@ -17,17 +28,16 @@ CPPFLAGS	+= -MD
 
 STXXL_MAIN_HEADER	+= stxxl.h
 STXXL_HEADERS		+= all
-STXXL_HEADERS		+= vector stack queue priority_queue deque map hash_map
-STXXL_HEADERS		+= algorithm scan sort ksort stable_ksort
+STXXL_HEADERS		+= vector stack queue priority_queue deque map
+STXXL_HEADERS		+= algorithm scan sort ksort stable_ksort random_shuffle
 STXXL_HEADERS		+= io mng stream
-STXXL_HEADERS		+= random timer mallocstats
+STXXL_HEADERS		+= random timer mallocstats aligned_alloc types
 STXXL_BITS		+= $(HEADER_FILES_BITS)
 STXXL_BITS		+= $(HEADER_FILES_COMMON:%=common/%)
 STXXL_BITS		+= $(HEADER_FILES_IO:%=io/%)
 STXXL_BITS		+= $(HEADER_FILES_MNG:%=mng/%)
 STXXL_BITS		+= $(HEADER_FILES_CONTAINER:%=containers/%)
 STXXL_BITS		+= $(HEADER_FILES_CONTAINERS_BTREE:%=containers/btree/%)
-STXXL_BITS		+= $(HEADER_FILES_CONTAINERS_HASH_MAP:%=containers/hash_map/%)
 STXXL_BITS		+= $(HEADER_FILES_ALGO:%=algo/%)
 STXXL_BITS		+= $(HEADER_FILES_STREAM:%=stream/%)
 STXXL_BITS		+= $(HEADER_FILES_UTILS:%=utils/%)

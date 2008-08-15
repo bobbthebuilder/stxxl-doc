@@ -1,16 +1,19 @@
-#ifndef SWITCH_HEADER
-#define SWITCH_HEADER
-
 /***************************************************************************
- *            switch.h
- *	kind of semaphore
- *  Sat Aug 24 23:53:59 2002
- *  Copyright  2002  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  include/stxxl/bits/common/switch.h
+ *
+ *  kind of semaphore
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2002 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include <stxxl/bits/noncopyable.h>
-#include "stxxl/bits/common/utils.h"
+#ifndef STXXL_SWITCH_HEADER
+#define STXXL_SWITCH_HEADER
 
 #ifdef STXXL_BOOST_THREADS
  #include <boost/thread/mutex.hpp>
@@ -18,6 +21,9 @@
 #else
  #include <pthread.h>
 #endif
+
+#include <stxxl/bits/noncopyable.h>
+#include <stxxl/bits/common/utils.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -34,32 +40,31 @@ class onoff_switch : private noncopyable
     pthread_cond_t cond;
 #endif
     bool _on;
+
 public:
-    onoff_switch (bool flag = false) : _on (flag)
+    onoff_switch(bool flag = false) : _on(flag)
     {
 #ifndef STXXL_BOOST_THREADS
-        stxxl_nassert (pthread_mutex_init (&mutex, NULL), resource_error);
-        stxxl_nassert (pthread_cond_init (&cond, NULL), resource_error);
+        check_pthread_call(pthread_mutex_init(&mutex, NULL));
+        check_pthread_call(pthread_cond_init(&cond, NULL));
 #endif
-    };
-    ~onoff_switch ()
+    }
+    ~onoff_switch()
     {
 #ifndef STXXL_BOOST_THREADS
-        int res = pthread_mutex_trylock (&mutex);
+        int res = pthread_mutex_trylock(&mutex);
 
         if (res == 0 || res == EBUSY) {
-            stxxl_nassert (pthread_mutex_unlock
-                           (&mutex), resource_error);
+            check_pthread_call(pthread_mutex_unlock(&mutex));
         } else
             stxxl_function_error(resource_error);
-        stxxl_nassert (pthread_mutex_destroy
-                       (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_destroy(&mutex));
 
 
-        stxxl_nassert (pthread_cond_destroy (&cond), resource_error);
+        check_pthread_call(pthread_cond_destroy(&cond));
 #endif
-    };
-    void on ()
+    }
+    void on()
     {
 #ifdef STXXL_BOOST_THREADS
         boost::mutex::scoped_lock Lock(mutex);
@@ -67,13 +72,13 @@ public:
         Lock.unlock();
         cond.notify_one();
 #else
-        stxxl_nassert (pthread_mutex_lock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_lock(&mutex));
         _on = true;
-        stxxl_nassert (pthread_mutex_unlock (&mutex), resource_error);
-        stxxl_nassert (pthread_cond_signal (&cond), resource_error);
+        check_pthread_call(pthread_mutex_unlock(&mutex));
+        check_pthread_call(pthread_cond_signal(&cond));
 #endif
     }
-    void off ()
+    void off()
     {
 #ifdef STXXL_BOOST_THREADS
         boost::mutex::scoped_lock Lock(mutex);
@@ -81,13 +86,13 @@ public:
         Lock.unlock();
         cond.notify_one();
 #else
-        stxxl_nassert (pthread_mutex_lock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_lock(&mutex));
         _on = false;
-        stxxl_nassert (pthread_mutex_unlock (&mutex), resource_error);
-        stxxl_nassert (pthread_cond_signal (&cond), resource_error);
+        check_pthread_call(pthread_mutex_unlock(&mutex));
+        check_pthread_call(pthread_cond_signal(&cond));
 #endif
     }
-    void wait_for_on ()
+    void wait_for_on()
     {
 #ifdef STXXL_BOOST_THREADS
         boost::mutex::scoped_lock Lock(mutex);
@@ -95,15 +100,14 @@ public:
             cond.wait(Lock);
 
 #else
-        stxxl_nassert (pthread_mutex_lock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_lock(&mutex));
         if (!_on)
-            stxxl_nassert (pthread_cond_wait
-                           (&cond, &mutex), resource_error);
+            check_pthread_call(pthread_cond_wait(&cond, &mutex));
 
-        stxxl_nassert (pthread_mutex_unlock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_unlock(&mutex));
 #endif
     }
-    void wait_for_off ()
+    void wait_for_off()
     {
 #ifdef STXXL_BOOST_THREADS
         boost::mutex::scoped_lock Lock(mutex);
@@ -111,24 +115,23 @@ public:
             cond.wait(Lock);
 
 #else
-        stxxl_nassert (pthread_mutex_lock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_lock(&mutex));
         if (_on)
-            stxxl_nassert (pthread_cond_wait
-                           (&cond, &mutex), resource_error);
+            check_pthread_call(pthread_cond_wait(&cond, &mutex));
 
-        stxxl_nassert (pthread_mutex_unlock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_unlock(&mutex));
 #endif
     }
-    bool is_on ()
+    bool is_on()
     {
 #ifdef STXXL_BOOST_THREADS
         boost::mutex::scoped_lock Lock(mutex);
         return _on;
 #else
         bool res;
-        stxxl_nassert (pthread_mutex_lock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_lock(&mutex));
         res = _on;
-        stxxl_nassert (pthread_mutex_unlock (&mutex), resource_error);
+        check_pthread_call(pthread_mutex_unlock(&mutex));
         return res;
 #endif
     }
@@ -136,4 +139,4 @@ public:
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_SWITCH_HEADER

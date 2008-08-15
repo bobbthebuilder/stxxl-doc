@@ -1,18 +1,23 @@
-#ifndef COMPLETION_HANDLER_HEADER
-#define COMPLETION_HANDLER_HEADER
-
 /***************************************************************************
- *            completion_handler.h
+ *  include/stxxl/bits/io/completion_handler.h
  *
- *  Mon Apr 21 02:45:45 2003
- *  Copyright  2003  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
  *  Loki-style completion handler (functors)
- ****************************************************************************/
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2003 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl/bits/namespace.h"
+#ifndef STXXL_COMPLETION_HANDLER_HEADER
+#define STXXL_COMPLETION_HANDLER_HEADER
 
 #include <memory>
+
+#include <stxxl/bits/namespace.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -22,7 +27,7 @@ class request;
 class completion_handler_impl
 {
 public:
-    virtual void operator() (request * ) = 0;
+    virtual void operator () (request *) = 0;
     virtual completion_handler_impl * clone() const = 0;
     virtual ~completion_handler_impl() { }
 };
@@ -50,12 +55,13 @@ public:
         copy.sp_impl_.reset(p);
         return *this;
     }
-    void operator() (request * req)
+    void operator () (request * req)
     {
         (*sp_impl_)(req);
     }
     template <typename handler_type>
     completion_handler(const handler_type & handler__);
+
 private:
     std::auto_ptr<completion_handler_impl> sp_impl_;
 };
@@ -65,13 +71,14 @@ class completion_handler1 : public completion_handler_impl
 {
 private:
     handler_type handler_;
+
 public:
     completion_handler1(const handler_type & handler__) : handler_(handler__) { }
     completion_handler1 * clone() const
     {
         return new completion_handler1(*this);
     }
-    void operator() (request * req)
+    void operator () (request * req)
     {
         handler_(req);
     }
@@ -84,4 +91,4 @@ completion_handler::completion_handler(const handler_type & handler__) :
 
 __STXXL_END_NAMESPACE
 
-#endif
+#endif // !STXXL_COMPLETION_HANDLER_HEADER

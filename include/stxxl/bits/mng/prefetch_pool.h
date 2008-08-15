@@ -1,16 +1,17 @@
-#ifndef PREFETCH_POOL_HEADER
-#define PREFETCH_POOL_HEADER
-
 /***************************************************************************
- *            prefetch_pool.h
+ *  include/stxxl/bits/mng/prefetch_pool.h
  *
- *  Thu Jul  3 11:08:09 2003
- *  Copyright  2003  Roman Dementiev
- *  dementiev@mpi-sb.mpg.de
- ****************************************************************************/
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2003-2004 Roman Dementiev <dementiev@mpi-sb.mpg.de>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
 
-#include "stxxl/bits/mng/mng.h"
-#include "stxxl/bits/mng/write_pool.h"
+#ifndef STXXL_PREFETCH_POOL_HEADER
+#define STXXL_PREFETCH_POOL_HEADER
 
 #include <list>
 
@@ -18,11 +19,9 @@
  #include <boost/config.hpp>
 #endif
 
-#ifdef BOOST_MSVC
- #include <hash_map>
-#else
- #include <ext/hash_map>
-#endif
+#include <stxxl/bits/mng/mng.h>
+#include <stxxl/bits/mng/write_pool.h>
+#include <stxxl/bits/compat_hash_map.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -41,30 +40,26 @@ public:
 protected:
     struct bid_hash
     {
-        size_t operator() (const bid_type & bid) const
+        size_t operator () (const bid_type & bid) const
         {
             size_t result = size_t(bid.storage) +
                             size_t(bid.offset & 0xffffffff) + size_t(bid.offset >> 32);
             return result;
         }
 #ifdef BOOST_MSVC
-        bool operator ()  (const bid_type & a, const bid_type & b) const
+        bool operator () (const bid_type & a, const bid_type & b) const
         {
-            return (a.storage < b.storage) || ( a.storage == b.storage && a.offset < b.offset);
+            return (a.storage < b.storage) || (a.storage == b.storage && a.offset < b.offset);
         }
         enum
-        {       // parameters for hash table
+        {                               // parameters for hash table
             bucket_size = 4,            // 0 < bucket_size
-            min_buckets = 8
-        };      // min_buckets = 2 ^^ N, 0 < N
+            min_buckets = 8             // min_buckets = 2 ^^ N, 0 < N
+        };
 #endif
     };
     typedef std::pair<block_type *, request_ptr> busy_entry;
-#ifdef BOOST_MSVC
-    typedef stdext::hash_map < bid_type, busy_entry, bid_hash > hash_map_type;
-#else
-    typedef __gnu_cxx::hash_map < bid_type, busy_entry, bid_hash > hash_map_type;
-#endif
+    typedef typename compat_hash_map<bid_type, busy_entry, bid_hash>::result hash_map_type;
     typedef typename std::list<block_type *>::iterator free_blocks_iterator;
     typedef typename hash_map_type::iterator busy_blocks_iterator;
 
@@ -76,7 +71,6 @@ protected:
     unsigned_type free_blocks_size;
 
 public:
-
     //! \brief Constructs pool
     //! \param init_size initial number of blocks in the pool
     explicit prefetch_pool(unsigned_type init_size = 1) : free_blocks_size(init_size)
@@ -162,10 +156,10 @@ public:
             request_ptr req = w_pool.get_request(bid);
             if (req.valid())
             {
-                STXXL_VERBOSE2("prefetch_pool::hint2 bid= " << bid << " was in write cache");
                 block_type * w_block = w_pool.steal(bid);
+                STXXL_VERBOSE1("prefetch_pool::hint2 bid= " << bid << " was in write cache at " << w_block);
                 assert(w_block != 0);
-                w_pool.add(block);
+                w_pool.add(block);  //in exchange
                 busy_blocks[bid] = busy_entry(w_block, req);
                 return true;
             }
@@ -194,12 +188,12 @@ public:
         if (cache_el == busy_blocks.end())
         {
             // not cached
-            STXXL_VERBOSE2("prefetch_pool::read bid=" << bid << " => no copy in cache, retrieving");
+            STXXL_VERBOSE1("prefetch_pool::read bid=" << bid << " => no copy in cache, retrieving to " << block);
             return block->read(bid);
         }
 
         // cached
-        STXXL_VERBOSE2("prefetch_pool::read bid=" << bid << " => copy in cache exists");
+        STXXL_VERBOSE1("prefetch_pool::read bid=" << bid << " => copy in cache exists");
         ++free_blocks_size;
         free_blocks.push_back(block);
         block = cache_el->second.first;
@@ -245,11 +239,11 @@ __STXXL_END_NAMESPACE
 namespace std
 {
     template <class BlockType>
-    void swap(      stxxl::prefetch_pool < BlockType > & a,
-                    stxxl::prefetch_pool<BlockType> & b)
+    void swap(stxxl::prefetch_pool<BlockType> & a,
+              stxxl::prefetch_pool<BlockType> & b)
     {
         a.swap(b);
     }
 }
 
-#endif
+#endif // !STXXL_PREFETCH_POOL_HEADER
