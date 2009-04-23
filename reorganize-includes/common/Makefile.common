@@ -1,3 +1,0 @@
-TESTS			 =
-
-LIB_SRC			 = log.cpp debug.cpp rand.cpp version.cpp
