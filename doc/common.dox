@@ -38,9 +38,42 @@ TODO-df
 
 /*! \page common_timer Timestamp and Timer Classes
 
-See file common/timer.h
+See file common/timer.h -> TODO-df
 
-TODO-df
+Measuring the time certain parts of an algorithm or the entire algorithm consume will often be of great interest. The STXXL provides build-in time measurement class stxxl::timer which can be used as follows:
+
+\code
+#include <stxxl/timer>  // make timer class available
+
+stxxl::timer Timer;  // create Timer object
+
+Timer.start();
+
+// code section which shall be measured
+
+Timer.stop();
+
+// get results:
+STXXL_MSG(",easured time: " << (Timer.seconds()) << " (seconds), " << (Timer.mseconds()) << " (milliseconds), " << (Timer.useconds()) << " (microseconds))
+
+Timer.reset();  // reset clock to zero which allows to run start() again 
+
+\endcode
+
+As an alternative, one can also work on the timestamp itself:
+
+\code
+double start = stxxl::timestamp();
+
+// code section to be measured 
+
+double stop = stxxl::timestamp();
+
+STXXL_MSG("measured time: " << (stop - start) << " seconds.");
+\endcode
+
+
+
 
 */
 
