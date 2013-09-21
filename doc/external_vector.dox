@@ -22,5 +22,4 @@ page_size (optional)	    |		4		 |  ?
 alloc_strategy (optional)   |		stxxl::RC      	 |  stxxl::striping, stxxl::SR, stxxl::FR, stxxl::RC
 paging_strategy (optional)  |		stxxl::lru     	 |  stxxl::random, stxxl::lru
 
-
 */
