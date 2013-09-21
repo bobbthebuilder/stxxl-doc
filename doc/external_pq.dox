@@ -1,0 +1,24 @@
+/*! \page external_pq stxxl::priority_queue
+
+
+
+
+\snippet pq1.cpp example
+
+
+
+To make use of stxxl::priority_queue, we can use the generator template stxxl::PRIORITY_QUEUE_GENERATOR which expects the following parameters:
+
+parameters (required if not optional) | default value              | note about the parameter
+:----------------------------------   | :------------------------: | :-------------------------------
+data_type 			      |           none             |  POD, with no reference to internal memory
+comparator class 		      |           none		   |  operator() (which must define strict-weak-ordering) and min_value() are both required 
+internal_memory_limit 		      |           none             |  internal memory consumption in bytes
+number_of_elements 		      |           none             |  in 1024 units 
+tuning_parameter (optional)	      |           6		   |  can be larger than 6 
+
+
+
+
+
+*/
