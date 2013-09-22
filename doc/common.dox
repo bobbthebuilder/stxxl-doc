@@ -12,7 +12,7 @@
 
 /*! \page common Common Utilities and Helpers found in STXXL
 
-A lots of basic utility classes and helper functions have accumulated in
+A lots of basic utility classes and helper functions have accumulated in 
 STXXL. Try are usually fundamental enough to be also used in an application
 program.  Before implementing a common software utility, please check the list
 below; it might already exist in STXXL:
@@ -30,9 +30,26 @@ below; it might already exist in STXXL:
 
 /*! \page common_random Random Number Generators
 
-See file common/rand.h
+See file common/rand.h -> TODO-df
 
-TODO-df
+Measuring the time consumption of program sections are often of great interest. The Stxxl comes with several build-in pseudo random number generators as shown below:
+
+\code 
+
+stxxl::random_number32 rand32;  // integer values in [0, 2^32)
+stxxl::random_number64 rand64;  // integer values in [0, 2^64)
+stxxl::random_uniform_slow urand_slow;  // uniform values in [0.0, 1.0)
+stxxl::random_uniform_fast urand_fast;  // uniform values in [0.0, 1.0)
+stxxl::random_number<> n_rand;  // integer values in [0,N)
+
+STXXL_MSG("random 32 bit number: " << rand32());
+STXXL_MSG("random 64 bit number: " << rand64());
+STXXL_MSG("random number between [0.0, 1.0) (slow): " << urand_slow());
+STXXL_MSG("random number between [0.0, 1.0) (fast): " << urand_fast());
+STXXL_MSG("random number between [0,123456789): " << n_rand(123456789));
+
+\endcode
+
 
 */
 

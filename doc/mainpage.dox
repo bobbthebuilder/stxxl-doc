@@ -15,10 +15,6 @@ another design priority is high performance. Here is a selection of \c S<small>T
 
 This section will help you if you are using the S<small>TXXL</small> for the first time.
 
-\link install-unix Compiling and Installing the S<small>TXXL</small> on Unix Variants \endlink
-
-\link install-windows Compiling and Installing the S<small>TXXL</small> on Microsoft Windows \endlink
-
 \link install-macos Compiling Installing the S<small>TXXL</small> on Mac OS \endlink
 
 \link overview Overview on S<small>TXXL</small>'s basic concepts \endlink
