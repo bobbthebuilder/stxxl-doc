@@ -37,18 +37,15 @@ int main()
   pq_type p(pool);
   
   STXXL_MSG("internal memory consumption of the priority queue in bytes: " << p.mem_cons() << " bytes");
-   
-  int tmp;
-  unsigned int elements = 128 * 1024 * 1024;  
   
+  int tmp;
+  unsigned int elements = 128 * 1024 * 1024;    
+  stxxl::random_number<> n_rand;  
+
   // fill priority queue with values
   for (unsigned int i = 1; i <= elements; i++)
     { 
-      if (i % 2 == 0) 
-	tmp = i / 2;
-      else 
-	tmp = ((3*i+1) / 2);
-    
+      tmp = n_rand(2147483647);  // generate random number in [0,2147483647)     
       p.push(tmp);
       //std::cout << tmp << " ";
     }
@@ -59,11 +56,11 @@ int main()
   for (int k = 0; k < 1000; k++) { p.pop(); }   
   STXXL_MSG("element on top: " << p.top());
  
-  // emptying priority queue
+  // pop values till emptyness  
   while (!p.empty()) {
     tmp = p.top();
-    //std::cout << tmp << " ";
     p.pop();
+    //std::cout << tmp << " "; 
   }
  
   return 0;
