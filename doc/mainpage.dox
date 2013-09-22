@@ -15,7 +15,7 @@ another design priority is high performance. Here is a selection of \c S<small>T
 
 This section will help you if you are using the S<small>TXXL</small> for the first time.
 
-\link install-macos Compiling Installing the S<small>TXXL</small> on Mac OS \endlink
+\link install-unix Compiling and Installing the S<small>TXXL</small> on Unix Variants \endlink 
 
 \link overview Overview on S<small>TXXL</small>'s basic concepts \endlink
 
@@ -35,14 +35,6 @@ This section provides simple and detailed documented examples on S<small>TXXL</s
 
 \link external_stack External Memory Stack \endlink
 
-\section installation Instructions on installation, usage, configuration
-
-- \link installation_linux_gcc Installation, usage, configuration (Linux/Unix &ndash; g++/icpc/clang++) \endlink
-- \link installation_msvc Installation, usage, configuration (Windows &ndash; Microsoft Visual C++) \endlink
-
-- \link install-svn Installing from subversion \endlink
-
-
 \section questions Questions
 
 - Questions concerning use and development of the \c S<small>TXXL</small>
@@ -57,7 +49,6 @@ your question may have been answered before.
   <b><a href="https://stxxl.ae.cs.uni-frankfurt.de/bugs/">Bugzilla Bug Tracker</a></b>
 
 - \link FAQ FAQ - Frequently Asked Questions \endlink
-
 
 \section license License
 
