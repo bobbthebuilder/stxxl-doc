@@ -1,0 +1,24 @@
+/*! \page external_stack stxxl::stack
+
+The \c S<small>TXXL</small> provides an I/O-efficient stack implementation stxxl::stack as the perhaps simplest external memory data structure. 
+\c S<small>TXXL</small> stacks are last in first out (LIFO), i.e. the element on top is the element added (pushed) most recently. 
+To access elements below, the overlying elements have to be popped. The basic idea is to buffer the top k elements (k <= 2B) in internal memory,
+If the buffers get empty on a number of removal calls, one block is brought from the external memory to the buffers.
+Therefore at least B removals are required to make one I/O reading a block. Insertions cause no I/Os until the internal buffers full up.
+If this case, one has make extra space and the first B elements are written to the disk. Thus a block write happens only after at least B insertions.
+Consequently, the amortized I/O complexity for push and pop stack operations is O(1/DB).
+
+\c S<small>TXXL</small> library contains four different variants of stacks, each implementation is specialized for a certain access pattern:
+
+1. \b normal_stack is a general purpose implementation which is the best if the access pattern to the stack is an irregular mix of 
+push'es and pop's, i.e. the stack grows and shrinks without a certain rule.
+
+2. \b grow_shrink stack is a stack that is optimized for an access pattern where the insertions are (almost) not intermixed with the removals, and/or vice versa,
+the removals are (almost) not intermixed with the insertions. In short the stack first grows to its maximal size, then shrinks, then grow again and so on, a pattern which can be described by \f$(push^{r_i}, push^{r_j})^k\f$ with \f$1 \leq j \leq k\f$ and large values for \f$r_i\f$ and \f$r_j\f$.
+
+3. \b grow_shrink2 stack is a "grow-shrink" stack that allows the use of common prefetch and write buffer pools. 
+   The pools are shared between several "grow-shrink" stacks.
+
+4. \b migrating stack is a stack that migrates from internal memory to external memory when its size exceeds a certain threshold.
+
+*/
