@@ -24,7 +24,7 @@ the removals are (almost) not intermixed with the insertions. In short, the stac
 To make use of stxxl::stack, one can use the generator template stxxl::STACK_GENERATOR which expects the parameters from left to right as shown in the table below.
 
 parameters (optional if not required)                 | default value                  	  | possible (permitted) values
-:-------------------------------------------------    | :------------------------:     	  | :-------------------------------:
+:-------------------------------------------------    | :------------------------:     	  | :-------------------------------
 value_type (required)       			      |           none                 	  |  POD,  with no reference to internal memory
 externality 					      |           stxxl::external      	  |  stxxl::external, stxxl::migrating, stxxl::internal
 behaviour  					      |           stxxl::normal        	  |  stxxl::normal, stxxl::grow_shrink_stack, stxxl::grow_shrink_stack2
