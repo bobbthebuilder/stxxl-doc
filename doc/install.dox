@@ -1,4 +1,4 @@
-/*! \page install-unix Compilation Installation on Unix Variants
+/*! \page install-unix Compilation and Installation on Unix Variants
 
 - Precondition: Make sure GNU Make, CMake, GNU Git and a C++ compiler are installed 
   -# Create a project directory and clone the newest S<small>TXXL</small> project repository: \verbatim $ mkdir project ; cd project 
@@ -43,11 +43,12 @@ add_subdirectory(stxxl)
 include_directories(${ZLIB_INCLUDE_DIR})
 \endverbatim
 
-  -# Create a build directory and a source directory (inside your /project folder) by: \verbatim 
-  $ mkdir build ; mkdir src \endverbatim
+  -# Create a build directory and a source directory (inside your /project folder) by: 
+  \verbatim $ mkdir build ; mkdir src \endverbatim
 
-  -# Change directory to the /src directory and create another CMakeLists.txt file: \verbatim 
-  $ cd src ; touch CMakeLists.txt \endverbatim 
+
+  -# Change directory to the /src directory and create another CMakeLists.txt file: 
+  \verbatim $ cd src ; touch CMakeLists.txt \endverbatim 
 
     filled with:  \verbatim add_executable(main main.cc) 
 include_directories("${PROJECT_BINARY_DIR}/stxxl/include" "${PROJECT_SOURCE_DIR}/stxxl/include" )
