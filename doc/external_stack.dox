@@ -14,11 +14,31 @@ Consequently, the amortized I/O complexity for push and pop stack operations is 
 push'es and pop's, i.e. the stack grows and shrinks without a certain rule.
 
 2. \b grow_shrink stack is a stack that is optimized for an access pattern where the insertions are (almost) not intermixed with the removals, and/or vice versa,
-the removals are (almost) not intermixed with the insertions. In short the stack first grows to its maximal size, then shrinks, then grow again and so on, a pattern which can be described by \f$(push^{r_i}, push^{r_j})^k\f$ with \f$1 \leq j \leq k\f$ and large values for \f$r_i\f$ and \f$r_j\f$.
+the removals are (almost) not intermixed with the insertions. In short, the stack first grows to its maximal size, then shrinks, then grow again and so on, a pattern which can be described by \f$(push^{r_i}, push^{r_j})^k\f$ with \f$1 \leq j \leq k\f$ and large values for \f$r_i\f$ and \f$r_j\f$.
 
 3. \b grow_shrink2 stack is a "grow-shrink" stack that allows the use of common prefetch and write buffer pools. 
    The pools are shared between several "grow-shrink" stacks.
 
-4. \b migrating stack is a stack that migrates from internal memory to external memory when its size exceeds a certain threshold.
+4. \b migrating stack is a stack that migrates from internal memory to external memory when its size exceeds a certain threshold (determined by parameter migrating_critical_size)
+   
+To make use of stxxl::stack, one can use the generator template stxxl::STACK_GENERATOR which expects the parameters from left to right as shown in the table below.
+
+parameters (optional if not required)                 | default value                  	  | possible (permitted) values
+:-------------------------------------------------    | :------------------------:     	  | :-------------------------------:
+value_type (required)       			      |           none                 	  |  POD,  with no reference to internal memory
+externality 					      |           stxxl::external      	  |  stxxl::external, stxxl::migrating, stxxl::internal
+behaviour  					      |           stxxl::normal        	  |  stxxl::normal, stxxl::grow_shrink_stack, stxxl::grow_shrink_stack2
+blocks_per_page 				      |           4                    	  |  >= D is recommended
+block_size 					      |		  2*1024*1024          	  |  ?
+internal_stack_type 				      |		  none		       	  |  second argument used by migrating stack
+migrating_critical_size				      |	2 x blocks_per_page x block_size  |  ?
+alloc_strategy					      |           stxxl::RC        	  |  stxxl::striping, stxxl::SR, stxxl::FR, stxxl::RC
+size_type					      | 	  off_t			  |  off_t (?) recommended
+
+
+\n
+
+\snippet stack1.cpp example
+
 
 */
