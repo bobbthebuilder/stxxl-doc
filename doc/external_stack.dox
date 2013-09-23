@@ -8,6 +8,27 @@ Therefore at least B removals are required to make one I/O reading a block. Inse
 If this case, one has make extra space and the first B elements are written to the disk. Thus a block write happens only after at least B insertions.
 Consequently, the amortized I/O complexity for push and pop stack operations is O(1/DB).
 
+To make use of stxxl::stack, one can use the generator template stxxl::STACK_GENERATOR which expects the parameters from left to right as shown in the table below.
+
+parameters (optional if not required)                 | default value                     | possible (permitted) values
+:-------------------------------------------------    | :------------------------         | :-------------------------------
+value_type (required)                                 |           none                    |  POD,  with no reference to internal memory
+externality                                           |           stxxl::external         |  stxxl::external, stxxl::migrating, stxxl::internal
+behaviour                                             |           stxxl::normal           |  stxxl::normal, stxxl::grow_shrink_stack, stxxl::grow_shrink_stack2
+blocks_per_page                                       |           4                       |  >= D is recommended
+block_size                                            |           2*1024*1024             |  ?
+internal_stack_type                                   |           none                    |  second argument used by migrating stack
+migrating_critical_size                               | 2 x blocks_per_page x block_size  |  ?
+alloc_strategy                                        |           stxxl::RC               |  stxxl::striping, stxxl::SR, stxxl::FR, stxxl::RC
+size_type                                             |           off_t                   |  off_t (?) recommended
+
+
+\n
+
+\snippet stack1.cpp example
+
+\n 
+
 \c S<small>TXXL</small> library contains four different variants of stacks, each implementation is specialized for a certain access pattern:
 
 1. \b normal_stack is a general purpose implementation which is the best if the access pattern to the stack is an irregular mix of 
@@ -18,27 +39,30 @@ the removals are (almost) not intermixed with the insertions. In short, the stac
 
 3. \b grow_shrink2 stack is a "grow-shrink" stack that allows the use of common prefetch and write buffer pools. 
    The pools are shared between several "grow-shrink" stacks.
-
-4. \b migrating stack is a stack that migrates from internal memory to external memory when its size exceeds a certain threshold (determined by parameter migrating_critical_size)
-   
-To make use of stxxl::stack, one can use the generator template stxxl::STACK_GENERATOR which expects the parameters from left to right as shown in the table below.
-
-parameters (optional if not required)                 | default value                  	  | possible (permitted) values
-:-------------------------------------------------    | :------------------------:     	  | :-------------------------------
-value_type (required)       			      |           none                 	  |  POD,  with no reference to internal memory
-externality 					      |           stxxl::external      	  |  stxxl::external, stxxl::migrating, stxxl::internal
-behaviour  					      |           stxxl::normal        	  |  stxxl::normal, stxxl::grow_shrink_stack, stxxl::grow_shrink_stack2
-blocks_per_page 				      |           4                    	  |  >= D is recommended
-block_size 					      |		  2*1024*1024          	  |  ?
-internal_stack_type 				      |		  none		       	  |  second argument used by migrating stack
-migrating_critical_size				      |	2 x blocks_per_page x block_size  |  ?
-alloc_strategy					      |           stxxl::RC        	  |  stxxl::striping, stxxl::SR, stxxl::FR, stxxl::RC
-size_type					      | 	  off_t			  |  off_t (?) recommended
-
-
 \n
+\code
+// define grow_shrink2 stack
+typedef stxxl::STACK_GENERATOR<int, stxxl::external, stxxl::grow_shrink2, 4, 1*1024*1024, stxxl::RC>::result simple_stack;
+  
+// prefetch/write pool with 10 blocks prefetching and 10 block write cache (> D is recommended)
+stxxl::read_write_pool<simple_stack::block_type> pool(10, 10);
 
-\snippet stack1.cpp example
+// create a stack with prefetch aggressiveness of 0
+external_stack a_stack(pool, 0);
 
+// to give the hint that shrinking is imminent, always prefetch 5 buffers by setting prefetch aggressiveness to 5
+a_stack.set_prefetch_aggr(5);
+\endcode
+\n
+Hint: The push/pop pattern in the introductional example above perfectly matches for a grow_shrink stack - you can simply 
+replace the snippet with the corresponding code section.
+\n 
+4. \b migrating stack is a stack that migrates from internal memory to external memory when its size exceeds a certain threshold (determined by parameter migrating_critical_size). 
+\code 
+// migrating stack example with threshold of 100000
+int t = 1000000;
+typedef stxxl::STACK_GENERATOR<int, stxxl::migrating, stxxl::normal, 4, 1*1024*1024, std::stack<int>, t>::result mig_stack;
+mig_stack m_stack(); 
+\endcode
 
 */
