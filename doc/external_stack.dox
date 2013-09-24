@@ -22,14 +22,10 @@ migrating_critical_size                               | 2 x blocks_per_page x bl
 alloc_strategy                                        |           stxxl::RC               |  stxxl::striping, stxxl::SR, stxxl::FR, stxxl::RC
 size_type                                             |           off_t                   |  off_t (?) recommended
 
-
 \n
-
 \snippet stack1.cpp example
 
-\n 
-
-\c S<small>TXXL</small> library contains four different variants of stacks, each implementation is specialized for a certain access pattern:
+The \c S<small>TXXL</small> library contains four different variants of stacks, each implementation is specialized for a certain access pattern:
 
 1. \b normal_stack is a general purpose implementation which is the best if the access pattern to the stack is an irregular mix of 
 push'es and pop's, i.e. the stack grows and shrinks without a certain rule.
@@ -39,7 +35,6 @@ the removals are (almost) not intermixed with the insertions. In short, the stac
 
 3. \b grow_shrink2 stack is a "grow-shrink" stack that allows the use of common prefetch and write buffer pools. 
    The pools are shared between several "grow-shrink" stacks.
-\n
 \code
 // define grow_shrink2 stack
 typedef stxxl::STACK_GENERATOR<int, stxxl::external, stxxl::grow_shrink2, 4, 1*1024*1024, stxxl::RC>::result simple_stack;
@@ -55,14 +50,14 @@ a_stack.set_prefetch_aggr(5);
 \endcode
 \n
 Hint: The push/pop pattern in the introductional example above perfectly matches for a grow_shrink stack - you can simply 
-replace the snippet with the corresponding code section.
-\n 
+        replace the snippet with the corresponding code section.
+
 4. \b migrating stack is a stack that migrates from internal memory to external memory when its size exceeds a certain threshold (determined by parameter migrating_critical_size). 
-\code 
-// migrating stack example with threshold of 100000
-int t = 1000000;
-typedef stxxl::STACK_GENERATOR<int, stxxl::migrating, stxxl::normal, 4, 1*1024*1024, std::stack<int>, t>::result mig_stack;
-mig_stack m_stack(); 
-\endcode
+  \code 
+  // migrating stack example with threshold of 100000
+  int t = 1000000;
+  typedef stxxl::STACK_GENERATOR<int, stxxl::migrating, stxxl::normal, 4, 1*1024*1024, std::stack<int>, t>::result mig_stack;
+  mig_stack m_stack(); 
+  \endcode
 
 */

@@ -42,11 +42,17 @@ stxxl::random_uniform_slow urand_slow;  // uniform values in [0.0, 1.0)
 stxxl::random_uniform_fast urand_fast;  // uniform values in [0.0, 1.0)
 stxxl::random_number<> n_rand;  // integer values in [0,N)
 
-STXXL_MSG("random 32 bit number: " << rand32());
-STXXL_MSG("random 64 bit number: " << rand64());
-STXXL_MSG("random number between [0.0, 1.0) (slow): " << urand_slow());
-STXXL_MSG("random number between [0.0, 1.0) (fast): " << urand_fast());
-STXXL_MSG("random number between [0,123456789): " << n_rand(123456789));
+unsigned int random32 = rand32();
+stxxl::uint64 random64 = rand64();
+double urandom_slow = urand_slow();
+double urandom_fast = urand_fast();
+unsigned int n_random = n_rand(123456789);
+
+STXXL_MSG("random 32 bit number: " << random32);
+STXXL_MSG("random 64 bit number: " << random64);
+STXXL_MSG("random number between [0.0, 1.0) (slow): " << urandom_slow);
+STXXL_MSG("random number between [0.0, 1.0) (fast): " << urandom_fast);
+STXXL_MSG("random number between [0,123456789): " << n_random);
 
 \endcode
 
