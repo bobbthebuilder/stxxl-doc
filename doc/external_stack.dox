@@ -8,24 +8,35 @@ Therefore at least B removals are required to make one I/O reading a block. Inse
 If this case, one has make extra space and the first B elements are written to the disk. Thus a block write happens only after at least B insertions.
 Consequently, the amortized I/O complexity for push and pop stack operations is O(1/DB).
 
-To make use of stxxl::stack, one can use the generator template stxxl::STACK_GENERATOR which expects the parameters from left to right as shown in the table below.
+\section stack_architecture The Architecture of stxxl::stack
 
-parameters (optional if not required)                 | default value                     | possible (permitted) values
-:-------------------------------------------------    | :------------------------         | :-------------------------------
-value_type (required)                                 |           none                    |  POD,  with no reference to internal memory
-externality                                           |           stxxl::external         |  stxxl::external, stxxl::migrating, stxxl::internal
-behaviour                                             |           stxxl::normal           |  stxxl::normal, stxxl::grow_shrink_stack, stxxl::grow_shrink_stack2
-blocks_per_page                                       |           4                       |  >= D is recommended
-block_size                                            |           2*1024*1024             |  ?
-internal_stack_type                                   |           none                    |  second argument used by migrating stack
-migrating_critical_size                               | 2 x blocks_per_page x block_size  |  ?
-alloc_strategy                                        |           stxxl::RC               |  stxxl::striping, stxxl::SR, stxxl::FR, stxxl::RC
-size_type                                             |           off_t                   |  off_t (?) recommended
+TODO grafik (?)
 
-\n
-\snippet stack1.cpp example
 
-The \c S<small>TXXL</small> library contains four different variants of stacks, each implementation is specialized for a certain access pattern:
+\section design_stack_generator stxxl::STACK_GENERATOR 
+
+Besides the type of the elements stxxl::stack has many other template parameters (block size, number of blocks per page, pager class, etc.). To make the configuration of the stack type easier STXXL provides 
+special type generator template meta programs for its containers.
+
+The meta-program for stxxl::stack is called stxxl::STACK_GENERATOR.
+
+\code
+// Example of use
+typedef stxxl::STACK_GENERATOR<int>::result stack_type;
+stack_type my_stack;
+stack.push(8);
+assert(my_stack.size() == 1 && !my_stack.empty() && my_stack.top() == 8);
+stack.pop();
+assert(my_stack.size() == 0 && my_stack.empty());
+\endcode 
+
+The stxxl::STACK_GENERATOR expects the following template parameters in exactly the same order.
+
+\copydetails stxxl::STACK_GENERATOR
+
+\section advanced_stack_section Advanced variants of stxxl::stack
+
+The \c S<small>TXXL</small> library contains four different variants of stacks, each implementation is specialized for a certain access pattern to gain a significant speedup. 
 
 1. \b normal_stack is a general purpose implementation which is the best if the access pattern to the stack is an irregular mix of 
 push'es and pop's, i.e. the stack grows and shrinks without a certain rule.
@@ -49,8 +60,6 @@ external_stack a_stack(pool, 0);
 a_stack.set_prefetch_aggr(5);
 \endcode
 \n
-Hint: The push/pop pattern in the introductional example above perfectly matches for a grow_shrink stack - you can simply 
-        replace the snippet with the corresponding code section.
 
 4. \b migrating stack is a stack that migrates from internal memory to external memory when its size exceeds a certain threshold (determined by parameter migrating_critical_size). 
   \code 

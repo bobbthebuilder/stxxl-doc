@@ -1,0 +1,88 @@
+namespace stxxl {
+
+/*! \page tutorial STXXL Tutorial
+
+Some introductional text concerning this Tutorial
+
+# Available tutorials on STXXL Containers
+
+- \subpage vector_tutorial "stxxl::vector Tutorial"
+- \subpage stack_tutorial "stxxl::stack Tutorial"
+- \subpage queue_tutorial "stxxl::queue Tutorial"
+- \subpage deque_tutorial "stxxl::deque Tutorial"
+- \subpage pqueue_tutorial "stxxl::priority_queue Tutorial"
+- \subpage map_tutorial "stxxl::map Tutorial"
+- \subpage design_matrix "stxxl::matrix Tutorial"
+
+\page vector_tutorial Vector Tutorial
+
+This page introduces into the stxxl::vector Container
+
+Imagine a situation where you want to store a \b std::vector which does not fit into the internal memory completely.
+That is precisely the situation where an Stxxl vector solves the issue. Working with an Stxxl vector is quite easy because it is very similar to the familiar STL vector.
+
+### Creating a Stxxl vector
+
+Before we can use a Stxxl vector, we first have to define and then to instantiate a vector object:
+
+\code
+typedef stxxl::VECTOR_GENERATOR<int>::result vector;
+vector my_vector;  // creates empty vector 
+\endcode
+
+### Fill in values
+
+As the Stxxl vector supports many (but not all) operations the STL vector supports as well, we can fill the vector by calling push_back() which appends a new value at the end:
+
+\code
+for (int i = 0; i < 10*1024*1024; i++) {
+  my_vector.push_back(i);
+}
+\endcode
+
+### Access elements
+
+To read and/or modify values of a Stxxl vector, simply use the []-operator - equivalent to STL vector:
+
+\code
+std::cout << my_vector[99] << std::endl;
+my_vector[100] = 0;
+\endcode
+
+In addition, Stxxl vector provides iterators to advance through the vector which can be used as follows:
+
+\code
+// create iterator which starts at the beginning of my_vector
+vector::iterator iter = my_vector.begin();
+// access an element
+std::cout << "first element: " << *iter << std::endl;
+// go to next element
+iter++;
+\endcode
+
+Alongside the many advantages of iterators, there are several things which need to bear in mind when using them. Details are described in \ref design_vector_notes.
+
+### Erase elements
+
+The operation pop_back() removes the last element of the vector (without returning it). The following code snippet is emptying my_vector:
+
+\code
+// empty() returns true, if the vector is empty
+while (!my_vector.empty()) {
+  my_vector.pop_back();
+}
+\endcode
+
+### A minimal working example of STXXL's vector
+
+\snippet vector_minimal1.cpp example
+
+### Count even numbers - a more extensive example (Ausklappbar)
+
+\snippet vector1.cpp example
+
+### Konten - a more extensive example (Ausklappbar)
+
+*/
+
+}  // namespace stxxl
