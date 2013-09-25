@@ -42,15 +42,19 @@ struct Cmp : public std::binary_function<value_type, value_type, bool>
     }
 };
 
+// special parameter type
+typedef stxxl::stream::use_push<value_type> InputType;
+typedef stxxl::stream::runs_creator<InputType, Cmp, 4096, stxxl::RC> CreateRunsAlg;
+typedef CreateRunsAlg::sorted_runs_type SortedRunsType;
+
+// forced instantiation
+template class stxxl::stream::runs_merger<SortedRunsType, Cmp>;
+
 int main()
 {
 #if STXXL_PARALLEL_MULTIWAY_MERGE
     STXXL_MSG("STXXL_PARALLEL_MULTIWAY_MERGE");
 #endif
-    // special parameter type
-    typedef stxxl::stream::use_push<value_type> InputType;
-    typedef stxxl::stream::runs_creator<InputType, Cmp, 4096, stxxl::RC> CreateRunsAlg;
-    typedef CreateRunsAlg::sorted_runs_type SortedRunsType;
 
     unsigned input_size = (50 * megabyte / sizeof(value_type));
 
@@ -73,7 +77,7 @@ int main()
     // merge the runs
     stxxl::stream::runs_merger<SortedRunsType, Cmp> merger(Runs, Cmp(), 10 * megabyte);
     stxxl::vector<value_type, 4, stxxl::lru_pager<8>, block_size, STXXL_DEFAULT_ALLOC_STRATEGY> array;
-    STXXL_MSG(input_size << " " << Runs.elements);
+    STXXL_MSG(input_size << " " << Runs->elements);
     STXXL_MSG("checksum before: " << checksum_before);
     value_type checksum_after(0);
     for (unsigned i = 0; i < input_size; ++i)

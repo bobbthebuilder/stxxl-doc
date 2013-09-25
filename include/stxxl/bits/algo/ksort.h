@@ -732,7 +732,7 @@ namespace ksort_local
  */
 
 
-//! \brief Sort records with integer keys
+//! Sort records with integer keys
 //! \param first_ object of model of \c ext_random_access_iterator concept
 //! \param last_ object of model of \c ext_random_access_iterator concept
 //! \param keyobj \link key_extractor key extractor \endlink object
@@ -1054,8 +1054,8 @@ void ksort(ExtIterator_ first_, ExtIterator_ last_, KeyExtractor_ keyobj, unsign
 
 #if STXXL_CHECK_ORDER_IN_SORTS
     typedef typename ExtIterator_::const_iterator const_iterator;
-    assert(stxxl::is_sorted(const_iterator(first_), const_iterator(last_),
-                            ksort_local::key_comparison<value_type, KeyExtractor_>()));
+    STXXL_ASSERT(stxxl::is_sorted(const_iterator(first_), const_iterator(last_),
+                                  ksort_local::key_comparison<value_type, KeyExtractor_>()));
 #endif
 }
 
@@ -1078,7 +1078,7 @@ struct ksort_defaultkey
 };
 
 
-//! \brief Sort records with integer keys
+//! Sort records with integer keys
 //! \param first_ object of model of \c ext_random_access_iterator concept
 //! \param last_ object of model of \c ext_random_access_iterator concept
 //! \param M__ amount of buffers for internal use

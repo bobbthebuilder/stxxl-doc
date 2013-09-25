@@ -20,6 +20,7 @@
 #include <stxxl/bits/namespace.h>
 #include <stxxl/bits/singleton.h>
 #include <stxxl/bits/io/iostats.h>
+#include <stxxl/bits/io/request.h>
 #include <stxxl/bits/io/request_queue_impl_qwqr.h>
 
 
@@ -28,9 +29,7 @@ __STXXL_BEGIN_NAMESPACE
 //! \addtogroup iolayer
 //! \{
 
-class request_ptr;
-
-//! \brief Encapsulates disk queues
+//! Encapsulates disk queues.
 //! \remark is a singleton
 class disk_queues : public singleton<disk_queues>
 {
@@ -63,7 +62,7 @@ public:
         queues[disk]->add_request(req);
     }
 
-    //! \brief Cancel a request
+    //! Cancel a request.
     //! The specified request is canceled unless already being processed.
     //! However, cancelation cannot be guaranteed.
     //! Cancelled requests must still be waited for in order to ensure correct
@@ -89,7 +88,7 @@ public:
             delete (*i).second;
     }
 
-    //! \brief Changes requests priorities
+    //! Changes requests priorities.
     //! \param op one of:
     //!                 - READ, read requests are served before write requests within a disk queue
     //!                 - WRITE, write requests are served before read requests within a disk queue
