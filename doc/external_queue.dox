@@ -49,7 +49,7 @@ D			      			| -1		    |  					     	       					      |
 write_pool		      			|  ?		    | must be at least 2, recommended at least 3					      |		     
 prefetch_pool		             		|  1	            | recommended at least 1								      | 		       
 blocks2prefetch                      		| -1                | a negative value means to use the number of blocks in the prefetch pool 		      |
-wp_pool(=write_pool, prefetch_pool)		| 		    |                                                                 	 		      |
+wp_pool = (write_pool, prefetch_pool)		| 		    |                                                                 	 		      |
 		     
 
 
