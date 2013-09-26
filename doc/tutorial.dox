@@ -12,18 +12,20 @@ Some introductional text concerning this Tutorial
 - \subpage deque_tutorial "stxxl::deque Tutorial"
 - \subpage pqueue_tutorial "stxxl::priority_queue Tutorial"
 - \subpage map_tutorial "stxxl::map Tutorial"
-- \subpage design_matrix "stxxl::matrix Tutorial"
+- \subpage matrix_tutorial "stxxl::matrix Tutorial"
 
 \page vector_tutorial Vector Tutorial
 
-This page introduces into the stxxl::vector Container
+This page introduces into the usage of stxxl::vector Container (to learn more about the structure of stxxl::vector, see section \ref design_vector).
 
 Imagine a situation where you want to store a \b std::vector which does not fit into the internal memory completely.
 That is precisely the situation where an Stxxl vector solves the issue. Working with an Stxxl vector is quite easy because it is very similar to the familiar STL vector.
 
 ### Creating a Stxxl vector
 
-Before we can use a Stxxl vector, we first have to define and then to instantiate a vector object:
+Before we can use a Stxxl vector, we first have to define and then to instantiate a vector object.
+To manage the configuration of the vector type we used the generator template. A minimal configuration is shown below - as one can see the value_type (integer in our case) is the only only stricly neccessary 
+parameter. See \ref design_vector_generator for additional configuration parameters and information.
 
 \code
 typedef stxxl::VECTOR_GENERATOR<int>::result vector;
@@ -42,14 +44,14 @@ for (int i = 0; i < 10*1024*1024; i++) {
 
 ### Access elements
 
-To read and/or modify values of a Stxxl vector, simply use the []-operator - equivalent to STL vector:
+To read and/or modify the values of a Stxxl vector, simply use the []-operator - equivalent to STL vector:
 
 \code
-std::cout << my_vector[99] << std::endl;
-my_vector[100] = 0;
+std::cout << "element at position 99: " << my_vector[99] << std::endl;
+my_vector[99] = 0;  // zeroing element at position 99
 \endcode
 
-In addition, Stxxl vector provides iterators to advance through the vector which can be used as follows:
+In addition, the Stxxl vector provides different iterators to advance the vector which can be used as follows:
 
 \code
 // create iterator which starts at the beginning of my_vector
@@ -77,12 +79,109 @@ while (!my_vector.empty()) {
 
 \snippet vector_minimal1.cpp example
 
-### Count even numbers - a more extensive example (Ausklappbar)
+The following links refer to more extensive Stxxl vector examples:
+
+\subpage count_even_numbers_example "Example 1 - Count Even Numbers"
+
+\subpage phonebills_example "Example 2 - Phonebills Example"
+
+*/
+
+/*! \page count_even_numbers_example Vector Example 1 - Count Even Numbers
 
 \snippet vector1.cpp example
 
-### Konten - a more extensive example (Ausklappbar)
+*/
+
+/*! \page phonebills_example Vector Example 2 - Phonebills
+
+\snippet phonebills.cpp example
 
 */
+
+
+/*! \page stack_tutorial Stack Tutorial
+
+This page introduces into the stxxl::stack Container (to learn more about the structure of stxxl::stack, see section \ref design_stack).
+
+Stxxl stacks are last in first out (LIFO), i.e. inserting and extracting elements are only allowed from one end of the container and the the element on top is the element added most recently.
+The Stxxl stack can be almost used as its internal counterpart \b std::stack from the STL.
+
+### Creating a Stxxl stack
+
+Before using a Stxxl stack, we initially have to define and then to instantiate a stack object. To manage the configuration of the stack type we used the generator template. A minimal configuration is shown below - as one can see the value_type (integer in our case) is the only stricly neccessary parameter. See [TODO ref design_stack_generator] for additional configuration parameters and information.
+
+\code
+typedef stxxl::STACK_GENERATOR<int>::result stack;
+stack my_stack;
+\endcode
+
+
+### Insert / Access / Remove elements 
+
+To insert an element on top of the stack call \b push(). \n
+To access the top element call \b top(). \n
+To remove the top element call \b pop().
+
+\code
+...
+my_stack.push(7);  // inserts 7 on top of stack
+std::cout << "element in top is: " << my_stack.top << std::endl;
+my_stack.pop();  // removes the element on top
+\endcode
+
+### Determine size of stack / Check whether stack is empty
+
+\code
+std::cout << "size of stack: " << my_stack.size() << std::endl; 
+std::cout << "is stack empty? " << my_stack.empty() << std::endl;
+\endcode
+
+### A minimal working example of STXXL's stack
+
+\snippet stack_minimal1.cpp example
+
+The following page refers to more comprehensive grow-shrink-stack example.
+
+\subpage grow_shrink_stack_example "Example 1 - Grow-Shrink-Stack"
+
+/*! \page grow_shrink_stack_example Example 1 - Grow-Shrink-Stack
+
+\snippet stack1.cpp example
+
+*/
+
+
+/*! \page queue_tutorial Queue Tutorial
+
+This page introduces into the stxxl::queue Container.
+
+*/
+
+/*! \page deque_tutorial Deque Tutorial
+
+This page introduces into the stxxl::deque Container.
+
+*/
+
+/*! \page pqueue_tutorial Priority Queue Tutorial
+
+This page introduces into the stxxl::priority_queue Container.
+
+*/
+
+/*! \page map_tutorial Map (B+-tree) Tutorial
+
+This page introduces into the stxxl::map Container.
+
+*/
+
+/*! \page matrix_tutorial Matrix Tutorial
+
+This page introduces into the stxxl::matrix Container.
+
+*/
+
+
 
 }  // namespace stxxl
