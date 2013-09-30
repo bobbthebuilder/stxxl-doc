@@ -11,33 +11,32 @@
  **************************************************************************/
 
 //! [example]
-#include <stdint.h>
+#include <stxxl/queue>
 #include <iostream>
-
 
 int main() 
 {
   // template parameter <value_type, block_size, allocation_strategy, size_type> 
   typedef stxxl::queue<unsigned int> a_queue;
   
-  // write_pool size = ?, prefetch_pool size = 1, blocks2prefetch = number of blocks in the prefetch pool (i.e. 1)
+  // construct queue with default parameters
   a_queue my_queue;
 
   unsigned int random;
-  stxxl::random_number32 rand32;
-  stxxl::uint64 number_of_elements = (long long int)(1*1024) * (long long int)(1024 * 1024);
+  stxxl::random_number32 rand32;  // define random number generator
+  stxxl::uint64 number_of_elements = (long long int)(1*64) * (long long int)(1024 * 1024);
   
   // push random values in the queue
   for (stxxl::uint64 i = 0; i < number_of_elements; i++) 
     {
-      random = rand32();    
+      random = rand32();  // generate random integers from interval [0,2^32)    
       my_queue.push(random);      
     }
 
   unsigned int last_inserted = my_queue.back();
   STXXL_MSG("last element inserted: " << last_inserted);
       
-  // identify smallest element than first_inserted, search in growth-direction (front->back)
+  // identify smaller element than first_inserted, search in growth-direction (front->back)
   while(!my_queue.empty()) 
     {
       if (last_inserted > my_queue.front()) 
@@ -47,8 +46,7 @@ int main()
 	}
       std::cout << my_queue.front() << " " << std::endl;
       my_queue.pop();    
-    }
-  
+    }  
 
   return 0;
 }
