@@ -74,11 +74,12 @@ int main(int argc, char ** argv)
         }
         std::cout << stxxl::stats_data(*stxxl::stats::get_instance()) - stats1;
 
-        file->remove();
+        file->close_remove();
     }
     catch (stxxl::io_error e)
     {
         std::cerr << e.what() << std::endl;
+        throw;
     }
 
     stxxl::aligned_dealloc<4096>(buffer);

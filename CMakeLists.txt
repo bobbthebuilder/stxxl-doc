@@ -69,8 +69,16 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4290")
   # warning C4250: '...' : inherits '...' via dominance
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4250")
+  # warning C4512: assignment operator could not be generated (contains const members)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4512")
+  # disable lots of warnings about "unsecure" C runtime function
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  # disable lots of warnings about deprecated POSIX function names
+  add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
+  # disable lots of warnings about "unsecure" STL functions
+  add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Wall ")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Wall")
 endif()
 
 # more template depth for some tests and compilers
@@ -115,7 +123,12 @@ if(USE_BOOST OR MSVC)
   if(Boost_FOUND)
     # globally add boost include directories
     include_directories(${Boost_INCLUDE_DIRS})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSTXXL_BOOST_CONFIG -DSTXXL_BOOST_FILESYSTEM -DSTXXL_BOOST_RANDOM -DSTXXL_BOOST_THREADS -DSTXXL_BOOST_TIMESTAMP")
+    # set defines in <stxxl/bits/config.h>
+    set(STXXL_BOOST_CONFIG "1")
+    set(STXXL_BOOST_FILESYSTEM "1")
+    set(STXXL_BOOST_RANDOM "1")
+    set(STXXL_BOOST_THREADS "1")
+    set(STXXL_BOOST_TIMESTAMP "1")
   elseif(MSVC)
     message(FATAL_ERROR "Boost libraries not found. STXXL requires Boost on Windows.")
   else()
@@ -151,65 +164,23 @@ if(USE_GNU_PARALLEL)
 endif(USE_GNU_PARALLEL)
 
 ###############################################################################
-# optional CppUnit for more tests
-# -- from http://www.cmake.org/pipermail/cmake/2006-October/011446.html
-
-if(BUILD_TESTS)
-
-  find_path(CPPUNIT_INCLUDE_DIR cppunit/TestCase.h
-    /usr/local/include
-    /usr/include
-    )
-
-  # With Win32, important to have both
-  if(WIN32)
-    find_library(CPPUNIT_LIBRARY cppunit
-      ${CPPUNIT_INCLUDE_DIR}/../lib
-      /usr/local/lib
-      /usr/lib)
-    find_library(CPPUNIT_DEBUG_LIBRARY cppunitd
-      ${CPPUNIT_INCLUDE_DIR}/../lib
-      /usr/local/lib
-      /usr/lib)
-  else(WIN32)
-    # On unix system, debug and release have the same name
-    find_library(CPPUNIT_LIBRARY cppunit
-      ${CPPUNIT_INCLUDE_DIR}/../lib
-      /usr/local/lib
-      /usr/lib)
-    find_library(CPPUNIT_DEBUG_LIBRARY cppunit
-      ${CPPUNIT_INCLUDE_DIR}/../lib
-      /usr/local/lib
-      /usr/lib)
-  endif(WIN32)
-
-  if(CPPUNIT_INCLUDE_DIR)
-    if(CPPUNIT_LIBRARY)
-      set(CPPUNIT_FOUND "YES")
-      set(CPPUNIT_LIBRARIES ${CPPUNIT_LIBRARY} ${CMAKE_DL_LIBS})
-      set(CPPUNIT_DEBUG_LIBRARIES ${CPPUNIT_DEBUG_LIBRARY} ${CMAKE_DL_LIBS})
-    endif(CPPUNIT_LIBRARY)
-  endif(CPPUNIT_INCLUDE_DIR)
-
-  if (NOT CPPUNIT_FOUND)
-    message("CppUnit libraries not found. Some tests will not be compiled.")
-  else (CPPUNIT_FOUND)
-    message("CppUnit libraries found: ${CPPUNIT_INCLUDE_DIR}.")
-  endif (NOT CPPUNIT_FOUND)
-
-endif(BUILD_TESTS)
-
-###############################################################################
 # configure environment for building
 
 # create config.h with define switches _inside binary dir_!
 configure_file(${PROJECT_SOURCE_DIR}/include/stxxl/bits/config.h.in ${PROJECT_BINARY_DIR}/include/stxxl/bits/config.h)
 
 # globally adds top-level include directories
-include_directories("${PROJECT_SOURCE_DIR}/include/" "${PROJECT_BINARY_DIR}/include/")
+set(STXXL_INCLUDES ${PROJECT_SOURCE_DIR}/include/ ${PROJECT_BINARY_DIR}/include/)
+include_directories(${STXXL_INCLUDES})
 
 # for targets using stxxl library
-set(STXXL_LIBS ${STXXL_LIBS} stxxl ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(STXXL_LIBS stxxl ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+# export STXXL_INCLUDES and STXXL_LIBS to PARENT_SCOPE
+if(PARENT_SCOPE)
+  set(STXXL_INCLUDES "${STXXL_INCLUDES}" PARENT_SCOPE)
+  set(STXXL_LIBS "${STXXL_LIBS}" PARENT_SCOPE)
+endif(PARENT_SCOPE)
 
 # build libstxxl in /lib
 add_subdirectory(lib)
@@ -282,10 +253,12 @@ endmacro (add_define TESTNAME)
 if(TRY_COMPILE_HEADERS)
 
   include(CheckCXXSourceCompiles)
-  set(CMAKE_REQUIRED_INCLUDES "${PROJECT_SOURCE_DIR}/include" "${PROJECT_BINARY_DIR}/include")
+  set(CMAKE_REQUIRED_INCLUDES ${STXXL_INCLUDES})
+  set(CMAKE_REQUIRED_LIBRARIES ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
   file(GLOB_RECURSE header_files FOLLOW_SYMLINKS "include/*")
   list(REMOVE_ITEM header_files "${PROJECT_SOURCE_DIR}/include/stxxl/bits/config.h.in")
+  list(SORT header_files)
 
   foreach(file ${header_files})
     check_cxx_source_compiles(
@@ -293,7 +266,7 @@ if(TRY_COMPILE_HEADERS)
       int main() { return 0; }" IsSelfContained-${file})
 
     if(NOT IsSelfContained-${file})
-      message(SEND_ERROR "Compilation FAILED for ${file}")
+      message(SEND_ERROR "Compilation FAILED for ${file}\n\nCompiler output:\n${OUTPUT}")
     endif()
   endforeach()
 
@@ -316,3 +289,4 @@ message("Using STXXL_TMPDIR ${STXXL_TMPDIR} for tests")
 add_subdirectory(tests)
 add_subdirectory(tools)
 add_subdirectory(examples)
+add_subdirectory(local)

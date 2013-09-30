@@ -169,7 +169,7 @@ QT_AUTOBRIEF           = YES
 # The new default is to treat a multi-line C++ comment block as a detailed
 # description. Set this tag to YES if you prefer the old behaviour instead.
 
-MULTILINE_CPP_IS_BRIEF = NO
+MULTILINE_CPP_IS_BRIEF = YES
 
 # If the INHERIT_DOCS tag is set to YES (the default) then an undocumented
 # member inherits the documentation from any documented member that it
@@ -317,7 +317,7 @@ INLINE_GROUPED_CLASSES = NO
 # structs, classes, and unions are shown on a separate page (for HTML and Man
 # pages) or section (for LaTeX and RTF).
 
-INLINE_SIMPLE_STRUCTS  = YES
+INLINE_SIMPLE_STRUCTS  = NO
 
 # When TYPEDEF_HIDES_STRUCT is enabled, a typedef of a struct, union, or enum
 # is documented as struct, union, or enum with the name of the typedef. So
@@ -595,7 +595,7 @@ FILE_VERSION_FILTER    =
 # You can optionally specify a file name after the option, if omitted
 # DoxygenLayout.xml will be used as the name of the layout file.
 
-LAYOUT_FILE            =
+LAYOUT_FILE            = doc/DoxygenLayout.xml
 
 # The CITE_BIB_FILES tag can be used to specify one or more bib files
 # containing the references data. This must be a list of .bib files. The
@@ -688,7 +688,7 @@ INPUT_ENCODING         = UTF-8
 # *.hxx *.hpp *.h++ *.idl *.odl *.cs *.php *.php3 *.inc *.m *.mm *.dox *.py
 # *.f90 *.f *.for *.vhd *.vhdl
 
-FILE_PATTERNS          =
+FILE_PATTERNS          = *
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
 # should be searched for input files as well. Possible values are YES and NO.
@@ -716,7 +716,7 @@ EXCLUDE_SYMLINKS       = NO
 # against the file with absolute path, so to exclude all test directories
 # for example use the pattern */test/*
 
-EXCLUDE_PATTERNS       =
+EXCLUDE_PATTERNS       = *.png *.pdf *.eps *.svg *.bib *.xml *.css
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the
@@ -931,7 +931,7 @@ HTML_STYLESHEET        =
 # robust against future updates. Doxygen will copy the style sheet file to
 # the output directory.
 
-HTML_EXTRA_STYLESHEET  =
+HTML_EXTRA_STYLESHEET  = doc/doxygen-extra.css
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note
@@ -1185,7 +1185,7 @@ EXT_LINKS_IN_WINDOW    = NO
 # to manually remove any form_*.png images from the HTML output directory
 # to force them to be regenerated.
 
-FORMULA_FONTSIZE       = 10
+FORMULA_FONTSIZE       = 12
 
 # Use the FORMULA_TRANPARENT tag to determine whether or not the images
 # generated for formulas are transparent PNGs. Transparent PNGs are

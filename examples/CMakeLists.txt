@@ -14,4 +14,5 @@
 
 add_subdirectory(algo)
 add_subdirectory(containers)
+add_subdirectory(stream)
 

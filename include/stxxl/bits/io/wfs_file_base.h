@@ -17,9 +17,7 @@
 #ifndef STXXL_WFSFILEBASE_HEADER
 #define STXXL_WFSFILEBASE_HEADER
 
-#ifdef STXXL_BOOST_CONFIG
- #include <boost/config.hpp>
-#endif
+#include <stxxl/bits/config.h>
 
 #ifdef BOOST_MSVC
 
@@ -53,7 +51,7 @@ public:
     void set_size(offset_type newsize);
     void lock();
     const char * io_type() const;
-    void remove();
+    void close_remove();
 };
 
 //! \}

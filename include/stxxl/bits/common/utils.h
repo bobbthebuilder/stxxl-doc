@@ -20,11 +20,10 @@
 #include <string>
 #include <cmath>
 #include <cstdlib>
+#include <sstream>
+#include <assert.h>
 
-#ifdef STXXL_BOOST_CONFIG
- #include <boost/config.hpp>
-#endif
-
+#include <stxxl/bits/config.h>
 #include <stxxl/bits/namespace.h>
 #include <stxxl/bits/common/types.h>
 #include <stxxl/bits/compat/type_traits.h>
@@ -51,12 +50,16 @@ __STXXL_BEGIN_NAMESPACE
 
 ////////////////////////////////////////////////////////////////////////////
 
-inline std::vector<std::string>
-split(const std::string & str, const std::string & sep)
+//! Split a string by given separator string. Returns a vector of strings with
+//! at least min_fields.
+static inline std::vector<std::string>
+split(const std::string & str, const std::string & sep, unsigned int min_fields)
 {
     std::vector<std::string> result;
-    if (str.empty())
+    if (str.empty()) {
+        result.resize(min_fields);
         return result;
+    }
 
     std::string::size_type CurPos(0), LastPos(0);
     while (1)
@@ -65,21 +68,123 @@ split(const std::string & str, const std::string & sep)
         if (CurPos == std::string::npos)
             break;
 
-        std::string sub =
+        result.push_back(
             str.substr(LastPos,
-                       std::string::size_type(CurPos -
-                                              LastPos));
-        if (sub.size())
-            result.push_back(sub);
+                       std::string::size_type(CurPos - LastPos))
+            );
 
         LastPos = CurPos + sep.size();
     }
 
     std::string sub = str.substr(LastPos);
-    if (sub.size())
-        result.push_back(sub);
+    result.push_back(sub);
+
+    if (result.size() < min_fields)
+        result.resize(min_fields);
 
     return result;
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+//! Wrap a long string at spaces into lines. Prefix is added unconditionally to
+//! each line. Lines are wrapped after wraplen characters if possible.
+static inline std::string string_wrap(const std::string& prefix, const std::string& text, unsigned int wraplen)
+{
+    std::string::size_type it = 0;
+    std::ostringstream os;
+    while (it != text.size())
+    {
+        if (text.size() - it > wraplen)
+        {
+            std::string::size_type spos = text.rfind(' ', it + wraplen);
+            if (spos <= it) { // forced line wrap
+                spos = it + wraplen;
+            }
+            os << prefix << text.substr(it, spos - it) << std::endl;
+            it = spos;
+            while (it != text.size() && text[it] == ' ') ++it;
+        }
+        else
+        {
+            os << prefix << text.substr(it) << std::endl;
+            it = text.size();
+        }
+    }
+    return os.str();
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+//! Parse a string like "343KB" or "44 GiB" into the corresponding size in
+//! bytes. Returns the number of bytes and sets ok = true if the string could
+//! be parsed correctly.
+static inline bool parse_SI_IEC_filesize(const std::string& str, uint64& size)
+{
+    char* endptr;
+    size = strtoul(str.c_str(), &endptr, 10);
+    if (!endptr) return false; // parse failed, no number
+
+    while (endptr[0] == ' ') ++endptr; // skip over spaces
+
+    if ( endptr[0] == 0 ) // number parsed, no suffix defaults to MiB
+        size *= 1024 * 1024;
+    else if ( (endptr[0] == 'b' || endptr[0] == 'B') && endptr[1] == 0 ) // bytes
+        size *= 1;
+    else if (endptr[0] == 'k' || endptr[0] == 'K')
+    {
+        if ( endptr[1] == 0 || ( (endptr[1] == 'b' || endptr[1] == 'B') && endptr[2] == 0) )
+            size *= 1000; // power of ten
+        else if ( (endptr[1] == 'i' || endptr[0] == 'I') &&
+                  (endptr[2] == 0 || ( (endptr[2] == 'b' || endptr[2] == 'B') && endptr[3] == 0) ) )
+            size *= 1024; // power of two
+        else
+            return false;
+    }
+    else if (endptr[0] == 'm' || endptr[0] == 'M')
+    {
+        if ( endptr[1] == 0 || ( (endptr[1] == 'b' || endptr[1] == 'B') && endptr[2] == 0) )
+            size *= 1000 * 1000; // power of ten
+        else if ( (endptr[1] == 'i' || endptr[0] == 'I') &&
+                  (endptr[2] == 0 || ( (endptr[2] == 'b' || endptr[2] == 'B') && endptr[3] == 0) ) )
+            size *= 1024 * 1024; // power of two
+        else
+            return false;
+    }
+    else if (endptr[0] == 'g' || endptr[0] == 'G')
+    {
+        if ( endptr[1] == 0 || ( (endptr[1] == 'b' || endptr[1] == 'B') && endptr[2] == 0) )
+            size *= 1000 * 1000 * 1000; // power of ten
+        else if ( (endptr[1] == 'i' || endptr[0] == 'I') &&
+                  (endptr[2] == 0 || ( (endptr[2] == 'b' || endptr[2] == 'B') && endptr[3] == 0) ) )
+            size *= 1024 * 1024 * 1024; // power of two
+        else
+            return false;
+    }
+    else if (endptr[0] == 't' || endptr[0] == 'T')
+    {
+        if ( endptr[1] == 0 || ( (endptr[1] == 'b' || endptr[1] == 'B') && endptr[2] == 0) )
+            size *= int64(1000) * int64(1000) * int64(1000) * int64(1000); // power of ten
+        else if ( (endptr[1] == 'i' || endptr[0] == 'I') &&
+                  (endptr[2] == 0 || ( (endptr[2] == 'b' || endptr[2] == 'B') && endptr[3] == 0) ) )
+            size *= int64(1024) * int64(1024) * int64(1024) * int64(1024); // power of two
+        else
+            return false;
+    }
+    else if (endptr[0] == 'p' || endptr[0] == 'P')
+    {
+        if ( endptr[1] == 0 || ( (endptr[1] == 'b' || endptr[1] == 'B') && endptr[2] == 0) )
+            size *= int64(1000) * int64(1000) * int64(1000) * int64(1000) * int64(1000); // power of ten
+        else if ( (endptr[1] == 'i' || endptr[0] == 'I') &&
+                  (endptr[2] == 0 || ( (endptr[2] == 'b' || endptr[2] == 'B') && endptr[3] == 0) ) )
+            size *= int64(1024) * int64(1024) * int64(1024) * int64(1024) * int64(1024); // power of two
+        else
+            return false;
+    }
+    else
+        return false;
+
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -111,16 +216,38 @@ STXXL_MAX(const Tp & a, const Tp & b)
 
 ////////////////////////////////////////////////////////////////////////////
 
+//! calculate the log2 floor of an integral type using math.h
 template <typename Integral>
 inline Integral log2_ceil(Integral i)
 {
     return Integral(ceil(log2(i)));
 }
 
+//! calculate the log2 ceiling of an integral type using math.h
 template <typename Integral>
 inline Integral log2_floor(Integral i)
 {
     return Integral(log2(i));
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+//! calculate the log2 floor of an integer type (by repeated bit shifts)
+template <typename IntegerType>
+unsigned int ilog2_floor(IntegerType i)
+{
+    unsigned int p = 0;
+    while (i >= 256) i >>= 8, p += 8;
+    while (i >>= 1) ++p;
+    return p;
+}
+
+//! calculate the log2 ceiling of an integer type (by repeated bit shifts)
+template <typename IntegerType>
+unsigned int ilog2_ceil(const IntegerType& i)
+{
+    if (i <= 1) return 0;
+    return ilog2_floor(i - 1) + 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////

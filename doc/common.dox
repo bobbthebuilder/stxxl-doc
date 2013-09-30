@@ -1,3 +1,4 @@
+// -*- mode: c++; mode: visual-line; mode: flyspell; fill-column: 100000 -*-
 /***************************************************************************
  *  doc/common.dox
  *
@@ -10,12 +11,11 @@
  *  http://www.boost.org/LICENSE_1_0.txt)
  **************************************************************************/
 
-/*! \page common Common Utilities and Helpers found in STXXL
+/** \page common Common Utilities and Helpers
 
-A lots of basic utility classes and helper functions have accumulated in 
-STXXL. Try are usually fundamental enough to be also used in an application
-program.  Before implementing a common software utility, please check the list
-below; it might already exist in STXXL:
+\author Timo Bingmann (2013)
+
+A lots of basic utility classes and helper functions have accumulated in STXXL. Try are usually fundamental enough to be also used in an application program.  Before implementing a common software utility, please check the list below; it might already exist in STXXL:
 
 - \subpage common_random "random number generators"
 - \subpage common_timer "timestamp and timer function"
@@ -25,11 +25,13 @@ below; it might already exist in STXXL:
 - \subpage common_logging "logging macros"
 - \subpage common_assert "macros for checking assertions"
 - \subpage common_types "signed and unsigned integer types"
+- \subpage common_log2 "calculating log_2(x)"
 - \subpage common_misc_macros "miscellaneous macros"
+- \subpage common_misc_funcs "miscellaneous functions"
 
  */
 
-/*! \page common_random Random Number Generators
+/** \page common_random Random Number Generators
 
 See file common/rand.h -> TODO-df
 
@@ -60,7 +62,7 @@ STXXL_MSG("random number between [0,123456789): " << n_random);
 
 */
 
-/*! \page common_timer Timestamp and Timer Classes
+/** \page common_timer Timestamp and Timer Classes
 
 See file common/timer.h -> TODO-df
 
@@ -101,27 +103,19 @@ STXXL_MSG("measured time: " << (stop - start) << " seconds.");
 
 */
 
-/*! \page common_simple_vector A Non-growing, Non-initializing Simpler Vector
+/** \page common_simple_vector A Non-growing, Non-initializing Simpler Vector
 
-For applications where a std::vector is overkill, or one wishes to allocate an
-uninitialied POD array, the stxxl::simple_vector is a good method.
+For applications where a std::vector is overkill, or one wishes to allocate an uninitialied POD array, the stxxl::simple_vector is a good method.
 
 */
 
-/*! \page common_counting_ptr Reference Counted (Shared) Objects
+/** \page common_counting_ptr Reference Counted (Shared) Objects
 
-Some objects in STXXL are reference counted. This is usually done for large
-objects, which should not be copied deeply in assignments. Instead, a reference
-counting pointer is used, which holds a handle while the pointer exists and
-deletes the object once all pointers go out of scope. Examples are matrices and
-sorted_runs.
+Some objects in STXXL are reference counted. This is usually done for large objects, which should not be copied deeply in assignments. Instead, a reference counting pointer is used, which holds a handle while the pointer exists and deletes the object once all pointers go out of scope. Examples are matrices and sorted_runs.
 
-The method used is called stxxl::counting_ptr or intrusive reference counting.
-This is similar, but not identical to boost or TR1's shared_ptr.
+The method used is called stxxl::counting_ptr or intrusive reference counting.  This is similar, but not identical to boost or TR1's shared_ptr.
 
-The stxxl::counting_ptr is accompanied by stxxl::counted_object, which contains
-the actual reference counter (a single integer). A reference counted object
-must derive from stxxl::counted_object:
+The stxxl::counting_ptr is accompanied by stxxl::counted_object, which contains the actual reference counter (a single integer). A reference counted object must derive from stxxl::counted_object:
 
 \code
 struct something : public stxxl::counted_object
@@ -129,9 +123,7 @@ struct something : public stxxl::counted_object
 };
 \endcode
 
-Code that now wishes to use pointers referencing this object, will typedef an
-stxxl::counting_ptr, which is used to increment and decrement the included
-reference counter automatically.
+Code that now wishes to use pointers referencing this object, will typedef an stxxl::counting_ptr, which is used to increment and decrement the included reference counter automatically.
 
 \code
 typedef stxxl::counting_ptr<something> something_ptr
@@ -147,25 +139,19 @@ typedef stxxl::counting_ptr<something> something_ptr
 }
 \endcode
 
-The stxxl::counting_ptr can generally be used like a usual pointer or
-shared_ptr (see the docs for more).
+The stxxl::counting_ptr can generally be used like a usual pointer or shared_ptr (see the docs for more).
 
-There is also stxxl::const_counting_ptr to return const objects (note that a
-const stxxl::counting_ptr will only render the pointer const, not the enclosed
-object).
+There is also stxxl::const_counting_ptr to return const objects (note that a const stxxl::counting_ptr will only render the pointer const, not the enclosed object).
 
 */
 
-/*! \page common_thread_sync Synchronization Primitives for Multi-Threading
+/** \page common_thread_sync Synchronization Primitives for Multi-Threading
 
-To support multi-threading, some parts of STXXL use synchronization primitives
-to ensure correct results. The primitives are based either on pthreads or on
-Boost classes.
+To support multi-threading, some parts of STXXL use synchronization primitives to ensure correct results. The primitives are based either on pthreads or on Boost classes.
 
 \section mutex Mutexes
 
-For simple mutual exclusion contexts, stxxl::mutex objects should be used
-together with scoped locks:
+For simple mutual exclusion contexts, stxxl::mutex objects should be used together with scoped locks:
 
 \code
 class Something
@@ -191,10 +177,9 @@ stxxl::onoff_switch is a two state semaphore thing?
 
 */
 
-/*! \page common_logging Logging Macros STXXL_MSG
+/** \page common_logging Logging Macros STXXL_MSG
 
-All STXXL components should output log or trace messages using the following
-macros. There are two basic methods for logging using ostream syntax:
+All STXXL components should output log or trace messages using the following macros. There are two basic methods for logging using ostream syntax:
 
 \code
 // for plain messages
@@ -215,8 +200,7 @@ STXXL_VERBOSE2("text " << var)
 STXXL_VERBOSE3("text " << var)
 \endcode
 
-A method used by some submodule authors to create their own levels of verbosity
-is to make their own debugging macros:
+A method used by some submodule authors to create their own levels of verbosity is to make their own debugging macros:
 
 \code
 #define STXXL_VERBOSE_VECTOR(msg) STXXL_VERBOSE1("vector[" << static_cast<const void *>(this) << "]::" << msg)
@@ -224,10 +208,9 @@ is to make their own debugging macros:
 
 */
 
-/*! \page common_assert Macros for Checking Assertions
+/** \page common_assert Macros for Checking Assertions
 
-There are quite a bunch of macros for testing assertions. You must be careful
-to pick the right one depending on when and what you want to assert on.
+There are quite a bunch of macros for testing assertions. You must be careful to pick the right one depending on when and what you want to assert on.
 
 \section static Compile-time Assertions: STXXL_STATIC_ASSERT
 
@@ -240,10 +223,7 @@ STXXL_STATIC_ASSERT(sizeof(item) == 4 * sizeof(int));
 
 \section unittest Assertions in Unit Tests: STXXL_CHECK
 
-Assertions in unit tests must use the following macros to ensure that the
-condition is also checked in release builds (where a plain \c "assert()" is
-void). These \c CHECK function should NOT be used to test return values, since
-we try to throw exceptions instead of aborting the program.
+Assertions in unit tests must use the following macros to ensure that the condition is also checked in release builds (where a plain \c "assert()" is void). These \c CHECK function should NOT be used to test return values, since we try to throw exceptions instead of aborting the program.
 
 \code
 // test a condition
@@ -252,44 +232,78 @@ STXXL_CHECK( 2+2 == 4 );
 STXXL_CHECK2( 2+2 == 4, "We cannot count!");
 \endcode
 
+Sometimes one also wants to check that a specific expression \b throws an exception. This checking can be done automatically using a <tt>try { } catch {}</tt> by using STXXL_CHECK_THROW.
+
 \section plain Plain Assertions: assert
 
-For the usual assertions, that should be removed in production code for
-performance, we use the standard \c "assert()" function.
+For the usual assertions, that should be removed in production code for performance, we use the standard \c "assert()" function.
 
-However, there is also \c STXXL_ASSERT(), which can be used as a replacement
-for \c assert(), when compiler warnings about unused variables or typedefs
-occur. The issue is that assert() completely removes the code, whereas
-STXXL_ASSERT() keeps the code encloses it inside \c if(0).
+However, there is also \c STXXL_ASSERT(), which can be used as a replacement for \c assert(), when compiler warnings about unused variables or typedefs occur. The issue is that assert() completely removes the code, whereas STXXL_ASSERT() keeps the code encloses it inside \c if(0).
 
 TODO: STXXL_THROW
 
 */
 
-/*! \page common_types Signed and Unsigned Integer Types
+/** \page common_log2 Calculating log2(x) for Integers and at Compile-Time
 
-STXXL provides two very important types: \c signed_type and \c
-unsigned_type. These should be used for general counting and indexing types, as
-they are defined to be the size of a register on the machines: on 32-bit
-machines the two types are 4 bytes size, while on a 64-bit machine the two
-types are 8 bytes in size!
+STXXL provides three methods to calculate log2(x), which is often needed for binary trees, etc.
 
-See the file common/types.h
+The first is during \b compile-time using template meta-programming magic:
+
+\code
+#include <stxxl/bits/common/tmeta.h>
+
+std::cout << stxxl::LOG2<10000>::floor << std::endl;
+std::cout << stxxl::LOG2<10000>::ceil << std::endl;
+\endcode
+
+The second is for calculating log2(x) for \b integer arguments using simple bit shift arithmetic:
+
+\code
+#include <stxxl/bits/common/utils.h>
+
+std::cout << stxxl::ilog2_floor(10000) << std::endl;
+std::cout << stxxl::ilog2_ceil(10000) << std::endl;
+\endcode
+
+The third and probably least useful is to use conversion to \b double and \c math.h's facilities:
+
+\code
+#include <stxxl/bits/common/utils.h>
+
+std::cout << stxxl::log2_floor(10000) << std::endl;
+std::cout << stxxl::log2_ceil(10000) << std::endl;
+\endcode
 
 */
 
-/*! \page common_misc_macros Miscellaneous Macros
+/** \page common_types Signed and Unsigned Integer Types
+
+STXXL provides two very important types: stxxl::int_type and stxxl::unsigned_type. These should be used for general counting and indexing types, as they are defined to be the size of a register on the machines: on 32-bit machines the two types are 4 bytes size, while on a 64-bit machine the two types are 8 bytes in size!
+
+The previous types are for general purpose counting. For real 64-bit integers, also on 32-bit machines, STXXL also provides a stxx::uint64 type (independent of other headers).
+
+See the file common/types.h
+
+\section common_types_uint uint40 and uint48 Unsigned Integer Types
+
+When storing file offsets in external memory, one often does not require full 64-bit indexes. Mostly, 40-bit or 48-bit are sufficient, if only < 1 TiB or < 16 TiB of data are processed. If one stores theses integers in five or six bytes, the total I/O volume can be reduced significantly.
+
+Since this issue occurs commonly in EM algorithms, STXXL provides two types: stxxl::uint40 and stxxl::uint48.
+
+See the file common/uint_types.h
+
+*/
+
+/** \page common_misc_macros Miscellaneous Macros
 
 \section namespaces __STXXL_BEGIN_NAMESPACE
 
-A long, long time ago, not all compilers supported C++ namespaces, thus STXXL
-uses the macros __STXXL_BEGIN_NAMESPACE and __STXXL_END_NAMESPACE, which open
-and close the \c "namespace stxxl".
+A long, long time ago, not all compilers supported C++ namespaces, thus STXXL uses the macros __STXXL_BEGIN_NAMESPACE and __STXXL_END_NAMESPACE, which open and close the \c "namespace stxxl".
 
 \section unused STXXL_UNUSED
 
-STXXL_UNUSED is not actually a macro. It is a remedy against "unused variable"
-warnings, for whatever reason. Usage:
+STXXL_UNUSED is not actually a macro. It is a remedy against "unused variable" warnings, for whatever reason. Usage:
 
 \code
 void function(int x)
@@ -300,9 +314,7 @@ void function(int x)
 
 \section likely LIKELY and UNLIKEY
 
-Some compilers have facilities to specify whether a condition is likely or
-unlikely to be true. This may have consequences on how to layout the assembler
-code better.
+Some compilers have facilities to specify whether a condition is likely or unlikely to be true. This may have consequences on how to layout the assembler code better.
 
 \code
 if (LIKELY(x > 1)) { ... }
@@ -311,8 +323,16 @@ if (UNLIKELY(x > 8)) { ... }
 
 \section deprecated Deprecated Functions
 
-Some compilers can warn the user about deprecated function by tagging them in
-the source. In STXXL we use the macro _STXXL_DEPRECATED(...) to enclose
-deprecated functions.
+Some compilers can warn the user about deprecated function by tagging them in the source. In STXXL we use the macro _STXXL_DEPRECATED(...) to enclose deprecated functions.
+
+*/
+
+/** \page common_misc_funcs Miscellaneous Functions
+
+\section parse_filesize Parsing Filesizes with K, M, G suffixes
+
+Since with STXXL one often has to parse large file or disk sizes, there is a function called parse_filesize(), which accepts strings like "1 GiB" or "20 TB" as input.
+
+See the \ref install_config documentation page on the format of accepted file size strings.
 
 */

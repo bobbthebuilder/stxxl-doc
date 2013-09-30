@@ -12,8 +12,12 @@
  **************************************************************************/
 
 #include <iostream>
-#include <stxxl.h>
 #include <math.h>
+#include <assert.h>
+#include <stxxl/bits/config.h>
+#include <stxxl/bits/common/tmeta.h>
+#include <stxxl/bits/common/utils.h>
+#include <stxxl/bits/verbose.h>
 
 using stxxl::LOG2;
 using stxxl::unsigned_type;
@@ -26,9 +30,12 @@ void log_i()
               << stxxl::LOG2<i>::floor << "\t"
               << stxxl::LOG2<i>::ceil << std::endl;
 
-    std::cout << log2l((long double)i) << "\t"
+#ifndef BOOST_MSVC
+    std::cout << "\t\t"
+              << log2l((long double)i) << "\t"
               << (unsigned_type)floorl(log2l(i)) << "\t"
               << (unsigned_type)ceill(log2l(i)) << "\n";
+#endif
 
     if (i == 0)
     {
@@ -38,10 +45,23 @@ void log_i()
     }
     else if (i <= (1UL << 59)) // does not work for higher powers
     {
+        std::cout << "\t\t"
+                  << stxxl::ilog2_floor(i) << "\t"
+                  << stxxl::ilog2_floor(i) << "\t"
+                  << stxxl::ilog2_ceil(i) << "\n";
+
+        STXXL_CHECK( stxxl::LOG2_floor<i>::value == stxxl::ilog2_floor(i) );
+        STXXL_CHECK( stxxl::LOG2<i>::floor == stxxl::ilog2_floor(i) );
+        STXXL_CHECK( stxxl::LOG2<i>::ceil == stxxl::ilog2_ceil(i) );
+
+#ifndef BOOST_MSVC
         STXXL_CHECK( stxxl::LOG2_floor<i>::value == (unsigned_type)floorl(log2l(i)) );
         STXXL_CHECK( stxxl::LOG2<i>::floor == (unsigned_type)floorl(log2l(i)) );
         STXXL_CHECK( stxxl::LOG2<i>::ceil == (unsigned_type)ceill(log2l(i)) );
+#endif
     }
+
+    std::cout << "\n";
 }
 
 template <unsigned_type i>

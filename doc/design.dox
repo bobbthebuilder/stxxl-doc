@@ -1,3 +1,4 @@
+// -*- mode: c++; mode: visual-line; mode: flyspell; fill-column: 100000 -*-
 /***************************************************************************
  *  doc/design.dox
  *
@@ -16,10 +17,9 @@
 
 namespace stxxl {
 
-/*! \page design Design of STXXL
+/** \page design Design of STXXL
 
-\author Roman Dementiev
-\date written 2006
+\author Roman Dementiev (2006)
 
 STXXL is a layered library consisting of three layers (see following figure). The lowest layer, the Asynchronous I/O primitives layer (AIO layer), abstracts away the details of how asynchronous I/O is performed on a particular operating system. Other existing external memory algorithm libraries only rely on synchronous I/O APIs \cite CraMeh99 or allow reading ahead sequences stored in a file using the POSIX asynchronous I/O API \cite tpie_manual. These libraries also rely on uncontrolled operating system I/O caching and buffering in order to overlap I/O and computation in some way. However, this approach has significant performance penalties for accesses without locality. Unfortunately, the asynchronous I/O APIs are very different for different operating systems (e.g. POSIX AIO and Win32 Overlapped I/O). Therefore, we have introduced the AIO layer to make porting STXXL easy. Porting the whole library to a different platform requires only reimplementing the AIO layer using native file access methods and/or native multithreading mechanisms.
 
@@ -55,7 +55,7 @@ The following listing shows a simple example of how to use AIO objects to perfor
 \code
 using namespace stxxl;
 struct my_handler { // I/O completion handler
-    void operator () (request_ptr ptr) { 
+    void operator () (request_ptr ptr) {
         std::cout << "Request '" << *ptr << "' completed." << std::endl;
     }
 };
@@ -63,7 +63,7 @@ char * mybuffer = new char[1024*1024]; // allocate 1MB buffer
 syscall_file myfile("./storage", file::RDONLY);
 request_ptr myreq = myfile.aread(mybuffer, 0, 1024*1024,my_handler());
 do_something1(); // do_something1() is overlapped with reading
-myreq->wait();	 // wait for read completion
+myreq->wait();   // wait for read completion
 do_something2(mybuffer);// process the read buffer
 delete [] mybuffer; // free the buffer
 \endcode
@@ -125,19 +125,31 @@ The documentation of \subpage design_stl "The STL-User Layer" is on a separate s
 
 # The Algorithm Pipelining Layer
 
-The \subpage design_pipeline "Streaming layer" provides efficient support for
-external memory algorithms with mostly \b sequential I/O pattern, i.e. scan,
-sort, merge, etc. A user algorithm, implemented using this module can save many
-I/Os. The win is due to an efficient interface, that couples the input and the
-output of the algorithms-components (scans, sorts, etc.). The output from an
-algorithm is directly fed into another algorithm as the input, without the need
-to store it on the disk.
+The \subpage design_pipeline "Streaming layer" provides efficient support for external memory algorithms with mostly \b sequential I/O pattern, i.e. scan, sort, merge, etc. A user algorithm, implemented using this module can save many I/Os. The win is due to an efficient interface, that couples the input and the output of the algorithms-components (scans, sorts, etc.). The output from an algorithm is directly fed into another algorithm as the input, without the need to store it on the disk.
+
+# Common Helpers and Utilities
+
+Beyond the layered library, STXXL contains many small helpers commonly used in C++ like random numbers or shared pointers. See \subpage common "the common library" for short descriptions.
 
 */
 
-/*! \page design_stl The STL-User Layer
+/** \page design_stl The STL-User Layer
 
-\section stl_general General Issues Concerning STXXL Containers
+\author Roman Dementiev (2006)
+
+The STL layer of STXXL is composed of two large parts: containers and algorithms.
+
+- \subpage design_stl_containers "Containers" store elements, usually in external memory, but still follow the same interface as STL containers. See
+
+- \subpage design_stl_algo "Algorithms" operate, like STL algorithms, on iterators provided by the containers.
+
+*/
+
+/** \page design_stl_containers STXXL Containers
+
+\author Roman Dementiev (2006)
+
+\section General Issues Concerning STXXL Containers
 
 STXXL has the restriction that the data types stored in the containers cannot have C/C++ pointers or references to other elements of external memory containers. The reason is that these pointers and references get invalidated when the blocks containing the elements they point/refer to are written to disk. To get around this problem, the links can be kept in the form of external memory iterators (e.g. stxxl::vector::iterator). The iterators remain valid while storing to and loading from the external memory. When dereferencing an external memory iterator, the pointed object is loaded from external memory by the library on demand (if the object is not in the cache of the data structure already).
 
@@ -151,17 +163,20 @@ STXXL library was designed to ease the access to external memory algorithms and 
 - \subpage design_stack "stxxl::stack"
 - \subpage design_queue "stxxl::queue"
 - \subpage design_deque "stxxl::deque"
-- \subpage design_pqueue "stxxl::priority_queue"
 - \subpage design_map "stxxl::map"
+
+Beyond these, STXXL also provides a set of containers that are not part of the STL:
+
+- \subpage design_pqueue "stxxl::priority_queue"
 - \subpage design_matrix "stxxl::matrix"
-
-# STXXL Algorithms
-
-We have implemented a \link design_algo_sorting \b parallel disk sorter \endlink which have syntax of STL stxxl::sort \cite DemSan03. Our stxxl::ksort is a specialized implementation of stxxl::sort which efficiently sorts elements with integer keys. STXXL currently provides several implementations of \subpage design_algo "scanning algorithms" (stxxl::generate, stxxl::for_each, stxxl::find) optimized for external memory. However, it is possible (with some constant factor degradation in the performance) to apply internal memory scanning algorithms from STL to STXXL containers, since STXXL containers have iterator based interfaces.
+- \ref stxxl::sorter
+- \ref stxxl::sequence
 
 */
 
-/*! \page design_vector Vector
+/** \page design_vector Vector
+
+\author Roman Dementiev (2006)
 
 The most universal STXXL container is stxxl::vector. Vector is an array whose size can vary dynamically. The implementation of stxxl::vector is similar to the LEDA-SM array \cite CraMeh99. The content of a vector is striped block-wise over the disks, using an assignment strategy given as a template parameter. Some of the blocks are cached in a vector cache of fixed size (also a parameter). The replacement of cache blocks is controlled by a specified page-replacement strategy. STXXL has implementations of LRU and random replacement strategies. The user can provide his/her own strategy as well. The stxxl::vector has STL-compatible Random Access Iterators.
 
@@ -203,7 +218,7 @@ The stxxl::VECTOR_GENERATOR has the following template parameters:
 
 ### Notes:
 
-- All blocks of a page are read and written from/to disks together. Therefore to increase the I/O bandwidth, it is recommended to set the PageSize parameter to multiple of \f$ D \f$.
+- All blocks of a page are read and written from/to disks together. Therefore to increase the I/O bandwidth, it is recommended to set the PageSize parameter to multiple of \a D.
 
 - Memory consumption of constructed vector is BlockSize x CachePages x PageSize bytes (see below).
 
@@ -220,7 +235,7 @@ fully randomized   | FR
 randomized cycling | RC
 
 - Supported paging strategies:
-strategy            | identifier 
+strategy            | identifier
 ------------------- | ------
 random              | random
 least recently used | lru
@@ -272,48 +287,213 @@ This issue also concerns \c front() and \c back() methods.
 
 */
 
-/*! \page design_stack Stack
+/** \page design_stack Stack
 
-An I/O efficient stack is perhaps the simplest external memory data structure. Four different implementations of a stack are available in STXXL. Some of the implementations (e.g. stxxl::grow_shrink_stack2) are optimized to prefetch data ahead and to queue writing, efficiently overlapping I/O and computation. The amortized I/O complexity for \c push and \c pop stack operations is \f$ \mathcal{O}(1/DB) \f$.
+\author Roman Dementiev (2006)
+
+The I/O efficient stack is perhaps the simplest external memory data structure. Stacks provide only restricted subset of sequence operations: insertion, removal, and inspection of the element at the top of the stack. Stacks are a "last in first out" (LIFO) data structures: the element at the top of a stack is the one that was most recently added. Stacks does not allow iteration through its elements.
+
+The basic variant of EM stack keeps the top \a k elements in the main memory buffer, where \f$ k \leq 2B \f$. If the buffers get empty on a removal call, one block is brought from the disk to the buffers. Therefore at least \a B removals are required to make one I/O reading a block. Insertions cause no I/Os until the internal buffers get full. In this case to make space the first \a B elements are written to the disk. Thus a block write happens only after at least \a B insertions. If we choose the unit of disk transfer to be a multiple of <i>DB</i> (we denote it as a \a page), set the stack buffer size to <i>2D</i> pages, and evenly assign the blocks of a page to disks we obtain the following amortized running times of the basic operations of stxxl::stack
+
+operation            | internal work          | I/O (amortized)
+-------------------- | ---------------------- | -------------------------
+insertion at the end | \f$ \mathcal{O}(1) \f$ | \f$ \mathcal{O}(1/DB) \f$
+removal at the end   | \f$ \mathcal{O}(1) \f$ | \f$ \mathcal{O}(1/DB) \f$
 
 The STXXL library contains four different variants of stacks, each implementation is specialized for a certain access pattern:
 
-1. stxxl::normal_stack is a general purpose implementation which is the best if the access pattern to the stack is an irregular mix of push'es and pop's, i.e. the stack grows and shrinks without a certain rule.
-2. stxxl::grow_shrink stack is a stack that is optimized for an access pattern where the insertions are (almost) not intermixed with the removals, and/or vice versa, the removals are (almost) not intermixed with the insertions. In short, the stack first grows to its maximal size, then shrinks, then grow again and so on, a pattern which can be described by \f$(push^{r_i}, push^{r_j})^k\f$ with \f$1 \leq j \leq k\f$ and large values for \f$r_i\f$ and \f$r_j\f$.
+1. The stxxl::normal_stack is a general purpose implementation which is the best if the access pattern to the stack is an irregular mix of push'es and pop's, i.e. the stack grows and shrinks without a certain rule.
+
+2. The stxxl::grow_shrink stack is a stack that is optimized for an access pattern where the insertions are (almost) not intermixed with the removals, and/or vice versa, the removals are (almost) not intermixed with the insertions. In short, the stack first grows to its maximal size, then shrinks, then grow again and so on, a pattern which can be described by \f$ (push^{r_i}, push^{r_j})^k \f$ with \f$ 1 \leq j \leq k \f$ and large values for \f$ r_i \f$ and \f$ r_j \f$.
+
 3. stxxl::grow_shrink2 stack is a "grow-shrink" stack that allows the use of common prefetch and write buffer pools. The pools are shared between several "grow-shrink" stacks.
+
 4. stxxl::migrating stack is a stack that migrates from internal memory to external memory when its size exceeds a certain threshold (determined by parameter migrating_critical_size)
 
 To make use of stxxl::stack, one can use the generator template stxxl::STACK_GENERATOR which expects the parameters from left to right as shown in the table below.
 
+\section design_stack_normal stxxl::normal_stack
+
+The stxxl::normal_stack is a general purpose implementation of the external memory stack. The stack has two pages, the size of the page in blocks is a configuration constant and can be given as a template parameter. The implementation of the methods follows the description given in the previous section.
+
+## Internal Memory Consumption of stxxl::normal_stack
+
+The cache of stxxl::normal_stack largely dominates in its internal memory consumption. Other members consume very small fraction of stxxl::normal_stack's memory even when the stack size is large. Therefore, the internal memory consumption of stxxl::normal_stack can be estimated as \f$ 2 \times BlockSize \times PageSize \f$ bytes, where \f$ BlockSize \f$ is the block size and \f$ PageSize \f$ is the page size in blocks (see \ref design_stack).
+
+\section design_stack_grow_shrink stxxl::grow_shrink_stack
+
+The stxxl::grow_shrink_stack specialization is optimized for an access pattern where the insertions are (almost) not intermixed with the removals, and/or vice versa, the removals are (almost) not intermixed with the insertions. In other words the stack first grows to its maximal size, then it shrinks, then it might again grow, then shrink, and so forth, i.e. the pattern is \f$ (push^{i_j}pop^{r_j})^k \f$, where \f$ k \in N \f$, \f$ 1 \leq j \leq k \f$, and \f$ i_j \f$, \f$ r_j \f$ are \a large.  The implementation efficiently exploits the knowledge of the access pattern that allows \b prefetching the blocks beforehand while the stack shrinks and <b>buffered writing</b> while the stack grows. Therefore the \b overlapping of I/O and computation is possible.
+
+## Internal Memory Consumption of stxxl::grow_shrink_stack
+
+The cache of stxxl::grow_shrink_stack largely dominates in its internal memory
+consumption. Other members consume very small fraction of
+stxxl::grow_shrink_stack's
+memory even when the stack size is large. Therefore, the internal
+memory consumption of stxxl::grow_shrink_stack can be estimated as
+\f$ 2 \times BlockSize \times PageSize \f$ bytes, where \f$ BlockSize \f$ is the
+block size and \f$ PageSize \f$ is the page size in blocks (see \ref design_stack).
+
+## Members of stxxl::grow_shrink_stack
+
+The stxxl::grow_shrink_stack has the same set of members as the stxxl::normal_stack. The running times of stxxl::grow_shrink_stack are the same as stxxl::normal_stack except that when the stack switches from growing to shrinking (or from shrinking to growing) \f$ PageSize \f$ I/Os can be spent additionally in the worst case. (This is for the single disk setting, if the page is perfectly striped over parallel disk the number of I/Os is \f$ PageSize \cdot D \f$.)
+
+\section design_stack_grow_shrink2 stxxl::grow_shrink_stack2
+
+The stxxl::grow_shrink_stack2 is optimized for the same kind of access pattern as stxxl::grow_shrink_stack. The difference is that each instance of stxxl::grow_shrink_stack uses an own internal buffer to overlap I/Os and computation, but stxxl::grow_shrink_stack2 is able to share the buffers from the pool used by several stacks.
+
+## Internal Memory Consumption of stxxl::grow_shrink_stack2
+
+Not counting the memory consumption of the shared blocks from the pools, the stack alone consumes about \f$ BlockSize \f$ bytes. It has a cache that consists of only a single block.
+
+## Members of stxxl::grow_shrink_stack2
+
+The stxxl::grow_shrink_stack2 has almost the same set of members as the stxxl::normal_stack, except that it does not have the default constructor. The stxxl::grow_shrink_stack2 requires prefetching and write pool objects (see stxxl::prefetch_pool, stxxl::write_pool and stxxl::read_write_pool) to be specified in the creation time.
+
+Consequently, the constructor requires a read_write_pool for prefetching and buffered writing. But it also has a second parameter, which tells how many blocks from the prefetching pool are used, this is called "prefetch_aggressiveness".
+
+\section design_stack_grow_migrating stxxl::migrating_stack
+
+The stxxl::migrating_stack is a stack that migrates from internal memory to external when its size exceeds a certain threshold (template parameter). The implementation of internal and external memory stacks can be arbitrary and given as a template parameters.
+
+## Internal Memory Consumption of stxxl::migrating_stack
+
+The stxxl::migrating_stack memory consumption depends on the memory consumption of the stack implementations given as template parameters. The current state is internal (external), the stxxl::migrating_stack consumes almost exactly the same space as internal (external) memory stack implementation. (The stxxl::migrating_stack needs only few pointers to maintain the switching from internal to external memory implementations.)
+
+## Members of stxxl::migrating_stack
+
+The stxxl::migrating_stack extends the member set of stxxl::normal_stack. Additionally, there are stxxl::migrating_stack::internal() and stxxl::migrating_stack::external(), which return true if the currently used implementation is internal or external.
+
+\section design_stack_generator stxxl::STACK_GENERATOR
+
+To provide an easy way to choose and configure the stack
+implementations, STXXL offers a template meta program called
+stxxl::STACK_GENERATOR.
+
+The stxxl::STACK_GENERATOR has the following template parameters:
+
+\copydetails stxxl::STACK_GENERATOR
+
+## Examples:
+
+- STACK_GENERATOR<double>::result external stack of \c double's
+- STACK_GENERATOR<double,internal>::result internal stack of \c double's
+- STACK_GENERATOR<double,external,grow_shrink>::result external grow-shrink stack of \c double's
+- STACK_GENERATOR<double,migrating,grow_shrink>::result migrating grow-shrink stack of \c double's, internal implementation is \c std::stack<double>
+- STACK_GENERATOR<double,migrating,grow_shrink,1,512*1024>::result migrating grow-shrink stack of \c double's with 1 block per page and block size 512 KiB (total memory occupied = 1 MiB)
+
+## Example for stxxl::grow_shrink_stack2
+
+TODO-df : but use read_write_pool instead of the two pools.
+
+\code
+typedef STACK_GENERATOR<int,external,grow_shrink2>::result stack_type;
+typedef stack_type::block_type block_type;
+
+stxxl::prefetch_pool p_pool(10); // 10 read buffers
+stxxl::write_pool w_pool(6);     // 6 write buffers
+stack_type S(p_pool,w_pool,0);   // no read buffers used
+
+for(long long i=0;i < max_value;++i)
+     S.push(i);
+
+S.set_prefetch_aggressiveness(5);
+
+/* give a hint that we are going to shrink the stack from now on,
+always prefetch 5 buffers beforehand */
+
+for(long long i=0; i< max_value;++i)
+        S.pop();
+
+S.set_prefetch_aggressiveness(0);
+// stop prefetching
+
+\endcode
+
 */
 
-/*! \page design_queue Queue
+/** \page design_queue Queue
+
+\author Roman Dementiev (2006)
 
 STXXL also has an implementation of external memory FIFO stxxl::queue. Its design is similar to stxxl::grow_shrink_stack2. The implementation holds the head and the tail blocks in the main memory. Prefetch and write block pools might be used to overlap I/O and computation during stxxl::queue operations.
 
 */
 
-/*! \page design_deque Deque
+/** \page design_deque Deque
+
+\author Roman Dementiev (2006)
 
 The STXXL implementation of external memory stxxl::deque is an adaptor of an (external memory) vector. This implementation wraps the elements around the end of the vector \b circularly. It provides the pop/push operations from/to the both ends of the stxxl::deque in \f$ \mathcal{O}(1/DB) \f$ amortized I/Os if parameterized with a properly configured stxxl::vector.
 
 */
 
-/*! \page design_pqueue Priority Queue
+/** \page design_pqueue Priority Queue
 
-External memory priority queues are the central data structures for many I/O efficient graph algorithms \cite ZehPhd \cite ChiEtAl95 \cite MSS03. The main technique in these algorithms is time-forward processing \cite ChiEtAl95 \cite Arg95, easily realizable by an I/O efficient priority queue. I/O efficient priority queues also find application in large-scale discrete event simulation and online sorting. The STXXL implementation of priority queues is based on \cite San00b. An operation of this priority queue, called sequence heap, takes \f$ \mathcal{O}(\frac{1}{B}\log_{M/B}(I/B)) \f$ amortized I/Os, where \f$ I \f$ is the total number of insertions into the priority queue. This queue needs less than a third of I/Os used by other similar cache (I/O) efficient priority queues (e.g. \cite Brengel00 \cite FJKT97).
+\author Roman Dementiev (2006)
 
-A sequence heap maintains \f$ R \f$ <b>merge groups</b> \f$ G_1,\ldots, G_R \f$ where \f$ G_i \f$ holds up to \f$ k \f$ sorted sequences of size up to \f$ m k^{i-1} \f$, \f$ m << M \f$, see following figure. When group \f$ G_i \f$ overflows, all its sequences are merged, and the resulting sequence is put into group \f$ G_{i+1} \f$. Each group is equipped with a <b>group buffer</b> of size \f$ m \f$ to allow batched deletion from the sequences. The smallest elements of these buffers are deleted in small batches and stored in the <b>deletion buffer</b>. The elements are first inserted into the <b>insertion priority queue</b>. On deletion, one checks the minimum elements stored in the insertion priority queue and the deletion buffer.
+A priority queue is a data structure that provides a restricted subset of container functionality: it provides insertion of elements, and inspection and removal of the top element. It is guaranteed that the top element is the largest element in the priority queue, where the function object Cmp is used for comparisons. Priority queues do not allow iteration through its elements.
+
+External memory priority queues are the central data structures for many I/O efficient graph algorithms (\cite ZehPhd \cite ChiEtAl95 \cite MSS03). The main technique in these algorithms is time-forward processing (\cite ChiEtAl95 \cite Arg95), easily realizable by an I/O efficient priority queue. I/O efficient priority queues also find application in large-scale discrete event simulation and online sorting. The STXXL implementation of priority queues is based on \cite San00b. An operation of this priority queue, called sequence heap, takes \f$ \mathcal{O}(\frac{1}{B}\log_{M/B}(I/B)) \f$ amortized I/Os, where \f$ I \f$ is the total number of insertions into the priority queue. This queue needs less than a third of I/Os used by other similar cache (I/O) efficient priority queues (e.g. \cite Brengel00 \cite FJKT97). The amortized run time of the STXXL priority queue are
+operation | internal work               | I/O (amortized)
+--------- | --------------------------- | ------------------------
+insertion | \f$ \mathcal{O}(\log I) \f$ | \f$ \mathcal{O}(1/B) \f$
+deletion  | \f$ \mathcal{O}(\log I) \f$ | \f$ \mathcal{O}(1/B) \f$
+where \f$ I \f$ is the number of performed operations.
+
+A sequence heap maintains \a R <b>merge groups</b> \f$ G_1,\ldots, G_R \f$ where \f$ G_i \f$ holds up to \a k sorted sequences of size up to \f$ m k^{i-1} \f$, \f$ m << M \f$, see following figure. When group \f$ G_i \f$ overflows, all its sequences are merged, and the resulting sequence is put into group \f$ G_{i+1} \f$. Each group is equipped with a <b>group buffer</b> of size \a m to allow batched deletion from the sequences. The smallest elements of these buffers are deleted in small batches and stored in the <b>deletion buffer</b>. The elements are first inserted into the <b>insertion priority queue</b>. On deletion, one checks the minimum elements stored in the insertion priority queue and the deletion buffer.
 
 The difference of our implementation to \cite San00b is that a number of larger merge groups are explicitly kept in external memory. The sorted sequences in those groups only hold their \b first blocks in the main memory. The implementation supports parallel disks and overlaps I/O and computation. As in \cite San00b, the internal merging is based on loser trees \cite Knu98. However, our implementation does not use \b sentinel elements.
 
 \image html san00b_pqueue_small.png "The structure of STXXL priority queue"
 
+\section design_pqueue_generator stxxl::PRIORITY_QUEUE_GENERATOR
+
+Since the stxxl::priority_queue has many setup parameters (internal memory buffer sizes, arity of mergers, number of internal and external memory merger groups, etc.) which are difficult to guess, STXXL provides a helper meta template program that searches for the optimum settings for user demands. This is necessary to limit the amount of main memory occupied by the different buffers of the data structure. The program is called stxxl::PRIORITY_QUEUE_GENERATOR.
+
+The stxxl::PRIORITY_QUEUE_GENERATOR has the following template parameters:
+
+\copydetails stxxl::PRIORITY_QUEUE_GENERATOR
+
+## Notes
+
+- If \c CompareType(x,y) is true, then x is smaller than y. The element returned by \c Q.top() is the largest element in the priority queue. That is, it has the property that, for every other element \b x in the priority queue, \c CompareType(Q.top(),x) is false. \c CompareType must also provide \c min_value() method, that returns value of type ValueType that is smaller than any element of the queue \b x, i.e. \c CompareType(CompareType.min_value(),x) is always \b true. <BR>
+Example: comparison object for priority queue
+where \c top() returns the \b smallest contained integer:
+\code
+struct CmpIntGreater
+{
+    bool operator () (const int & a, const int & b) const { return a > b; }
+    int min_value() const  { return std::numeric_limits<int>::max(); }
+};
+\endcode
+Example: comparison object for priority queue where \c top() returns the \b largest contained integer:
+\code
+struct CmpIntLess
+{
+    bool operator () (const int & a, const int & b) const { return a < b; }
+    int min_value() const  { return std::numeric_limits<int>::min(); }
+};
+\endcode
+Note that \c CompareType must define strict weak ordering. (<a href="http://www.sgi.com/tech/stl/StrictWeakOrdering.html">see what it is</a>)
+
+- stxxl::PRIORITY_QUEUE_GENERATOR is template meta program that searches for \b 7 configuration parameters of \b stxxl::priority_queue that both minimize internal memory consumption of the priority queue to match \c IntMemory and maximize performance of priority queue operations.  Actual memory consumption might be larger (use stxxl::priority_queue::mem_cons() method to track it), since the search assumes rather optimistic schedule of push'es and pop'es for the estimation of the maximum memory consumption. To keep actual memory requirements low increase the value of \c MaxItems parameter.
+
+- For functioning a priority queue object requires two pools of blocks (See constructor of stxxl::priority_queue). To construct STXXL block pools you might need \b block_type that will be used by priority queue. Note that block's size and hence it's type is generated by the stxxl::PRIORITY_QUEUE_GENERATOR in compile type from \c IntMemory, \c MaxItems and \c sizeof(ValueType) and not given directly by user as a template parameter. Block type can be extracted as stxxl::PRIORITY_QUEUE_GENERATOR<>::result::block_type (see \ref tutorial_pqueue).
+
+- The configured priority queue type is available as stxxl::PRIORITY_QUEUE_GENERATOR<>::result.
+
+\section design_pqueue_memory Internal Memory Consumption of stxxl::priority_queue
+
+Internal memory consumption of stxxl::priority_queue is bounded by the IntMemory template parameter in most situations.
+
 */
 
-/*! \page design_map Map (B+-tree)
+/** \page design_map Map (B+-tree)
 
-stxxl::map is an STL interface for search trees with unique keys. Our implementation of stxxl::map is a variant of a B+-tree data structure \cite BM72 supporting the operations \c insert, \c erase, \c find, \c lower_bound and \c upper_bound in optimal \f$ \mathcal{O}(\log_{B}(n)) \f$ I/Os. Operations of stxxl::map use \a iterators to refer to the elements stored in the container, e.g. \c find and \c insert return an iterator pointing to the data. Iterators are used for range queries: an iterator pointing to the smallest element in the range is returned by \c lower_bound, the element which is next to the maximum element in the range is returned by \c upper_bound. Scanning through the elements of the query can be done by using \c operator++ or \c operator-- of the obtained iterators in \f$ \mathcal{O}(R/B) \f$ I/Os, where \f$ R \f$ is the number of elements in the result. Our current implementation does not exploit disk parallelism. The flexibility of the iterator-based access has some circumstances for an external memory implementation: iterators must return correct data after reorganizations in the data structure even when the pointed data is moved to a different external memory block.
+\author Roman Dementiev (2006)
+
+stxxl::map is an STL interface for search trees with unique keys. Our implementation of stxxl::map is a variant of a B+-tree data structure \cite BM72 supporting the operations \c insert, \c erase, \c find, \c lower_bound and \c upper_bound in optimal \f$ \mathcal{O}(\log_{B}(n)) \f$ I/Os. Operations of stxxl::map use \a iterators to refer to the elements stored in the container, e.g. \c find and \c insert return an iterator pointing to the data. Iterators are used for range queries: an iterator pointing to the smallest element in the range is returned by \c lower_bound, the element which is next to the maximum element in the range is returned by \c upper_bound. Scanning through the elements of the query can be done by using \c operator++ or \c operator-- of the obtained iterators in \f$ \mathcal{O}(R/B) \f$ I/Os, where \a R is the number of elements in the result. Our current implementation does not exploit disk parallelism. The flexibility of the iterator-based access has some circumstances for an external memory implementation: iterators must return correct data after reorganizations in the data structure even when the pointed data is moved to a different external memory block.
 
 The way how iterators are used for accessing a stxxl::map is similar to the use of database <b>cursors</b> \cite BDB99. STXXL is the first C++ template library that provides an <b>I/O-efficient</b> search tree implementation with iterator-based access.
 
@@ -325,32 +505,76 @@ Our design allows to use different implementations for leaves and (internal) nod
 
 */
 
-/*! \page design_matrix Matrix
+/** \page design_matrix Matrix
 
 Currently undocumented. TODO
 
 */
 
-/*! \page design_algo STXXL Algorithms
+/** \page design_stl_algo STXXL Algorithms
+
+\author Roman Dementiev (2006)
+
+Iterators of stxxl::vector are STL compatible. stxxl::vector::iterator is a model of Random Access Iterator concept from STL. Therefore it is possible to use the stxxl::vector iterator ranges with STL algorithms. However, such use is not I/O efficient if an algorithm accesses the sequence in a random order.  For such kind of algorithms STXXL provides I/O efficient implementations described on this page. If an algorithm does only a scan (or a constant number of scans) of a sequence (or sequences) the implementation that calls STL algorithm is nevertheless I/O efficient. However, one can save constant factors in I/O volume and internal work if the the access pattern is known (read-only or write-only scan for example). This knowledge is used in STXXL specialized implementations of STL algorithms.
+
+Example: STL Algorithms Running on STXXL containers (do not do this, read below!)
+
+\code
+typedef stxxl::VECTOR_GENERATOR<int>::result vector_type;
+
+// Replace every number in an array with its negative.
+const int N = 1000000000;
+vector_type A(N);
+std::iota(A.begin(), A.end(), 1);
+std::transform(A, A+N, A, negate<double>());
+
+// Calculate the sum of two vectors,
+// storing the result in a third vector.
+
+const int N = 1000000000;
+vector_type V1(N);
+vector_type V2(N);
+vector_type V3(N);
+
+std::iota(V1.begin(), V1.end(), 1);
+std::fill(V2.begin(), V2.end(), 75);
+
+assert(V2.size() >= V1.size() &&
+       V3.size() >= V1.size());
+std::transform(V1.begin(),
+               V1.end(),
+               V2.begin(),
+               V3.begin(),
+               plus<int>());
+\endcode
 
 The algorithms of the STL can be divided into two groups by their memory access pattern: <b>scanning</b> algorithms and <b>random access</b> algorithms.
 
-\section design_algo_scan Scanning Algorithms
+# Scanning Algorithms
 
-Scanning algorithms work with Input, Output, Forward, and Bidirectional iterators only. Since random access operations are not allowed with these kinds of iterators, the algorithms inherently exhibit a strong spatial locality of reference. STXXL containers and their iterators are STL-compatible, therefore one can directly apply STL scanning algorithms to them, and they will run I/O-efficiently (see the use of \c std::generate and \c std::unique algorithms in the following listing).
+Scanning algorithms work with Input, Output, Forward, and Bidirectional iterators only. Since random access operations are not allowed with these kinds of iterators, the algorithms inherently exhibit a strong spatial locality of reference. STXXL containers and their iterators are STL-compatible, therefore one can directly apply STL scanning algorithms to them, and they will run I/O-efficiently (see the use of \c std::generate and \c std::unique algorithms in the listing above).
 
-Scanning algorithms are the majority of the STL algorithms (62 out of 71). STXXL also offers specialized implementations of some scanning algorithms (stxxl::for_each, stxxl::generate, etc.), which perform better in terms of constant factors in the I/O volume and internal CPU work. These implementations benefit from accessing lower level interfaces of the BM layer instead of using iterator interfaces, resulting in a smaller CPU overhead. Being aware of the sequential access pattern of the applied algorithm, the STXXL implementations can do prefetching and use queued writing, thereby leading to the overlapping of I/O with computation.
+Scanning algorithms are the majority of the STL algorithms (62 out of 71). STXXL also offers specialized implementations of some scanning algorithms, which perform better in terms of constant factors in the I/O volume and internal CPU work. These implementations benefit from accessing lower level interfaces of the BM layer instead of using iterator interfaces, resulting in a smaller CPU overhead. Being aware of the sequential access pattern of the applied algorithm, the STXXL implementations can do prefetching and use queued writing, thereby leading to the overlapping of I/O with computation.
 
-\section design_algo_random Random Access Algorithms
+STXXL provides the following scanning algorithms:
+- \subpage design_algo_generate
+- \subpage design_algo_foreach
+- \subpage design_algo_foreachm
+- \subpage design_algo_find
 
-Random access algorithms require random access iterators, hence may perform (many) random I/Os. For such algorithms, STXXL provides specialized I/O efficient implementations that work with STL-user layer external memory containers. Currently, the library provides two implementations of sorting: an <tt>std::sort</tt>-like sorting routine -- stxxl::sort, and a sorter that exploits integer keys -- stxxl::ksort. Both sorters are implementations of parallel disk algorithms described in \subpage design_algo_sorting.
+# Random Access Algorithms
+
+Random access algorithms require random access iterators, hence may perform (many) random I/Os. For such algorithms, STXXL provides specialized I/O efficient implementations that work with STL-user layer external memory containers. Currently, the library provides two implementations of sorting:
+- an <tt>std::sort</tt>-like sorting routine: \subpage design_algo_sort "stxxl::sort", and
+- a sorter that exploits integer keys -- \subpage design_algo_ksort "stxxl::ksort".
+
+Both sorters are implementations of parallel disk algorithms described in \subpage design_algo_sorting \cite DemSan03.
 
 */
 
-/*! \page design_algo_sorting Parallel Disk Sorting
+/** \page design_algo_sorting Parallel Disk Sorting
 
-\author Roman Dementiev
-\date written 2006
+\author Roman Dementiev (2006)
 
 The development of STXXL has been started with sorting, because it is \c the fundamental tool for I/O-efficient processing of large data sets. Therefore, an efficient implementation of sorting largely defines the performance of an external memory software library as a whole. To achieve the best performance our implementation \cite DemSan03 uses parallel disks, has an optimal I/O volume \f$ \mathcal{O}(\frac{N}{DB}\log_{M/B}\frac{N}{B}) \f$ (that matches the lower bound), and guarantees almost perfect overlap between I/O and computation.
 
@@ -370,11 +594,11 @@ peak performance of our system.
 
 \section design_algo_sorting_overlapping Multi-way Merge Sort with Overlapped I/Os
 
-Perhaps the most widely used external memory sorting algorithm is \f$ k \f$-way merge sort: During <b>run formation</b>, chunks of \f$ \Theta(M) \f$ elements are read, sorted internally, and written back to the disk as sorted \a runs. The runs are then merged into larger runs until only a single run is left. \f$ k = \mathcal{O}(M/B) \f$ runs can be sorted in a single pass by keeping up to \f$ B \f$ of the smallest elements of each run in internal memory. Using randomization, prediction of the order in which blocks are accessed, a prefetch buffer of \f$ \mathcal{O}(D) \f$ blocks, and an optimal prefetching strategy, it is possible to implement \f$ k \f$-way merging using \f$ D \f$ disks in a load balanced way \cite HutSanVit01b. However, the rate at which new blocks are requested is more difficult to predict so that this algorithm does not guarantee overlapping of I/O and computation. In this section, we derive a parallel disk algorithm that compensates these fluctuations in the block request rate by a FIFO buffer of \f$ k+\Theta(D) \f$ blocks.
+Perhaps the most widely used external memory sorting algorithm is <i>k</i>-way merge sort: During <b>run formation</b>, chunks of \f$ \Theta(M) \f$ elements are read, sorted internally, and written back to the disk as sorted \a runs. The runs are then merged into larger runs until only a single run is left. \f$ k = \mathcal{O}(M/B) \f$ runs can be sorted in a single pass by keeping up to \a B of the smallest elements of each run in internal memory. Using randomization, prediction of the order in which blocks are accessed, a prefetch buffer of \f$ \mathcal{O}(D) \f$ blocks, and an optimal prefetching strategy, it is possible to implement <i>k</i>-way merging using \a D disks in a load balanced way \cite HutSanVit01b. However, the rate at which new blocks are requested is more difficult to predict so that this algorithm does not guarantee overlapping of I/O and computation. In this section, we derive a parallel disk algorithm that compensates these fluctuations in the block request rate by a FIFO buffer of \f$ k+\Theta(D) \f$ blocks.
 
 \subsection design_algo_sorting_runform Run Formation
 
-There are many ways to overlap I/O and run formation. We start with a very simple method that treats internal sorting as a black box and therefore can use the fastest available internal sorters. Two threads cooperate to build \f$ k \f$ runs of size \f$ M/2 \f$:
+There are many ways to overlap I/O and run formation. We start with a very simple method that treats internal sorting as a black box and therefore can use the fastest available internal sorters. Two threads cooperate to build \a k runs of size \f$ M/2 \f$:
 
 \verbatim
 post a read request for runs 1 and 2
@@ -388,31 +612,31 @@ for r:=1 to k do         | for r:=1 to k-2 do
 
 \image html overlapping_runformation_small.png "Overlapping I/O and computation during run formation."
 
-The figure above illustrates how I/O and computation is overlapped by this algorithm. Formalizing this figure, we can prove that using this approach an input of size \f$ N \f$ can be transformed into sorted runs of size \f$ M/2 - \mathcal{O}(DB) \f$ in time \f$ \max(2T_{\mathrm{sort}}(M/2)N/M,\frac{2LN}{DB}) + \mathcal{O}(\frac{LM}{DB}) \f$, where \f$ T_{\mathrm{sort}}(x) \f$ denotes the time for sorting \f$ x \f$ elements internally and where \f$ L \f$ is the time needed for a parallel I/O step.
+The figure above illustrates how I/O and computation is overlapped by this algorithm. Formalizing this figure, we can prove that using this approach an input of size \a N can be transformed into sorted runs of size \f$ M/2 - \mathcal{O}(DB) \f$ in time \f$ \max(2T_{\mathrm{sort}}(M/2)N/M,\frac{2LN}{DB}) + \mathcal{O}(\frac{LM}{DB}) \f$, where \f$ T_{\mathrm{sort}}(x) \f$ denotes the time for sorting \a x elements internally and where \a L is the time needed for a parallel I/O step.
 
 In \cite DemSan03 one can find an algorithm which generates longer runs of average length \f$ 2M \f$ and overlaps I/O and computation.
 
 \subsection design_algo_sorting_multiway Multi-way Merging
 
-We want to merge \f$ k \f$ sorted sequences comprising \f$ N' \f$ elements stored in \f$ N'/B \f$ blocks (In practical situations, where a single merging phase suffices, we will have \f$ N'=N \f$). In each iteration, the merging thread chooses the smallest remaining element from the \f$ k \f$ sequences and hands it over to the I/O thread. Prediction of read operations is based on the observation that the merging thread does not need to access a block until its smallest element becomes the smallest unread element. We therefore record the \b smallest keys of each block during run formation. By merging the resulting \f$ k \f$ sequences of smallest elements, we can produce a sequence \f$ \sigma \f$ of block identifiers that indicates the exact order in which blocks are logically read by the merging thread. The overhead for producing and storing the prediction data structure is negligible because its size is a factor at least \f$ B \f$ smaller than the input.
+We want to merge \a k sorted sequences comprising \a N' elements stored in \f$ N'/B \f$ blocks (In practical situations, where a single merging phase suffices, we will have \f$ N'=N \f$). In each iteration, the merging thread chooses the smallest remaining element from the \a k sequences and hands it over to the I/O thread. Prediction of read operations is based on the observation that the merging thread does not need to access a block until its smallest element becomes the smallest unread element. We therefore record the \b smallest keys of each block during run formation. By merging the resulting \a k sequences of smallest elements, we can produce a sequence \f$ \sigma \f$ of block identifiers that indicates the exact order in which blocks are logically read by the merging thread. The overhead for producing and storing the prediction data structure is negligible because its size is a factor at least \a B smaller than the input.
 
-The prediction sequence \f$ \sigma \f$ is used as follows. The merging thread maintains the invariant that it always buffers the \f$ k \f$ first blocks in \f$ \sigma \f$ that contain unselected elements, i.e., initially, the first \f$ k \f$ blocks from \f$ \sigma \f$ are read into these <b>merge buffers</b>. When the last element of a merge buffer block is selected, the now empty buffer frame is returned to the I/O thread and the next block in \f$ \sigma \f$ is read.
+The prediction sequence \f$ \sigma \f$ is used as follows. The merging thread maintains the invariant that it always buffers the \a k first blocks in \f$ \sigma \f$ that contain unselected elements, i.e., initially, the first \a k blocks from \f$ \sigma \f$ are read into these <b>merge buffers</b>. When the last element of a merge buffer block is selected, the now empty buffer frame is returned to the I/O thread and the next block in \f$ \sigma \f$ is read.
 
 The keys of the smallest elements in each buffer block are kept in a tournament tree data structure \cite Knu98 so that the currently smallest element can be selected in time \f$ \mathcal{O}(\log k) \f$. Hence, the total internal work for merging is \f$ \mathcal{O}(N'\log k) \f$.
 
-We have now defined multi-way merging from the point of view of the sorting algorithm. Our approach to merging slightly deviates from previous approaches that keep track of the run numbers of the merge blocks and pre-assign each merge block to the corresponding input sequence. In these approaches also the \b last key in the \b previous block decides about the position of a block in \f$ \sigma \f$. The correctness of our approach is shown in \cite DemSan03. With respect to performance, both approaches should be similar. Our approach is somewhat simpler, however --- note that the merging thread does not need to know anything about the \f$ k \f$ input runs and how they are allocated. Its only input is the prediction sequence \f$ \sigma \f$. In a sense, we are merging individual blocks and the order in \f$ \sigma \f$ makes sure that the overall effect is that the input runs are merged. A conceptual advantage is that data \b within a block decides about when a block is read.
+We have now defined multi-way merging from the point of view of the sorting algorithm. Our approach to merging slightly deviates from previous approaches that keep track of the run numbers of the merge blocks and pre-assign each merge block to the corresponding input sequence. In these approaches also the \b last key in the \b previous block decides about the position of a block in \f$ \sigma \f$. The correctness of our approach is shown in \cite DemSan03. With respect to performance, both approaches should be similar. Our approach is somewhat simpler, however --- note that the merging thread does not need to know anything about the \a k input runs and how they are allocated. Its only input is the prediction sequence \f$ \sigma \f$. In a sense, we are merging individual blocks and the order in \f$ \sigma \f$ makes sure that the overall effect is that the input runs are merged. A conceptual advantage is that data \b within a block decides about when a block is read.
 
 \subsection design_algo_sorting_merging Overlapping I/O and Merging
 
 \image html overlapping_merging_small.png "Data flow of overlapped parallel disk multi-way merging."
 
-Although we can predict the order in which blocks are read, we cannot easily predict how much internal work is done between two reads. For example, consider \f$ k \f$ identical runs storing the sequence \f$ \fboxsep0.5mm\framebox{$1^{B-1}2$}\framebox{$3^{B-1}4$}\framebox{$5^{B-1}6$} \cdots \f$. After initializing the merge buffers, the merging thread will consume \f$ k(B-1) \f$ values `1' before it posts another read. Then it will post one read after selecting each of the next \f$ k \f$ values (2). Then there will be a pause of another \f$ k(B-1) \f$ steps and another \f$ k \f$ reads are following each other quickly, etc. We explain how to overlap I/O and computation despite this irregularity using the I/O model of Aggarwal and Vitter \cite AggVit88 that allows access to \f$ D \f$ \b arbitrary blocks within one I/O step. To model overlapping of I/O and computation, we assume that an I/O step takes time \f$ L \f$ and can be done in parallel with internal computations. We maintain an <b>overlap buffer</b> that stores up to \f$ k+3D \f$ blocks in a FIFO manner (see figure above). Whenever the overlap buffer is non-empty, a read can be served from it without blocking. Writing is implemented using a <b>write buffer</b> FIFO with \f$ 2DB \f$ elements capacity. An <b>I/O thread</b> inputs or outputs \f$ D \f$ blocks in time \f$ L \f$ using the following strategy: Whenever no I/O is active and at least \f$ DB \f$ elements are present in the write buffer, an output step is started. When no I/O is active, less than \f$ D \f$ output blocks are available, and at least \f$ D \f$ overlap buffers are unused, then the next \f$ D \f$ blocks from \f$ \sigma \f$ are fetched into the overlap buffer. This strategy guarantees that merging \f$ k \f$ sorted sequences with a total of \f$ N' \f$ elements can be implemented to run in time \f$ \max\left(\frac{2LN'}{DB}, \ell N'\right)+\mathcal{O}(L\lceil\frac{k}{D}\rceil) \f$ where \f$ \ell \f$ is the time needed by the merging thread to produce one element of output and \f$ L \f$ is the time needed to input or output \f$ D \f$ arbitrary blocks \cite DemSan03.
+Although we can predict the order in which blocks are read, we cannot easily predict how much internal work is done between two reads. For example, consider \a k identical runs storing the sequence \f$ \fboxsep0.5mm\framebox{$1^{B-1}2$}\framebox{$3^{B-1}4$}\framebox{$5^{B-1}6$} \cdots \f$. After initializing the merge buffers, the merging thread will consume \f$ k(B-1) \f$ values '1' before it posts another read. Then it will post one read after selecting each of the next \a k values (2). Then there will be a pause of another \f$ k(B-1) \f$ steps and another \a k reads are following each other quickly, etc. We explain how to overlap I/O and computation despite this irregularity using the I/O model of Aggarwal and Vitter \cite AggVit88 that allows access to \a D \b arbitrary blocks within one I/O step. To model overlapping of I/O and computation, we assume that an I/O step takes time \a L and can be done in parallel with internal computations. We maintain an <b>overlap buffer</b> that stores up to \f$ k+3D \f$ blocks in a FIFO manner (see figure above). Whenever the overlap buffer is non-empty, a read can be served from it without blocking. Writing is implemented using a <b>write buffer</b> FIFO with \f$ 2DB \f$ elements capacity. An <b>I/O thread</b> inputs or outputs \a D blocks in time \a L using the following strategy: Whenever no I/O is active and at least \f$ DB \f$ elements are present in the write buffer, an output step is started. When no I/O is active, less than \a D output blocks are available, and at least \a D overlap buffers are unused, then the next \a D blocks from \f$ \sigma \f$ are fetched into the overlap buffer. This strategy guarantees that merging \a k sorted sequences with a total of \a N' elements can be implemented to run in time \f$ \max\left(\frac{2LN'}{DB}, \ell N'\right)+\mathcal{O}(L\lceil\frac{k}{D}\rceil) \f$ where \f$ \ell \f$ is the time needed by the merging thread to produce one element of output and \a L is the time needed to input or output \a D arbitrary blocks \cite DemSan03.
 
 \subsection design_algo_sorting_scheduling Disk Scheduling
 
-The I/Os for the run formation and for the output of merging are perfectly balanced over all disks if all sequences are \b striped over the disks, i.e., sequences are stored in blocks of \f$ B \f$ elements each and the blocks numbered \f$ i,\ldots,i+D-1 \f$ in a sequence are stored on different disks for all \f$ i \f$. In particular, the original input and the final output of sorting can use any kind of striping.
+The I/Os for the run formation and for the output of merging are perfectly balanced over all disks if all sequences are \b striped over the disks, i.e., sequences are stored in blocks of \a B elements each and the blocks numbered \f$ i,\ldots,i+D-1 \f$ in a sequence are stored on different disks for all \a i. In particular, the original input and the final output of sorting can use any kind of striping.
 
-The merging algorithm presented above is optimal for the unrealistic model of Aggarwal and Vitter \cite AggVit88 which allows to access any \f$ D \f$ blocks in an I/O step. This facilitates good performance for fetching very irregularly placed input blocks. However, this model can be simulated using \f$ D \f$ independent disks using <b>randomized striping allocation</b> \cite VitHut01 and a prefetch buffer of size \f$ m = \Theta(D) \f$ blocks: In almost every input step, \f$ (1-\mathcal{O}(D/m))D \f$ blocks from prefetch sequence \f$ \sigma \f$ can be fetched \cite DemSan03.
+The merging algorithm presented above is optimal for the unrealistic model of Aggarwal and Vitter \cite AggVit88 which allows to access any \a D blocks in an I/O step. This facilitates good performance for fetching very irregularly placed input blocks. However, this model can be simulated using \a D independent disks using <b>randomized striping allocation</b> \cite VitHut01 and a prefetch buffer of size \f$ m = \Theta(D) \f$ blocks: In almost every input step, \f$ (1-\mathcal{O}(D/m))D \f$ blocks from prefetch sequence \f$ \sigma \f$ can be fetched \cite DemSan03.
 
 \section design_algo_sorting_impl Implementation Details
 
@@ -420,7 +644,7 @@ The merging algorithm presented above is optimal for the unrealistic model of Ag
 
 We have two implementations with respect to the internal work: stxxl::sort is a comparison based sorting using std::sort from STL to sort the runs internally; stxxl::ksort exploits integer keys and has smaller internal memory bandwidth requirements for large elements with small key fields. After reading elements using DMA (i.e. the STXXL direct access), we extract pairs \f$ (\mathrm{key},\mathrm{pointerToElement}) \f$, sort these pairs, and only then move elements in sorted order to write buffers from where they are output using DMA.
 
-Furthermore, we exploit random keys. We use two passes of MSD (most significant digit) radix sort of the key-pointer pairs. The first pass uses the \f$ m \f$ most significant bits where \f$ m \f$ is a tuning parameter depending on the size of the processor caches and of the TLB (translation look-aside buffer). This pass consists of a counting phase that determines bucket sizes and a distribution phase that moves pairs. The counting phase is fused into a single loop with pair extraction. The second pass of radix sort uses a number of bits that brings us closest to an expected bucket size of two. This two-pass algorithm is much more cache efficient than a one-pass radix sort. (On our system we get a factor of 3.8 speedup over the one pass radix sort and a factor of 1.6 over STL's sort which in turn is faster than a hand tuned quicksort (for sorting \f$ 2^{21} \f$ pairs storing a random four byte key and a pointer). The remaining buckets are sorted using a comparison based algorithm: Optimal straight line code for \f$ n\leq 4 \f$, insertion sort for \f$ n \in \{ 5..16 \} \f$, and quicksort for \f$ n > 16 \f$.
+Furthermore, we exploit random keys. We use two passes of MSD (most significant digit) radix sort of the key-pointer pairs. The first pass uses the \a m most significant bits where \a m is a tuning parameter depending on the size of the processor caches and of the TLB (translation look-aside buffer). This pass consists of a counting phase that determines bucket sizes and a distribution phase that moves pairs. The counting phase is fused into a single loop with pair extraction. The second pass of radix sort uses a number of bits that brings us closest to an expected bucket size of two. This two-pass algorithm is much more cache efficient than a one-pass radix sort. (On our system we get a factor of 3.8 speedup over the one pass radix sort and a factor of 1.6 over STL's sort which in turn is faster than a hand tuned quicksort (for sorting \f$ 2^{21} \f$ pairs storing a random four byte key and a pointer). The remaining buckets are sorted using a comparison based algorithm: Optimal straight line code for \f$ n \leq 4 \f$, insertion sort for \f$ n \in \{ 5..16 \} \f$, and quicksort for \f$ n > 16 \f$.
 
 <b>Multi-way Merging.</b> We have adapted the tuned multi-way merger from \cite San00b, i.e. a tournament tree stores pointers to the current elements of each merge buffer.
 
@@ -430,14 +654,519 @@ Furthermore, we exploit random keys. We use two passes of MSD (most significant 
 
 */
 
+/** \page design_algo_sort stxxl::sort -- Sorting Comparison-Based
+
+\author Roman Dementiev (2006)
+
+stxxl::sort is an external memory equivalent to STL std::sort. The design and implementation of the algorithm is described in detail in \cite DemSan03.
+
+# Prototype
+
+\code
+template < typename ExtIterator,
+           typename StrictWeakOrdering
+         >
+void sort ( ExtIterator        first,
+            ExtIterator        last,
+            StrictWeakOrdering cmp,
+            unsigned_type      M
+          )
+\endcode
+
+# Description
+
+\copydetails stxxl::sort
+
+# Requirements on Types
+
+- \c ExtIterator is a model of External Random Access Iterator (In STXXL currently only stxxl::vector provides iterators that are models of External Random Access Iterator.).
+
+- \c ExtIterator is mutable.
+
+- \c StrictWeakOrdering is a model of \ref StrictWeakOrdering
+
+- \c ExtIterator's value type is convertible to \c StrictWeakOrdering's argument type.
+
+\section StrictWeakOrdering StrictWeakOrdering Comparison Concept
+
+Model of \b StrictWeakOrdering Comparison concept must:
+- provide \b operator(a,b) that returns comparison result of two user types, must define strict weak ordering
+- provide \b max_value method that returns a value that is <b>strictly greater</b> than all other objects of user type,
+- provide \b min_value method that returns a value that is <b>strictly less</b> than all other objects of user type,
+- \b Note: when using unsigned integral types as key in user types, the value 0 cannot be used as a key value of the data to be sorted because it would conflict with the sentinel value returned by \b min_value
+- \b Note, that according to the stxxl::sort requirements \c min_value() and \c max_value() <b>can not</b> be present in the input sequence.
+
+## Examples
+
+A comparator class for integers: \b my_less_int.
+\code
+struct my_less_int
+{
+    bool operator() (int a, int b) const
+    {
+        return a < b;
+    }
+    int min_value() const { return std::numeric_limits<int>::min(); };
+    int max_value() const { return std::numeric_limits<int>::max(); };
+};
+\endcode
+
+A comparator class \b my_less, that could be instantiated as e.g. \c my_less<int>, \c my_less<unsigned long>, etc.
+\code
+template <typename ValueType>
+struct my_less
+{
+    typedef ValueType value_type;
+    bool operator() (const value_type & a, const value_type & b) const
+    {
+        return a < b;
+    }
+    value_type min_value() const { return std::numeric_limits<value_type>::min(); };
+    value_type max_value() const { return std::numeric_limits<value_type>::max(); };
+};
+\endcode
+
+# Preconditions
+
+[first, last) is a valid range.
+
+# Complexity
+
+- Internal work: \f$ \mathcal{O}( N \log N ) \f$, where
+\f$ N = (last - first) \cdot \texttt{sizeof(ExtIterator::value\_type)} \f$.
+
+- I/O complexity: \f$ (2N/DB)(1 + \lceil {\log}_{M/B}(2N/M) \rceil) \f$ I/Os
+
+stxxl::sort chooses the block size (parameter \a B) equal to the block size of the container, the last and first iterators pointing to (e.g. stxxl::vector's block size).
+
+The second term in the I/O complexity accounts for the merge phases of the external memory sorting algorithm \cite DemSan03. Avoiding multiple merge phases speeds up the sorting. In practice one should choose the block size \a B$of the container to be sorted such that there is only one merge phase needed: \f$ \lceil {\log}_{M/B}(2N/M) \rceil) = 1 \f$. This is possible for \f$ M > DB \f$ and \f$ N < M^2/2DB \f$. But still this restriction gives a freedom to choose a variety of blocks sizes. The study \cite DemSan03 has shown that optimal \a B for sorting lies in the range \f$ [M^2/(4N),3M^2/(8N)] \f$. With such choice of the parameters the stxxl::sort always performs \f$ 4N/DB \f$ I/Os.
+
+# Internal Memory Consumption
+
+The stxxl::sort consumes slightly more than \a M bytes of internal memory.
+
+# External Memory Consumption
+
+The stxxl::sort is not in-place. It requires about \a N bytes of external memory to store the sorted runs during the sorting process \cite DemSan03. After the sorting this memory is freed.
+
+# Example
+
+\code
+struct MyCmp: public std::less<int> // ascending
+{                                   // order
+     static int min_value() const
+     { return std::numeric_limits<int>::min(); }
+     static int max_value() const
+     { return std::numeric_limits<int>::max(); }
+};
+typedef stxxl::VECTOR_GENERATOR<int>::result vec_type;
+
+vec_type V;
+// ... fill here the vector with some values
+
+// Sort in ascending order use 512 MiB of main memory
+stxxl::sort(V.begin(), V.end(), MyCmp(), 512*1024*1024);
+// sorted
+\endcode
+
+# Sorted Order Checking
+
+STXXL gives an ability to automatically check the order in the output of STXXL sorters and intermediate results of sorting (the order and a meta information in the sorted runs). The check is switched on if the source codes and the library are compiled with the option <tt>-DSTXXL_CHECK_ORDER_IN_SORTS</tt> and the option <tt>-DNDEBUG</tt> is not used. For details see the <tt>compiler.make</tt> file in the STXXL tar ball. Note, that the checking routines require more internal work as well as additional \f$ N/DB \f$ I/Os to read the sorted runs. Therefore for the final non-debug version of a user application on should switch this option off.
+
+This checker checks the stxxl::sort, stxxl::ksort, and the \ref design_stream_pipesort "pipelined sorter".
+
+*/
+
+/** \page design_algo_ksort stxxl::ksort -- Sorting Integer Keys
+
+\author Roman Dementiev (2006)
+
+stxxl::ksort is a specialization of external memory sorting optimized for records having integer keys.
+
+# Prototype
+
+\code
+template < typename ExtIterator >
+void ksort ( ExtIterator   first,
+             ExtIterator   last,
+             unsigned_type M
+           )
+
+template < typename ExtIterator, typename KeyExtractor >
+void ksort ( ExtIterator   first,
+             ExtIterator   last,
+             KeyExtractor  keyobj,
+             unsigned_type M
+           )
+\endcode
+
+# Description
+
+\copydetails stxxl::ksort
+
+# Requirements on Types
+
+- \c ExtIterator is a model of External Random Access Iterator. (In STXXL currently only stxxl::vector provides iterators that are models of External Random Access Iterator.)
+
+- \c ExtIterator is mutable.
+
+- \c KeyExtractor must implement \c operator() that extracts the key of an element and provide min and max values for the elements in the input, see \ref design_algo_ksort_key_extractor.
+
+- \c ExtIterator's value type is convertible to \c KeyExtractor's argument type.
+
+- \c ExtIterator's value type has a typedef \c key_type.
+
+- For the first version of stxxl::ksort \c ExtIterator's value type must have a <b>\c key()</b> function that returns the key value of the element, and the \c min_value() and \c max\_value() member functions that return minimum and maximum element values respectively. <BR>
+Example:
+\code
+struct MyType
+{
+    typedef unsigned long long key_type;
+    key_type _key;
+    char _data[32];
+    MyType() {}
+    MyType(key_type __key):_key(__key) {}
+    key_type key() { return _key; }
+    MyType min_value() const
+    { return MyType( std::numeric_limits<key_type>::min() ); }
+    MyType max_value() const
+    { return MyType( std::numeric_limits<key_type>::max() ); }
+};
+\endcode
+
+\section design_algo_ksort_key_extractor Key Extractor Concept
+
+A model of the <b>Key Extractor</b> concept must:
+- define type \b key_type for the type of the keys.
+- provide \b operator() that returns key value of an object of user type.
+- provide \b max_value method that returns a value that is <b>strictly greater</b> than all other objects of user type in respect to the key obtained by this key extractor,
+- provide \b min_value method that returns a value that is <b>strictly less</b> than all other objects of user type in respect to the key obtained by this key extractor,
+- <tt>operator ></tt>, <tt>operator <</tt>, <tt>operator ==</tt> and <tt>operator !=</tt> on type \b key_type must be defined.
+- \b Note: when using unsigned integral types as key, the value 0 cannot be used as a key value because it would conflict with the sentinel value returned by \c min_value.
+- \b Note, that according to the stxxl::sort requirements \c min_value and \c max_value <b>can not</b> be present in the input sequence.
+
+# Examples
+
+A key extractor object for ordering elements having 64 bit integer keys:
+\code
+struct MyType
+{
+    typedef unsigned long long key_type;
+    key_type _key;
+    char _data[32];
+    MyType() {}
+    MyType(key_type __key):_key(__key) {}
+};
+struct GetKey
+{
+    typedef MyType::key_type key_type;
+    key_type operator() (const MyType & obj)
+    { return obj._key; }
+    MyType min_value() const
+    { return MyType( std::numeric_limits<key_type>::min() ); }
+    MyType max_value() const
+    { return MyType( std::numeric_limits<key_type>::max() ); }
+};
+\endcode
+
+A key extractor class \b GetWeight, that extracts weight from an \b Edge:
+\code
+struct Edge
+{
+    unsigned src, dest, weight;
+    Edge(unsigned s, unsigned d, unsigned w) : src(s), dest(d), weight(w) {}
+};
+
+struct GetWeight
+{
+    typedef unsigned key_type;
+    key_type operator() (const Edge & e) const
+    {
+        return e.weight;
+    }
+    Edge min_value() const { return Edge(0, 0, std::numeric_limits<key_type>::min()); }
+    Edge max_value() const { return Edge(0, 0, std::numeric_limits<key_type>::max()); }
+};
+\endcode
+
+# Preconditions
+
+The same as for \ref design_algo_sort "stxxl::sort".
+
+# Complexity
+
+The same as for \ref design_algo_sort "stxxl::sort".
+
+# Internal Memory Consumption
+
+The same as for \ref design_algo_sort "stxxl::sort".
+
+# External Memory Consumption
+
+The same as for \ref design_algo_sort "stxxl::sort".
+
+# Example
+
+\code
+struct MyType
+{
+    typedef unsigned long long key_type;
+    key_type _key;
+    char _data[32];
+    MyType() {}
+    MyType(key_type __key):_key(__key) {}
+    key_type key() { return obj._key; }
+    static MyType min_value() const
+    { return MyType( std::numeric_limits<key_type>::min() ); }
+    static MyType max_value() const
+    { return MyType( std::numeric_limits<key_type>::max()); }
+};
+
+typedef stxxl::VECTOR_GENERATOR<MyType>::result vec_type;
+
+vec_type V;
+// ... fill here the vector with some values
+
+// Sort in ascending order use 512 MiB of main memory
+stxxl::ksort(V.begin(), V.end(), 512*1024*1024);
+// sorted
+\endcode
+
+*/
+
+/** \page design_algo_generate stxxl::generate
+
+\author Roman Dementiev (2006)
+
+The semantics of the algorithm are equivalent to the STL std::generate.
+
+# Prototype
+
+\code
+template < typename ExtIterator, typename Generator >
+void generate ( ExtIterator first,
+                ExtIterator last,
+                Generator   generator,
+                int_type    nbuffers
+              )
+\endcode
+
+# Description
+
+\copydetails stxxl::generate
+
+# Requirements on types
+
+- \c ExtIterator is a model of External Random Access Iterator.
+- \c ExtIterator is mutable.
+- \c Generator is a model of a STL Generator.
+- \c Generator's result type is convertible to \c ExtIterator's  value type.
+
+# Preconditions
+
+[first, last) is a valid range.
+
+# Complexity
+
+- Internal work is linear.
+- External work: close to \f$ N/DB \f$ I/Os (write-only).
+
+# Example
+
+\code
+// Fill a vector with random numbers, using the
+// standard C library function rand.
+typedef stxxl::VECTOR_GENERATOR<int>::result vector_type;
+vector_type V(some_size);
+// use 20 buffer blocks
+stxxl::generate(V.begin(), V.end(), rand, 20);
+\endcode
+
+*/
+
+/** \page design_algo_foreach stxxl::for_each
+
+\author Roman Dementiev (2006)
+
+The semantics of the algorithm is equivalent to the STL std::for_each.
+
+# Prototype
+
+\code
+template < typename ExtIterator, typename UnaryFunction >
+UnaryFunction for_each ( ExtIterator   first,
+                         ExtIterator   last,
+                         UnaryFunction functor,
+                         int_type       nbuffers
+                       )
+\endcode
+
+# Description
+
+\copydetails stxxl::for_each
+
+# Requirements on types
+
+- \c ExtIterator is a model of External Random Access Iterator.
+- \c UnaryFunction is a model of STL Unary Function.
+- \c UnaryFunction does not apply any non-constant operations through its argument.
+- \c ExtIterator's value type is convertible to \c UnaryFunction's argument type.
+
+# Preconditions
+
+[first, last) is a valid range.
+
+# Complexity
+
+- Internal work is linear.
+- External work: close to \f$ N/DB \f$ I/Os (read-only).
+
+# Example
+
+\code
+template<class T>
+struct print : public unary_function<T, void>
+{
+    print(ostream& out) : os(out), count(0) {}
+    void operator() (T x) { os << x << ' '; ++count; }
+    ostream& os;
+    int count;
+};
+typedef stxxl::VECTOR_GENERATOR<int>::result vector_type;
+int main()
+{
+    vector_type A(N);
+    // fill A with some values
+    // ...
+
+    print<int> P = stxxl::for_each(A.begin(), A.end(), print<int>(cout));
+    cout << endl << P.count << " objects printed." << endl;
+}
+\endcode
+
+*/
+
+/** \page design_algo_foreachm stxxl::for_each_m (mutating)
+
+\author Roman Dementiev (2006)
+
+stxxl::for_each_m is a \b mutating version of stxxl::for_each, i.e. the restriction that Unary Function \c functor can not apply only constant operations through its argument does not exist.
+
+# Prototype
+
+\code
+template < typename ExtIterator, typename UnaryFunction >
+UnaryFunction for_each_m ( ExtIterator   first,
+                           ExtIterator   last,
+                           UnaryFunction functor,
+                           int nbuffers
+                         )
+\endcode
+
+# Description
+
+\copydetails stxxl::for_each_m
+
+# Requirements on types
+
+- \c ExtIterator is a model of External Random Access Iterator.
+- \c UnaryFunction is a model of STL Unary Function.
+- \c ExtIterator's value type is convertible to \c UnaryFunction's argument type.
+
+# Preconditions
+
+[first, last) is a valid range.
+
+# Complexity
+
+- Internal work is linear.
+- External work: close to \f$ 2N/DB \f$ I/Os (read and write).
+
+# Example
+
+\code
+struct AddX
+{
+    int x;
+    AddX(int x_): x(x_) {}
+    void operator() (int & val)
+    { val += x; }
+};
+
+typedef stxxl::VECTOR_GENERATOR<int>::result vector_type;
+int main()
+{
+    vector_type A(N);
+    // fill A with some values ...
+
+    // Add 5 to each value in the vector
+    stxxl::for_each_m(A.begin(), A.end(), AddX(5));
+}
+\endcode
+
+*/
+
+/** \page design_algo_find stxxl::find
+
+\author Roman Dementiev (2006)
+
+The semantics of the algorithm is equivalent to the STL std::find.
+
+# Prototype
+
+\code
+template < typename ExtIterator, typename EqualityComparable >
+ExtIterator find ( ExtIterator               first,
+                   ExtIterator               last,
+                   const EqualityComparable& value,
+                   int_type                  nbuffers
+                 )
+\endcode
+
+# Description
+
+\copydetails stxxl::find
+
+# Requirements on types
+
+- \c EqualityComparable is a model of STL EqualityComparable concept.
+- \c ExtIterator is a model of External Random Access Iterator.
+- \c Equality is defined between objects of type \c EqualityComparable and objects of \c ExtIterator's value type.
+
+# Preconditions
+
+[first, last) is a valid range.
+
+# Complexity
+
+- Internal work is linear.
+- External work: close to \f$ N/DB \f$ I/Os (read-only).
+
+# Example
+
+\code
+typedef stxxl::VECTOR_GENERATOR<int>::result vector_type;
+
+vector_type V;
+// fill the vector ...
+
+// find 7 in V
+vector_type::iterator result = find(V.begin(), V.end(), 7);
+if(result != V.end())
+    std::cout << "Found at position " << (result - V.begin()) << std::endl;
+else
+    std::cout << "Not found" << std::endl;
+\endcode
+
+*/
+
 namespace stream {
 
-/*! \page design_pipeline Algorithm Pipelining
+/** \page design_pipeline Algorithm Pipelining
 
-\author Roman Dementiev
-\date written 2006
+\author Roman Dementiev (2006)
 
-The pipelined processing technique is very well known in the database world \cite SKS01.
+The pipelined processing technique is very well known in the database world \cite SKS01. This page describes the abstract design of the stream package, see also \ref tutorial_stream.
 
 Usually, the interface of an external memory algorithm assumes that it reads the input from (an) external memory container(s) and writes output into (an) external memory container(s). The idea of pipelining is to equip the external memory algorithms with a new interface that allows them to feed the output as a data stream directly to the algorithm that consumes the output, rather than writing it to the external memory first. Logically, the input of an external memory algorithm does not have to reside in the external memory, rather, it could be a data stream produced by another external memory algorithm.
 
@@ -489,7 +1218,7 @@ The Streaming layer of the STXXL library offers generic classes which implement 
 
   The library also offers specializations of streamify() and stxxl::materialize for stxxl::vector, which are more efficient than the generic implementations due to the support of overlapping between I/O and computation.
 
-- Sort nodes: The Stream layer sort class is a generic pipelined sorter which has the interface of an \c stream. The input of the sorter may be an object complying to the \c stream interface. As the STL-user layer sorter, the pipelined sorter is an implementation of parallel disk merge sort \cite DemSan03 that overlaps I/O and computation.
+- \anchor design_stream_pipesort Sort nodes: The Stream layer sort class is a generic pipelined sorter which has the interface of an \c stream. The input of the sorter may be an object complying to the \c stream interface. As the STL-user layer sorter, the pipelined sorter is an implementation of parallel disk merge sort \cite DemSan03 that overlaps I/O and computation.
 
   The implementation of stream::sort relies on two classes that encapsulate the two phases of the algorithm: sorted run formation (class runs_creator) and run merging (runs_merger). The separate use of these classes breaks the pipelined data flow: the runs_creator must read the entire input to compute the sorted runs. This facilitates an efficient implementation of loops and recursions: the input for the next iteration or recursion can be the sorted runs stored on disks (\cite JensThesis \cite DKMS05).
 

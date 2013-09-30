@@ -4,6 +4,7 @@
  *  Part of the STXXL. See http://stxxl.sourceforge.net
  *
  *  Copyright (C) 2008-2009 Andreas Beckmann <beckmann@cs.uni-frankfurt.de>
+ *  Copyright (C) 2013 Timo Bingmann <tb@panthema.net>
  *
  *  Distributed under the Boost Software License, Version 1.0.
  *  (See accompanying file LICENSE_1_0.txt or copy at
@@ -13,10 +14,9 @@
 #ifndef STXXL_HEADER__DEPRECATED_H
 #define STXXL_HEADER__DEPRECATED_H
 
-#ifdef STXXL_BOOST_CONFIG
- #include <boost/config.hpp>
-#endif
+#include <stxxl/bits/config.h>
 
+// deprecated functions
 
 #ifdef BOOST_MSVC
   #define _STXXL_DEPRECATED(x) __declspec(deprecated) x

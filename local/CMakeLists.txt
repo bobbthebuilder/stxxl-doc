@@ -1,7 +1,7 @@
 ###############################################################################
-# CMakeLists.txt
+# local/CMakeLists.txt
 #
-# Cmake file for stxxl/tools/common
+# Cmake file which compiles and links all .cpp files in local/ with STXXL.
 #
 # Part of the STXXL. See http://stxxl.sourceforge.net
 #
@@ -12,4 +12,13 @@
 # http://www.boost.org/LICENSE_1_0.txt)
 ###############################################################################
 
-stxxl_build_tool(stxxl_info)
+# find all .cpp files in current directory
+file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cpp")
+
+# compile and link
+foreach(file ${source_files})
+  # remove .cpp
+  string(REGEX REPLACE "\\.cpp$" "" file ${file})
+  # call macro
+  stxxl_build_tool(${file})
+endforeach()

@@ -17,7 +17,6 @@
 #include <vector>
 #include <string>
 #include <cstdlib>
-#include <unistd.h>
 
 #include <stxxl/bits/singleton.h>
 #include <stxxl/bits/verbose.h>
@@ -37,7 +36,7 @@ class config : public singleton<config>
     {
         std::string path;
         std::string io_impl;
-        stxxl::int64 size;
+        uint64 size;
         bool delete_on_exit;
         bool autogrow;
     };
@@ -47,28 +46,14 @@ class config : public singleton<config>
     // in disks_props, flash devices come after all regular disks
     unsigned first_flash;
 
-    config()
-    {
-        const char * cfg_path = getenv("STXXLCFG");
-        if (cfg_path)
-            init(cfg_path);
-        else
-            init();
-    }
+    //! searchs different locations for a disk configuration file
+    config();
 
-    ~config()
-    {
-        for (unsigned i = 0; i < disks_props.size(); ++i) {
-            if (disks_props[i].delete_on_exit || disks_props[i].autogrow) {
-                if (!disks_props[i].autogrow) {
-                    STXXL_ERRMSG("Removing disk file created from default configuration: " << disks_props[i].path);
-                }
-                unlink(disks_props[i].path.c_str());
-            }
-        }
-    }
+    //! deletes autogrow files
+    ~config();
 
-    void init(const char * config_path = "./.stxxl");
+    //! load disk configuration file
+    void init(const std::string& config_path = "./.stxxl");
 
 public:
     //! Returns number of disks available to user.

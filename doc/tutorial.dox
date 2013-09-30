@@ -1,4 +1,31 @@
+
+// -*- mode: c++; mode: visual-line; mode: flyspell; fill-column: 100000 -*-
+/***************************************************************************
+ *  doc/tutorial.dox
+ *
+ *  Usage Tutorial for STXXL
+ *
+ *  Part of the STXXL. See http://stxxl.sourceforge.net
+ *
+ *  Copyright (C) 2013 Timo Bingmann <tb@panthema.net>
+ *
+ *  Distributed under the Boost Software License, Version 1.0.
+ *  (See accompanying file LICENSE_1_0.txt or copy at
+ *  http://www.boost.org/LICENSE_1_0.txt)
+ **************************************************************************/
+
 namespace stxxl {
+
+/** \page tutorial Tutorials
+
+- \subpage tutorial_vector
+  - \subpage tutorial_vector_billing
+
+- \subpage tutorial_pqueue
+
+- \subpage tutorial_stream
+
+*/
 
 /*! \page tutorial STXXL Tutorial
 
@@ -486,16 +513,10 @@ map_type my_map((map_type::node_block_type::raw_size) * (3, map_type::leaf_block
 
 */
 
-
-
-
-
 /*! \page matrix_tutorial Matrix Tutorial
 
 This page introduces into the stxxl::matrix Container.
 
 */
 
-
-
-}  // namespace stxxl
+} // namespace stxxl

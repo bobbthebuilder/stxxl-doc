@@ -6,6 +6,7 @@
  *  Copyright (C) 2002-2008 Roman Dementiev <dementiev@mpi-sb.mpg.de>
  *  Copyright (C) 2007-2009 Johannes Singler <singler@ira.uka.de>
  *  Copyright (C) 2008-2010 Andreas Beckmann <beckmann@cs.uni-frankfurt.de>
+ *  Copyright (C) 2013 Timo Bingmann <tb@panthema.net>
  *
  *  Distributed under the Boost Software License, Version 1.0.
  *  (See accompanying file LICENSE_1_0.txt or copy at
@@ -26,6 +27,7 @@
 #include <stxxl/bits/common/tmeta.h>
 #include <stxxl/bits/containers/pager.h>
 #include <stxxl/bits/common/is_sorted.h>
+#include <stxxl/bits/mng/buf_ostream.h>
 
 
 __STXXL_BEGIN_NAMESPACE
@@ -46,17 +48,18 @@ class double_blocked_index
 {
     static const size_type modulo12 = modulo1 * modulo2;
 
-    size_type pos, block1, block2, offset;
+    size_type pos;
+    unsigned_type block1, block2, offset;
 
     //! \invariant block2 * modulo12 + block1 * modulo1 + offset == pos && 0 <= block1 &lt; modulo2 && 0 <= offset &lt; modulo1
 
     void set(size_type pos)
     {
         this->pos = pos;
-        block2 = pos / modulo12;
+        block2 = (int_type)(pos / modulo12);
         pos -= block2 * modulo12;
-        block1 = pos / modulo1;
-        offset = (pos - block1 * modulo1);
+        block1 = (int_type)(pos / modulo1);
+        offset = (int_type)(pos - block1 * modulo1);
 
         assert(block2 * modulo12 + block1 * modulo1 + offset == this->pos);
         assert(/* 0 <= block1 && */ block1 < modulo2);
@@ -74,7 +77,7 @@ public:
         set(pos);
     }
 
-    double_blocked_index(size_type block2, size_type block1, size_type offset)
+    double_blocked_index(unsigned_type block2, unsigned_type block1, unsigned_type offset)
     {
         assert(/* 0 <= block1 && */ block1 < modulo2);
         assert(/* 0 <= offset && */ offset < modulo1);
@@ -221,17 +224,17 @@ public:
         return pos;
     }
 
-    const size_type & get_block2() const
+    const unsigned_type & get_block2() const
     {
         return block2;
     }
 
-    const size_type & get_block1() const
+    const unsigned_type & get_block1() const
     {
         return block1;
     }
 
-    const size_type & get_offset() const
+    const unsigned_type & get_offset() const
     {
         return offset;
     }
@@ -313,6 +316,11 @@ public:
         offset(a.offset),
         p_vector(a.p_vector) { }
 
+    //! return pointer to vector containing iterator
+    vector_type* parent_vector() const
+    {
+        return p_vector;
+    }
     block_offset_type block_offset() const
     {
         return static_cast<block_offset_type>(offset.get_offset());
@@ -545,6 +553,11 @@ public:
         p_vector(a.p_vector)
     { }
 
+    //! return pointer to vector containing iterator
+    const vector_type* parent_vector() const
+    {
+        return p_vector;
+    }
     block_offset_type block_offset() const
     {
         return static_cast<block_offset_type>(offset.get_offset());
@@ -823,7 +836,7 @@ public:
     //! \param npages Number of cached pages.
     vector(size_type n = 0, unsigned_type npages = pager_type().size()) :
         _size(n),
-        _bids(div_ceil(n, block_type::size)),
+        _bids((size_t)div_ceil(n, block_type::size)),
         pager (npages),
         _page_status(div_ceil(_bids.size(), page_size)),
         _page_to_slot(div_ceil(_bids.size(), page_size)),
@@ -836,15 +849,14 @@ public:
         cfg = config::get_instance();
 
         allocate_page_cache();
-        int_type all_pages = div_ceil(_bids.size(), page_size);
-        int_type i = 0;
-        for ( ; i < all_pages; ++i)
+        unsigned_type all_pages = div_ceil(_bids.size(), page_size);
+        for (unsigned_type i = 0; i < all_pages; ++i)
         {
             _page_status[i] = uninitialized;
             _page_to_slot[i] = on_disk;
         }
 
-        for (i = 0; i < numpages(); ++i)
+        for (unsigned_type i = 0; i < numpages(); ++i)
             _free_slots.push(i);
 
         bm->new_blocks(alloc_strategy, _bids.begin(), _bids.end(), 0);
@@ -906,7 +918,7 @@ public:
             return;
 
         unsigned_type old_bids_size = _bids.size();
-        unsigned_type new_bids_size = div_ceil(n, block_type::size);
+        unsigned_type new_bids_size = (unsigned_type)div_ceil(n, block_type::size);
         unsigned_type new_pages = div_ceil(new_bids_size, page_size);
         _page_status.resize(new_pages, uninitialized);
         _page_to_slot.resize(new_pages, on_disk);
@@ -950,7 +962,7 @@ private:
         reserve(n);
         if (n < _size) {
             // mark excess pages as uninitialized and evict them from cache
-            unsigned_type first_page_to_evict = div_ceil(n, block_type::size * page_size);
+            unsigned_type first_page_to_evict = (unsigned_type)div_ceil(n, block_type::size * page_size);
             for (unsigned_type i = first_page_to_evict; i < _page_status.size(); ++i) {
                 if (_page_to_slot[i] != on_disk) {
                     _free_slots.push(_page_to_slot[i]);
@@ -1005,8 +1017,7 @@ public:
         while (!_free_slots.empty())
             _free_slots.pop();
 
-
-        for (int_type i = 0; i < numpages(); ++i)
+        for (unsigned_type i = 0; i < numpages(); ++i)
             _free_slots.push(i);
     }
 
@@ -1051,9 +1062,9 @@ public:
     //! \warning Only one \c vector can be assigned to a particular (physical) file.
     //! The block size of the vector must be a multiple of the element size
     //! \c sizeof(ValueType) and the page size (4096).
-    vector(file * from, size_type size = size_type(-1), size_type npages = pager_type ().size ()) :
+    vector(file * from, size_type size = size_type(-1), unsigned_type npages = pager_type ().size ()) :
         _size((size == size_type(-1)) ? size_from_file_length(from->size()) : size),
-        _bids(div_ceil(_size, size_type(block_type::size))),
+        _bids((size_t)div_ceil(_size, size_type(block_type::size))),
         pager(npages),
         _page_status(div_ceil(_bids.size(), page_size)),
         _page_to_slot(div_ceil(_bids.size(), page_size)),
@@ -1075,15 +1086,14 @@ public:
         cfg = config::get_instance();
 
         allocate_page_cache();
-        int_type all_pages = div_ceil(_bids.size(), page_size);
-        int_type i = 0;
-        for ( ; i < all_pages; ++i)
+        unsigned_type all_pages = div_ceil(_bids.size(), page_size);
+        for (unsigned_type i = 0; i < all_pages; ++i)
         {
             _page_status[i] = valid_on_disk;
             _page_to_slot[i] = on_disk;
         }
 
-        for (i = 0; i < numpages(); ++i)
+        for (unsigned_type i = 0; i < numpages(); ++i)
             _free_slots.push(i);
 
 
@@ -1101,7 +1111,7 @@ public:
     //! copy-constructor
     vector(const vector & obj) :
         _size(obj.size()),
-        _bids(div_ceil(obj.size(), block_type::size)),
+        _bids((size_t)div_ceil(obj.size(), block_type::size)),
         pager(obj.numpages ()),
         _page_status(div_ceil(_bids.size(), page_size)),
         _page_to_slot(div_ceil(_bids.size(), page_size)),
@@ -1115,15 +1125,14 @@ public:
         cfg = config::get_instance();
 
         allocate_page_cache();
-        int_type all_pages = div_ceil(_bids.size(), page_size);
-        int_type i = 0;
-        for ( ; i < all_pages; ++i)
+        unsigned_type all_pages = div_ceil(_bids.size(), page_size);
+        for (unsigned_type i = 0; i < all_pages; ++i)
         {
             _page_status[i] = uninitialized;
             _page_to_slot[i] = on_disk;
         }
 
-        for (i = 0; i < numpages(); ++i)
+        for (unsigned_type i = 0; i < numpages(); ++i)
             _free_slots.push(i);
 
         bm->new_blocks(alloc_strategy, _bids.begin(), _bids.end(), 0);
@@ -1228,8 +1237,8 @@ public:
     void flush() const
     {
         simple_vector<bool> non_free_slots(numpages());
-        int_type i = 0;
-        for ( ; i < numpages(); i++)
+
+        for (unsigned_type i = 0; i < numpages(); i++)
             non_free_slots[i] = true;
 
         while (!_free_slots.empty())
@@ -1238,7 +1247,7 @@ public:
             _free_slots.pop();
         }
 
-        for (i = 0; i < numpages(); i++)
+        for (unsigned_type i = 0; i < numpages(); i++)
         {
             _free_slots.push(i);
             int_type page_no = _slot_to_page[i];
@@ -1330,7 +1339,7 @@ public:
     }
 
     //! Number of pages used by the pager.
-    inline int_type numpages() const
+    inline unsigned_type numpages() const
     {
       return pager.size ();
     }
@@ -1401,7 +1410,7 @@ private:
     reference element(size_type offset)
     {
         #ifdef STXXL_RANGE_CHECK
-        assert(offset < size());
+        assert(offset < (size_type)size());
         #endif
         return element(blocked_index_type(offset));
     }
@@ -1411,8 +1420,8 @@ private:
         #ifdef STXXL_RANGE_CHECK
         assert(offset.get_pos() < size());
         #endif
-        int_type page_no = offset.get_block2();
-        assert(page_no < int_type(_page_to_slot.size()));   // fails if offset is too large, out of bound access
+        unsigned_type page_no = offset.get_block2();
+        assert(page_no < _page_to_slot.size());   // fails if offset is too large, out of bound access
         int_type cache_slot = _page_to_slot[page_no];
         if (cache_slot < 0)                                 // == on_disk
         {
@@ -1501,8 +1510,8 @@ private:
 
     const_reference const_element(const blocked_index_type & offset) const
     {
-        int_type page_no = offset.get_block2();
-        assert(page_no < int_type(_page_to_slot.size()));   // fails if offset is too large, out of bound access
+        unsigned_type page_no = offset.get_block2();
+        assert(page_no < _page_to_slot.size());   // fails if offset is too large, out of bound access
         int_type cache_slot = _page_to_slot[page_no];
         if (cache_slot < 0)                                 // == on_disk
         {
@@ -1542,8 +1551,8 @@ private:
 
     bool is_page_cached(const blocked_index_type & offset) const
     {
-        int_type page_no = offset.get_block2();
-        assert(page_no < int_type(_page_to_slot.size()));   // fails if offset is too large, out of bound access
+        unsigned_type page_no = offset.get_block2();
+        assert(page_no < _page_to_slot.size());   // fails if offset is too large, out of bound access
         int_type cache_slot = _page_to_slot[page_no];
         return (cache_slot >= 0);                           // on_disk == -1
     }
@@ -1667,6 +1676,211 @@ bool is_sorted(
                stxxl::const_vector_iterator<ValueType, AllocStr, SizeType, DiffType, BlockSize, PagerType, PageSize>(__last),
                __comp);
 }
+
+////////////////////////////////////////////////////////////////////////////
+
+/*!
+ * Buffered sequential writer to a vector using overlapped I/O.
+ *
+ * This buffered writer can be used to write a large sequential region of a
+ * vector using overlapped I/O. The object is created from an iterator range,
+ * which can then be written to using operator<<(), or with operator*() and
+ * operator++().
+ *
+ * The buffered writer is given one iterator in the constructor. When writing,
+ * this iterator advances in the vector and will \b enlarge the vector once it
+ * reaches the end(). The vector size is doubled each time; nevertheless, it is
+ * better to preinitialize the vector's size using stxxl::vector::resize().
+ */
+template <typename VectorType>
+class vector_bufwriter : public noncopyable
+{
+public:
+    //! template parameter: the vector type
+    typedef VectorType vector_type;
+
+    //! value type of the output vector
+    typedef typename vector_type::value_type value_type;
+
+    //! block type used in the vector
+    typedef typename vector_type::block_type block_type;
+
+    //! block identifier iterator of the vector
+    typedef typename vector_type::bids_container_iterator bids_container_iterator;
+
+    //! iterator type of vector
+    typedef typename vector_type::iterator vector_iterator_type;
+    typedef typename vector_type::const_iterator vector_const_iterator_type;
+
+    //! construct output buffered stream used for overlapped writing
+    typedef buf_ostream<block_type, bids_container_iterator> buf_ostream_type;
+
+protected:
+
+    //! internal iterator into the vector.
+    vector_iterator_type        m_iter;
+
+    //! iterator to the current end of the vector.
+    vector_const_iterator_type  m_end;
+
+    //! boolean whether the vector was grown, will shorten at finish().
+    bool                        m_grown;
+
+    //! iterator into vector of the last block accessed (used to issue updates
+    //! when the block is switched).
+    vector_const_iterator_type  m_prevblk;
+
+    //! buffered output stream used to overlapped I/O.
+    buf_ostream_type*           m_bufout;
+
+    //! number of blocks to use as buffers.
+    unsigned_type               m_nbuffers;
+
+public:
+    //! Create overlapped writer beginning at the given iterator.
+    //! \param begin iterator to position were to start writing in vector
+    //! \param nbuffers number of buffers used for overlapped I/O (>= 2D recommended)
+    vector_bufwriter(vector_iterator_type begin,
+                     unsigned_type nbuffers = 0)
+        : m_iter(begin),
+          m_end( m_iter.parent_vector()->end() ),
+          m_grown(false),
+          m_bufout(NULL),
+          m_nbuffers(nbuffers)
+    {
+        if (m_nbuffers == 0)
+            m_nbuffers = 2 * config::get_instance()->disks_number();
+
+        assert( m_iter <= m_end );
+    }
+
+    //! Finish writing and flush output back to vector.
+    ~vector_bufwriter()
+    {
+        finish();
+    }
+
+    //! Return mutable reference to item at the position of the internal
+    //! iterator.
+    value_type & operator * ()
+    {
+        if (UNLIKELY(m_iter == m_end))
+        {
+            // iterator points to end of vector -> double vector's size
+
+            if (m_bufout) {
+                m_bufout->flush(); // flush overlap buffers
+                delete m_bufout;
+                m_bufout = NULL;
+
+                if (m_iter.block_offset() != 0)
+                    m_iter.block_externally_updated();
+            }
+
+            vector_type& v = *m_iter.parent_vector();
+            if (v.size() < 2 * block_type::size) {
+                v.resize(2 * block_type::size);
+            }
+            else {
+                v.resize(2 * v.size());
+            }
+            m_end = v.end();
+            m_grown = true;
+        }
+
+        assert( m_iter < m_end );
+
+        if (UNLIKELY(m_bufout == NULL))
+        {
+            if (m_iter.block_offset() != 0)
+            {
+                // output position is not at the start of the block, we
+                // continue to use the iterator initially passed to the
+                // constructor.
+                return *m_iter;
+            }
+            else
+            {
+                // output position is start of block: create buffered writer
+
+                m_iter.flush(); // flush container
+
+                // create buffered write stream for blocks
+                m_bufout = new buf_ostream_type(m_iter.bid(), m_nbuffers);
+                m_prevblk = m_iter;
+
+                // drop through to normal output into buffered writer
+            }
+        }
+
+        // if the pointer has finished a block, then we inform the vector that
+        // this block has been updated.
+        if (UNLIKELY(m_iter.block_offset() == 0)) {
+            if (m_prevblk != m_iter) {
+                m_prevblk.block_externally_updated();
+                m_prevblk = m_iter;
+            }
+        }
+
+        return m_bufout->operator*();
+    }
+
+    //! Advance internal iterator.
+    vector_bufwriter& operator ++ ()
+    {
+        // always advance internal iterator
+        ++m_iter;
+
+        // if buf_ostream active, advance that too
+        if (LIKELY(m_bufout != NULL)) m_bufout->operator++();
+
+        return *this;
+    }
+
+    //! Write value to the current position and advance the internal iterator.
+    vector_bufwriter& operator << (const value_type& v)
+    {
+        operator*() = v;
+        operator++();
+
+        return *this;
+    }
+
+    //! Finish writing and flush output back to vector.
+    void finish()
+    {
+        if (m_bufout)
+        {
+            // must finish the block started in the buffered writer: fill it with
+            // the data in the vector
+            vector_const_iterator_type const_out = m_iter;
+
+            while (const_out.block_offset() != 0)
+            {
+                m_bufout->operator*() = *const_out;
+                m_bufout->operator++();
+                ++const_out;
+            }
+
+            // inform the vector that the block has been updated.
+            if (m_prevblk != m_iter) {
+                m_prevblk.block_externally_updated();
+                m_prevblk = m_iter;
+            }
+
+            delete m_bufout;
+            m_bufout = NULL;
+        }
+
+        if (m_grown)
+        {
+            vector_type& v = *m_iter.parent_vector();
+            v.resize( m_iter - v.begin() );
+
+            m_grown = false;
+        }
+    }
+};
 
 ////////////////////////////////////////////////////////////////////////////
 

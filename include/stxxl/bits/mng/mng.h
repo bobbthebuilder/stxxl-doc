@@ -15,6 +15,8 @@
 #ifndef STXXL_MNG_HEADER
 #define STXXL_MNG_HEADER
 
+#include <stxxl/bits/config.h>
+
 #include <memory>
 #include <iostream>
 #include <iomanip>
@@ -25,14 +27,11 @@
 #include <string>
 #include <cstdlib>
 
-#ifdef STXXL_BOOST_CONFIG
- #include <boost/config.hpp>
-#endif
-
 #ifdef BOOST_MSVC
 #include <memory.h>
 #endif
 
+#include <stxxl/bits/defines.h>
 #include <stxxl/bits/deprecated.h>
 #include <stxxl/bits/io/request.h>
 #include <stxxl/bits/io/file.h>
@@ -43,9 +42,13 @@
 #include <stxxl/bits/mng/diskallocator.h>
 #include <stxxl/bits/mng/block_alloc.h>
 #include <stxxl/bits/mng/config.h>
-
+#include <stxxl/bits/common/utils.h>
 
 __STXXL_BEGIN_NAMESPACE
+
+#ifndef STXXL_MNG_COUNT_ALLOCATION
+#define STXXL_MNG_COUNT_ALLOCATION 1
+#endif // STXXL_MNG_COUNT_ALLOCATION
 
 //! \defgroup mnglayer Block management layer
 //! Group of classes which help controlling external memory space,
@@ -65,6 +68,17 @@ class block_manager : public singleton<block_manager>
 
     unsigned ndisks;
     block_manager();
+
+#if STXXL_MNG_COUNT_ALLOCATION
+    //! total requested allocation in bytes
+    uint64      m_total_allocation;
+
+    //! currently allocated bytes
+    uint64      m_current_allocation;
+
+    //! maximum number of bytes allocated during program run.
+    uint64      m_maximum_allocation;
+#endif // STXXL_MNG_COUNT_ALLOCATION
 
 protected:
     template <class BIDType, class DiskAssignFunctor, class BIDIteratorClass>
@@ -147,6 +161,20 @@ public:
     void delete_block(const BID<BLK_SIZE> & bid);
 
     ~block_manager();
+
+#if STXXL_MNG_COUNT_ALLOCATION
+    //! return total requested allocation in bytes
+    uint64      get_total_allocation() const
+    { return m_total_allocation; }
+
+    //! return currently allocated bytes
+    uint64      get_current_allocation() const
+    { return m_current_allocation; }
+
+    //! return maximum number of bytes allocated during program run.
+    uint64      get_maximum_allocation() const
+    { return m_maximum_allocation; }
+#endif // STXXL_MNG_COUNT_ALLOCATION
 };
 
 
@@ -163,6 +191,12 @@ void block_manager::new_blocks_int(
     int_type * bl = new int_type[ndisks];
     bid_array_type * disk_bids = new bid_array_type[ndisks];
     file ** disk_ptrs = new file *[nblocks];
+
+#if STXXL_MNG_COUNT_ALLOCATION
+    m_total_allocation += nblocks * BIDType::size;
+    m_current_allocation += nblocks * BIDType::size;
+    m_maximum_allocation = STXXL_MAX(m_maximum_allocation, m_current_allocation);
+#endif // STXXL_MNG_COUNT_ALLOCATION
 
     memset(bl, 0, ndisks * sizeof(int_type));
 
@@ -211,6 +245,10 @@ void block_manager::delete_block(const BID<BLK_SIZE> & bid)
     assert(bid.storage->get_allocator_id() >= 0);
     disk_allocators[bid.storage->get_allocator_id()]->delete_block(bid);
     disk_files[bid.storage->get_allocator_id()]->discard(bid.offset, bid.size);
+
+#if STXXL_MNG_COUNT_ALLOCATION
+    m_current_allocation -= BLK_SIZE;
+#endif // STXXL_MNG_COUNT_ALLOCATION
 }
 
 
